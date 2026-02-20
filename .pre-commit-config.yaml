@@ -1,0 +1,37 @@
+repos:
+  # ── Standard safety checks ──────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-added-large-files      # blocks files > 500 KB
+        args: ["--maxkb=500"]
+      - id: check-merge-conflict         # catches unresolved <<< HEAD markers
+      - id: check-json                   # validates JSON syntax (Postman files)
+      - id: check-yaml                   # validates YAML syntax
+      - id: detect-private-key           # blocks PEM private keys
+      - id: end-of-file-fixer            # ensures files end with a newline
+      - id: trailing-whitespace          # removes trailing spaces
+      - id: no-commit-to-branch          # blocks direct commits to main/develop
+        args: ["--branch", "main", "--branch", "master", "--branch", "develop"]
+      - id: check-case-conflict          # catches macOS/Windows filename clashes
+      - id: mixed-line-ending            # enforces LF line endings
+
+  # ── Credential / secret scanning ────────────────────────────────────────────
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]
+        exclude: >-
+          (?x)^(
+            .*\.example|
+            backend/seed/seed_data\.py|
+            backend/tests/conftest\.py
+          )$
+
+  # ── Python-specific ──────────────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: debug-statements             # blocks forgotten pdb/breakpoint() calls
+      - id: check-ast                    # validates Python syntax before commit
