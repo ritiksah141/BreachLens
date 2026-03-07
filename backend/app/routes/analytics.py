@@ -5,8 +5,8 @@ Prefix: /api/v1/analytics
 Analytics endpoints are cached for 5 minutes by default to reduce database load.
 Cache keys include authentication status and query parameters to ensure correct data isolation.
 """
-from flask import Blueprint, request
-from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
+import jwt as pyjwt
+from flask import Blueprint, current_app, request
 from app.middleware.auth_middleware import require_auth, require_role
 from app.services.analytics_service import AnalyticsService
 from app.utils.response import success_response, error_response
@@ -24,12 +24,19 @@ def make_cache_key(*args, **kwargs):
     - Unauthenticated requests get cached separately from authenticated ones
     - Different user roles get cached separately
     """
-    # Check if JWT is present (optional endpoints)
-    try:
-        verify_jwt_in_request(optional=True)
-        user_id = get_jwt_identity() or "anonymous"
-    except Exception:
-        user_id = "anonymous"
+    # Check if JWT is present (optional endpoints) — raw pyjwt
+    user_id = "anonymous"
+    token = request.headers.get("x-access-token")
+    if token:
+        try:
+            payload = pyjwt.decode(
+                token,
+                current_app.config["SECRET_KEY"],
+                algorithms=["HS256"],
+            )
+            user_id = payload.get("user", payload.get("user_id", "anonymous"))
+        except Exception:
+            pass
 
     # Include path, user, and query params in cache key
     try:
@@ -85,8 +92,8 @@ def top_organisations():
     return success_response(data)
 
 
-@cache.cached(timeout=300, key_prefix=make_cache_key)
 @analytics_bp.route("/data-types-frequency", methods=["GET"])
+@cache.cached(timeout=300, key_prefix=make_cache_key)
 def data_types_frequency():
     data = analytics_service.data_types_frequency()
     return success_response(data)

@@ -32,7 +32,7 @@ class TestPerformance:
         assert duration_ms < 500, f"Response took {duration_ms:.2f}ms (target: < 500ms)"
         data = response.json
         assert "data" in data
-        assert "pagination" in data
+        assert "meta" in data
 
     def test_analytics_endpoint_response_time(self, client, analyst_token):
         """Verify aggregation pipeline performs under 1 second."""
@@ -55,7 +55,7 @@ class TestPerformance:
             headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert create_response.status_code == 201
-        breach_id = create_response.json["data"]["_id"]
+        breach_id = create_response.json["data"].get("id") or create_response.json["data"].get("_id")
 
         # Test retrieval speed
         start = time.time()
@@ -197,7 +197,7 @@ class TestConcurrency:
             headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert create_response.status_code == 201
-        breach_id = create_response.json["data"]["_id"]
+        breach_id = create_response.json["data"].get("id") or create_response.json["data"].get("_id")
 
         read_errors = []
         write_errors = []
@@ -273,9 +273,9 @@ class TestScalability:
         data = response.json
 
         # Should return valid pagination info even if no results
-        assert "pagination" in data
-        assert "page" in data["pagination"]
-        assert "limit" in data["pagination"]
+        assert "meta" in data
+        assert "page" in data["meta"]
+        assert "limit" in data["meta"]
 
     def test_filtering_performance(self, client):
         """Verify filtered queries perform well."""

@@ -36,7 +36,7 @@ class TestAnalyticsEndpoints:
 
     def test_risk_by_industry_analyst_ok(self, client, analyst_headers):
         with patch("app.routes.analytics.analytics_service.risk_by_industry", return_value=[
-            {"industry": "finance", "avg_risk": 7.2, "max_risk": 9.5, "min_risk": 4.1, "count": 8},
+            {"industry": "finance", "avg_risk_score": 7.2, "max_risk_score": 9.5, "min_risk_score": 4.1, "breach_count": 8, "total_records_exposed": 5000000},
         ]):
             resp = client.get("/api/v1/analytics/risk-by-industry", headers=analyst_headers)
         assert resp.status_code == 200

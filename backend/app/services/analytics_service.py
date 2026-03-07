@@ -23,20 +23,22 @@ class AnalyticsService:
             {"$match": {"risk_score": {"$exists": True, "$ne": None}}},
             {"$group": {
                 "_id": "$industry",
-                "avg_risk": {"$avg": "$risk_score"},
-                "max_risk": {"$max": "$risk_score"},
-                "min_risk": {"$min": "$risk_score"},
-                "count": {"$sum": 1},
+                "avg_risk_score": {"$avg": "$risk_score"},
+                "max_risk_score": {"$max": "$risk_score"},
+                "min_risk_score": {"$min": "$risk_score"},
+                "breach_count": {"$sum": 1},
+                "total_records_exposed": {"$sum": "$affected_records_count"},
             }},
             {"$project": {
                 "industry": "$_id",
                 "_id": 0,
-                "avg_risk": {"$round": ["$avg_risk", 2]},
-                "max_risk": 1,
-                "min_risk": 1,
-                "count": 1,
+                "avg_risk_score": {"$round": ["$avg_risk_score", 2]},
+                "max_risk_score": 1,
+                "min_risk_score": 1,
+                "breach_count": 1,
+                "total_records_exposed": 1,
             }},
-            {"$sort": {"avg_risk": -1}},
+            {"$sort": {"avg_risk_score": -1}},
         ]
         return list(self.col.aggregate(pipeline))
 
@@ -103,18 +105,18 @@ class AnalyticsService:
         pipeline = [
             {"$group": {
                 "_id": "$organisation.name",
-                "total_records": {"$sum": "$affected_records_count"},
+                "total_records_exposed": {"$sum": "$affected_records_count"},
                 "breach_count": {"$sum": 1},
-                "avg_risk": {"$avg": "$risk_score"},
+                "avg_risk_score": {"$avg": "$risk_score"},
             }},
-            {"$sort": {"total_records": -1}},
+            {"$sort": {"total_records_exposed": -1}},
             {"$limit": limit},
             {"$project": {
                 "_id": 0,
                 "organisation": "$_id",
-                "total_records": 1,
+                "total_records_exposed": 1,
                 "breach_count": 1,
-                "avg_risk": {"$round": ["$avg_risk", 2]},
+                "avg_risk_score": {"$round": ["$avg_risk_score", 2]},
             }},
         ]
         return list(self.col.aggregate(pipeline))
@@ -221,13 +223,13 @@ class AnalyticsService:
             }},
             {"$group": {
                 "_id": {"industry": "$industry", "year": "$year"},
-                "count": {"$sum": 1},
+                "breach_count": {"$sum": 1},
             }},
             {"$project": {
                 "_id": 0,
                 "industry": "$_id.industry",
                 "year": "$_id.year",
-                "count": 1,
+                "breach_count": 1,
             }},
             {"$sort": {"year": 1, "industry": 1}},
         ]

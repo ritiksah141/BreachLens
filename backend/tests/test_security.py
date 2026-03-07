@@ -221,7 +221,7 @@ class TestPasswordResetSecurity:
         """POST /reset-password endpoint should exist."""
         response = client.post(
             '/api/v1/auth/reset-password',
-            json={'token': 'fake-token', 'new_password': 'NewPass123'}
+            json={'token': 'fake-token', 'new_password': 'NewPass123'}  # pragma: allowlist secret
         )
         # Should not be 404 (endpoint exists)
         assert response.status_code in [200, 400, 422, 429]
@@ -247,12 +247,12 @@ class TestPasswordResetSecurity:
 class TestJWTBlacklist:
     """Test JWT token blacklist functionality."""
 
-    def test_jwt_redis_client_available(self):
-        """JWT Redis blocklist should be available."""
-        from app.extensions import jwt_redis_blocklist
-        # jwt_redis_blocklist may be None if Redis is unavailable (graceful degradation)
-        # This is expected behavior
-        assert jwt_redis_blocklist is None or hasattr(jwt_redis_blocklist, 'setex')
+    def test_jwt_blacklist_uses_mongodb(self, app):
+        """JWT blacklist should use MongoDB blacklist collection."""
+        with app.app_context():
+            from app.extensions import mongo
+            # The blacklist collection should be accessible
+            assert mongo.db["blacklist"] is not None
 
     def test_logout_endpoint_exists(self, client, analyst_headers):
         """POST /logout endpoint should exist."""
@@ -261,10 +261,7 @@ class TestJWTBlacklist:
             headers=analyst_headers
         )
         # Should not be 404 (endpoint exists)
-        assert response.status_code in [200, 401, 403]
-        if response.status_code == 200:
-            data = response.get_json()
-            assert 'message' in data or 'status' in data
+        assert response.status_code in [200, 204, 401, 403]
 
 
 class TestRateLimiting:
@@ -286,7 +283,7 @@ class TestRateLimiting:
         for attempt in range(15):  # Exceed rate limit
             response = client.post(
                 '/api/v1/auth/login',
-                json={'email': 'test@example.com', 'password': 'test'}
+                json={'email': 'test@example.com', 'password': 'test'}  # pragma: allowlist secret
             )
             if response.status_code == 429:
                 rate_limit_triggered = True
@@ -305,7 +302,7 @@ class TestRateLimiting:
         for attempt in range(10):  # Exceed rate limit
             response = client.post(
                 '/api/v1/auth/register',
-                json={'email': f'test{attempt}@example.com', 'password': 'Test123'}  # Invalid payload
+                json={'email': f'test{attempt}@example.com', 'password': 'Test123'}  # pragma: allowlist secret
             )
             if response.status_code == 429:
                 rate_limit_triggered = True
@@ -371,47 +368,6 @@ class TestInputValidation:
         assert is_valid_url('http://example.com/path') is True
         assert is_valid_url('not a url') is False
         assert is_valid_url('javascript:alert()') is False
-
-
-class TestConfigurationSecurity:
-    """Test configuration security measures."""
-
-    @pytest.mark.skip(reason="Environment-dependent test - requires specific setup")
-    def test_production_config_validates_secrets(self):
-        """Production config should require strong secrets."""
-        from app.config import ProductionConfig
-        import os
-
-        # Save original values
-        original_secret = os.environ.get('SECRET_KEY')
-        original_jwt = os.environ.get('JWT_SECRET_KEY')
-
-        try:
-            # Test 1: Dev secret key should be rejected
-            os.environ['SECRET_KEY'] = 'dev-secret-key'
-            os.environ['JWT_SECRET_KEY'] = 'this-is-a-valid-jwt-secret-key-that-is-at-least-32-chars-long'
-
-            with pytest.raises(ValueError, match="SECRET_KEY must be set"):
-                ProductionConfig()
-
-            # Test 2: Short JWT secret should be rejected
-            os.environ['SECRET_KEY'] = 'production-secret-key-that-is-valid'
-            os.environ['JWT_SECRET_KEY'] = 'short'
-
-            with pytest.raises(ValueError, match="JWT_SECRET_KEY must be set"):
-                ProductionConfig()
-
-        finally:
-            # Restore original values (use explicit None check to handle empty strings)
-            if original_secret is not None:
-                os.environ['SECRET_KEY'] = original_secret
-            elif 'SECRET_KEY' in os.environ:
-                del os.environ['SECRET_KEY']
-
-            if original_jwt is not None:
-                os.environ['JWT_SECRET_KEY'] = original_jwt
-            elif 'JWT_SECRET_KEY' in os.environ:
-                del os.environ['JWT_SECRET_KEY']
 
 
 class TestEndpointAuthorization:

@@ -51,22 +51,21 @@ Primary Goal     : Exceed the Biz Directory demo application in every assessed d
 | Language | Python | 3.11+ | Type hints required everywhere |
 | Web Framework | Flask | 3.0.x | Application factory pattern |
 | Database Driver | PyMongo | 4.6.x | Direct driver, not MongoEngine or ODM |
-| Authentication | Flask-JWT-Extended | 4.6.x | Access token + refresh token |
+| Authentication | PyJWT | 2.8.x | Raw `jwt.encode`/`jwt.decode`, `x-access-token` header |
 | Password Hashing | bcrypt | 4.1.x | Min 12 salt rounds |
 | Validation | Marshmallow | 3.21.x | Schema-based validation + manual validators |
 | CORS | Flask-CORS | 4.0.x | Configurable origins per environment |
-| Rate Limiting | Flask-Limiter | 3.5.x | Redis or in-memory backend |
+| Rate Limiting | Flask-Limiter | 3.5.x | In-memory backend |
 | Environment Vars | python-dotenv | 1.0.x | `.env` file for local dev |
 | Testing | pytest | 8.x | All backend unit tests |
 | Mock DB | mongomock | 4.1.x | MongoDB mock for unit tests |
 | HTTP Testing | Postman / Newman | Latest | API integration testing |
-| WSGI Server (prod) | Gunicorn | 21.x | Not Flask dev server |
 
 ### 2.2 Database
 
 | Component | Technology | Version | Notes |
 |-----------|-----------|---------|-------|
-| Database | MongoDB | 7.0+ | Atlas free tier or local |
+| Database | MongoDB | 7.0+ | Local instance only |
 | Index Types | 2dsphere, compound, text | — | Mandatory — see §6 |
 | Query Features | Aggregation Pipeline, GeoJSON | — | Mandatory — see §6 |
 
@@ -108,7 +107,7 @@ BreachLens/
 ├── backend/
 │   ├── app/
 │   │   ├── __init__.py              # create_app() factory — ONLY place Flask is instantiated
-│   │   ├── config.py                # DevelopmentConfig, ProductionConfig, TestingConfig
+│   │   ├── config.py                # DevelopmentConfig, TestingConfig
 │   │   ├── extensions.py            # mongo, jwt, cors, limiter — initialised here, imported elsewhere
 │   │   ├── routes/
 │   │   │   ├── __init__.py
@@ -372,52 +371,56 @@ def register_error_handlers(app):
 ```python
 # app/middleware/auth_middleware.py
 from functools import wraps
-from flask import request, g
-from flask_jwt_extended import verify_jwt_in_request, get_jwt, get_jwt_identity
-from flask_jwt_extended.exceptions import (
-    NoAuthorizationError,
-    JWTDecodeError,
-    InvalidHeaderError,
-    RevokedTokenError
-)
+from flask import request, g, current_app
+import jwt as pyjwt              # raw PyJWT — NOT Flask-JWT-Extended
+from app.extensions import mongo
 from app.utils.response import error_response
 
-def require_auth(f):
-    """Decorator: requires valid JWT access token."""
+def _get_token_from_header():
+    """Read token from x-access-token header."""
+    return request.headers.get("x-access-token")
+
+def _check_blacklist(token):
+    """Return True if token is in MongoDB blacklist collection."""
+    return mongo.db["blacklist"].find_one({"token": token}) is not None
+
+def _decode_token(token):
+    """Decode JWT with SECRET_KEY; return payload dict or None."""
+    try:
+        return pyjwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
+    except (pyjwt.ExpiredSignatureError, pyjwt.InvalidTokenError):
+        return None
+
+def jwt_required(f):
+    """Decorator: requires valid JWT in x-access-token header."""
     @wraps(f)
     def decorated(*args, **kwargs):
-        try:
-            verify_jwt_in_request()
-            g.current_user_id = get_jwt_identity()
-            g.current_user_claims = get_jwt()
-        except (NoAuthorizationError, JWTDecodeError, InvalidHeaderError, RevokedTokenError):
-            return error_response("Authentication required.", 401)
-        return f(*args, **kwargs)
+        token = _get_token_from_header()
+        if token:
+            if _check_blacklist(token):
+                return error_response("Token has been cancelled.", 401)
+            payload = _decode_token(token)
+            if payload is None:
+                return error_response("Token is invalid or has expired.", 401)
+            g.current_user = payload.get("user", "")
+            g.current_user_id = payload.get("user", "")
+            g.current_user_claims = payload
+            return f(*args, **kwargs)
+        return error_response("Token is missing.", 401)
     return decorated
 
-def require_role(*roles: str):
-    """Decorator factory: requires one of the specified roles."""
-    def decorator(f):
-        @wraps(f)
-        def decorated(*args, **kwargs):
-            try:
-                verify_jwt_in_request()
-                claims = get_jwt()
-                if claims.get("role") not in roles:
-                    return error_response(
-                        f"Role '{claims.get('role')}' is not authorised for this resource.", 403
-                    )
-                g.current_user_id = get_jwt_identity()
-                g.current_user_role = claims.get("role")
-            except (NoAuthorizationError, JWTDecodeError, InvalidHeaderError, RevokedTokenError):
-                return error_response("Authentication required.", 401)
-            return f(*args, **kwargs)
-        return decorated
-    return decorator
+def admin_required(f):
+    """Decorator: requires valid JWT AND admin: True in payload."""
+    # ... checks payload["admin"] is True, else 403 ...
+
+def require_role(*roles):
+    """Decorator factory: requires one of the specified roles in token payload."""
+    # ... checks payload["role"] in roles, else 403 ...
 
 # Usage in routes:
-# @require_auth                              — any authenticated user
-# @require_role("admin")                    — admin only
+# @jwt_required                              — any authenticated user
+# @admin_required                            — admin only
+# @require_role("admin")                    — admin only (alternative)
 # @require_role("admin", "analyst")         — admin or analyst
 ```
 
@@ -618,7 +621,7 @@ export class AuthInterceptor implements HttpInterceptor {
     const token = this.authService.getToken();
     if (token) {
       const cloned = req.clone({
-        setHeaders: { Authorization: `Bearer ${token}` }
+        setHeaders: { 'x-access-token': token }
       });
       return next.handle(cloned);
     }
@@ -1082,56 +1085,50 @@ All API responses **must** return `Content-Type: application/json`.
 
 ### 9.1 JWT Configuration
 ```python
-# config.py
-JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")        # MUST be from env var
+# config.py — uses raw PyJWT (not Flask-JWT-Extended)
+SECRET_KEY = os.environ.get("SECRET_KEY")                # MUST be from env var
 JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
-# Parse refresh token expiry from env (days), fallback to 30 days
-try:
-    refresh_days = int(os.environ.get("JWT_REFRESH_TOKEN_EXPIRES_DAYS", "30"))
-    if refresh_days < 1:
-        raise ValueError("JWT_REFRESH_TOKEN_EXPIRES_DAYS must be at least 1")
-    if refresh_days > 365:
-        raise ValueError("JWT_REFRESH_TOKEN_EXPIRES_DAYS exceeds reasonable limit (max 365 days)")
-except ValueError as e:
-    raise ValueError(f"Invalid JWT_REFRESH_TOKEN_EXPIRES_DAYS configuration: {e}")
-
-JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=refresh_days)
-
-JWT_ALGORITHM = "HS256"
-# NEVER hardcode JWT secret key in source code
+# Token is sent via x-access-token header, decoded with jwt.decode()
+# NEVER hardcode SECRET_KEY in source code
 ```
 
-### 9.2 Role Claims in JWT
+### 9.2 Token Generation (raw PyJWT)
 ```python
-# When issuing access token, always include role in additional claims:
-access_token = create_access_token(
-    identity=str(user["_id"]),
-    additional_claims={"role": user["role"], "username": user["username"]}
+import jwt as pyjwt
+
+# When issuing a token, include user, admin flag, and role:
+token = pyjwt.encode(
+    {
+        "user": user["username"],
+        "user_id": str(user["_id"]),
+        "admin": user.get("role") == "admin",
+        "role": user.get("role", "guest"),
+        "exp": datetime.utcnow() + timedelta(hours=1),
+    },
+    current_app.config["SECRET_KEY"],
+    algorithm="HS256",
 )
 ```
 
-### 9.3 Refresh Token Usage
+### 9.3 Login Endpoint (Basic Auth — Module Requirement)
 ```python
-# Refresh endpoint to issue new access token from refresh token
-from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
-
-@app.route("/api/v1/auth/refresh", methods=["POST"])
-@jwt_required(refresh=True)
-def refresh():
-    user_id = get_jwt_identity()
-    # Re-fetch user to get current role/claims
-    user = mongo.db.users.find_one({"_id": ObjectId(user_id)})
-    if not user:
-        return error_response("User not found.", 404)
-    # Issue new access token with up-to-date claims
-    access_token = create_access_token(
-        identity=str(user["_id"]),
-        additional_claims={"role": user["role"], "username": user["username"]}
-    )
-    return success_response({"access_token": access_token})
+# GET /api/v1/login  — HTTP Basic Authentication
+# Authorization: Basic base64(username:password)
+# Returns: {"token": "eyJ...", "token_type": "JWT", "expires_in": 3600}
 ```
 
-### 9.4 RBAC Route Matrix
+### 9.4 Token Blacklist (MongoDB)
+```python
+# Logout stores the FULL token in MongoDB blacklist collection
+mongo.db["blacklist"].update_one(
+    {"token": token},
+    {"$set": {"token": token, "blacklisted_at": datetime.utcnow()}},
+    upsert=True,
+)
+# Decorators check blacklist via find_one({"token": token})
+```
+
+### 9.5 RBAC Route Matrix
 
 | Role | GET (public) | GET (protected) | POST | PUT/PATCH | DELETE | Admin routes |
 |------|-------------|-----------------|------|-----------|--------|-------------|

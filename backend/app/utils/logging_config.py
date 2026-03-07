@@ -1,7 +1,7 @@
 """
 Structured logging configuration for BreachLens.
 
-Provides JSON logging for production with human-readable logging for development.
+Provides human-readable logging for development.
 """
 import logging
 import sys
@@ -12,7 +12,7 @@ class CustomJsonFormatter(jsonlogger.JsonFormatter):
     """
     Custom JSON formatter that adds standard fields and request context.
 
-    Formats log records as JSON suitable for CloudWatch, Datadog, or Splunk ingestion.
+    Formats log records as JSON for structured log ingestion.
     """
 
     def add_fields(self, log_record, record, message_dict):
@@ -69,22 +69,11 @@ def configure_logging(app_config):
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(getattr(logging, normalized_level))
 
-    if environment == 'production':
-        # Production: JSON formatted logs
-        formatter = CustomJsonFormatter(
-            '%(timestamp)s %(level)s %(logger_name)s %(message)s',
-            rename_fields={
-                "levelname": "level",
-                "name": "logger_name",
-                "created": "timestamp"
-            }
-        )
-    else:
-        # Development: Human-readable logs (no colors - use colorlog for colored output)
-        formatter = logging.Formatter(
-            '%(asctime)s [%(levelname)s] %(name)s:%(lineno)d - %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
-        )
+    # Human-readable logs for development
+    formatter = logging.Formatter(
+        '%(asctime)s [%(levelname)s] %(name)s:%(lineno)d - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
 
     console_handler.setFormatter(formatter)
     root_logger.addHandler(console_handler)

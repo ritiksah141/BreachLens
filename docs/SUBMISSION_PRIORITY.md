@@ -82,144 +82,12 @@ All COM661 requirements from PRD §8 are met:
 
 ---
 
-## 🚀 Production Deployment Priorities
-
-If you plan to deploy BreachLens to production (after submission), here's the priority order:
-
-### High Priority (Do Before Launch) - 6-8 hours
-
-#### 1. Enhanced Health Checks (1 hour) ⭐
-**Why Critical:** Required for load balancers (AWS ELB, Nginx) and container orchestration (Kubernetes, Docker Swarm)
-```python
-# /health/ready endpoint checks:
-# - MongoDB connection alive
-# - Redis connection alive (if used)
-# - Disk space available
-# - Memory usage acceptable
-```
-
-#### 2. Structured JSON Logging (2 hours) ⭐
-**Why Critical:**
-- CloudWatch/Datadog/Splunk require JSON format
-- Enables log aggregation and searching
-- Essential for debugging production issues
-```python
-# Output format:
-{"timestamp": "2026-02-26T10:00:00Z", "level": "ERROR", "message": "...", "request_id": "abc123"}
-```
-
-#### 3. MongoDB Connection Pooling (1 hour) ⭐
-**Why Critical:** Prevents connection exhaustion under load
-```python
-# PyMongo already pools by default, but verify:
-app.config["MONGO_MAX_POOL_SIZE"] = 50
-app.config["MONGO_MIN_POOL_SIZE"] = 10
-```
-
-#### 4. Sentry Error Tracking (1 hour) ⭐
-**Why Critical:**
-- Real-time error alerts via email/Slack
-- Stack traces with user context
-- Error grouping and trend analysis
-```bash
-# Environment variable:
-SENTRY_DSN=https://your-project@sentry.io/123456
-```
-
-#### 5. Query Optimization (2-3 hours) ⭐
-**Why Critical:** Ensure analytics endpoints perform under load
-```python
-# Validate with explain():
-db.breaches.find(...).explain("executionStats")
-# Look for: IXSCAN (good) vs COLLSCAN (bad)
-```
-
-### Medium Priority (First Week) - 4-6 hours
-
-#### 6. Prometheus Metrics (2-3 hours)
-**Why Useful:**
-- Monitor request rates, errors, latency
-- Alert on anomalies (Grafana/AlertManager)
-- Track business metrics (breach creation rate)
-
-#### 7. Request ID Tracking (1 hour)
-**Why Useful:** Trace requests across microservices/logs
-```python
-# Add to request_logging.py:
-request_id = str(uuid.uuid4())
-g.request_id = request_id
-```
-
-### Low Priority (Post-Launch) - 4-5 hours
-
-#### 8. Performance Test Suite (2-3 hours)
-**Why Useful:** Validate system handles expected load before Black Friday / major events
-
-#### 9. Response Caching (2 hours)
-**Why Useful:** Reduce database load for frequently accessed data (analytics dashboards)
-
----
-
-## 📦 Production Deployment Checklist
-
-### Environment Configuration
-```bash
-# Required for production:
-export FLASK_ENV=production
-export MONGO_URI=mongodb+srv://prod-cluster...
-export JWT_SECRET_KEY=$(openssl rand -hex 32)
-export PASSWORD_RESET_SECRET=$(openssl rand -hex 32)
-export REDIS_URL=redis://prod-redis:6379/0
-export EMAIL_BACKEND=smtp  # or sendgrid/ses
-export SMTP_HOST=smtp.gmail.com
-export SMTP_PORT=587
-export SMTP_USERNAME=your-email@domain.com
-export SMTP_PASSWORD=app-password
-export SENTRY_DSN=https://...
-export FRONTEND_URL=https://breachlens.com
-```
-
-### Infrastructure Setup
-1. **Database:** MongoDB Atlas (M10+ cluster)
-2. **Cache:** Redis (AWS ElastiCache or Redis Cloud)
-3. **Hosting:**
-   - AWS EC2/ECS/Fargate
-   - Heroku (easiest for MVP)
-   - DigitalOcean App Platform
-   - Google Cloud Run
-4. **Load Balancer:** AWS ALB or Nginx (with health check on `/health/ready`)
-5. **CDN:** CloudFront or Cloudflare (for static assets)
-6. **Email:** SendGrid, AWS SES, or Mailgun
-
-### Security Hardening
-- [x] HTTPS enforced (let's encrypt or AWS ACM)
-- [x] CORS configured for production frontend domain
-- [x] Rate limiting enabled with Redis backend
-- [x] Security headers configured
-- [x] JWT secrets rotated from defaults
-- [ ] Database backups scheduled (MongoDB Atlas automated backups)
-- [ ] Secrets stored in AWS Secrets Manager / HashiCorp Vault
-- [ ] API behind rate-limiting WAF (CloudFlare / AWS WAF)
-
-### Monitoring & Alerting
-- [ ] Sentry configured with Slack/email alerts
-- [ ] Prometheus + Grafana dashboards
-- [ ] CloudWatch alarms for:
-  - High error rate (> 1%)
-  - Slow response time (p95 > 500ms)
-  - Database connection pool exhaustion
-  - High memory usage (> 80%)
-
----
-
 ## ⏱️ Time Investment Summary
 
-| Phase | Academic Submission | Production Deployment |
-|-------|-------------------|----------------------|
-| **Current State** | ✅ Complete (except Newman report) | ⚠️ Needs hardening |
-| **Time to Submit** | 10 minutes | N/A |
-| **Time to Production** | N/A | 6-8 hours (high priority items) |
-| **Total Optional Features** | 0 hours (all done!) | 10-14 hours (all items) |
+| Phase | Academic Submission |
+|-------|-------------------|
+| **Current State** | ✅ Complete |
+| **Time to Submit** | 10 minutes |
 
 ---
 
@@ -233,5 +101,5 @@ export FRONTEND_URL=https://breachlens.com
 ---
 
 **Generated:** 27 February 2026
-**Based on:** docs/PRD.md §7-8, docs/QA_STRATEGY.md §14, production best practices
-**Status**: 99% ready for submission (just Newman report remaining)
+**Based on:** docs/PRD.md §7-8, docs/QA_STRATEGY.md §14
+**Status**: ✅ Ready for submission

@@ -11,8 +11,8 @@ SWAGGER_TEMPLATE: dict = {
         "title": "BreachLens API",
         "description": (
             "Dark Web Breach Intelligence Tracker API.\n\n"
-            "**Authentication:** All protected endpoints require a `Bearer <token>` "
-            "header obtained from `POST /api/v1/auth/login`.\n\n"
+            "**Authentication:** All protected endpoints require an `x-access-token` "
+            "header obtained from `GET /api/v1/login` (Basic Auth) or `POST /api/v1/auth/login`.\n\n"
             "**Roles:** `guest` · `analyst` · `admin`"
         ),
         "version": "1.0.0",
@@ -26,8 +26,8 @@ SWAGGER_TEMPLATE: dict = {
         "Bearer": {
             "type": "apiKey",
             "in": "header",
-            "name": "Authorization",
-            "description": 'Enter your token as: **Bearer &lt;token&gt;**',
+            "name": "x-access-token",
+            "description": 'Enter your JWT token directly (no Bearer prefix)',
         }
     },
     "tags": [
@@ -87,26 +87,15 @@ SWAGGER_TEMPLATE: dict = {
                     },
                 }],
                 "responses": {
-                    "200": {"description": "Returns access_token and refresh_token"},
+                    "200": {"description": "Returns token and token_type JWT"},
                     "401": {"description": "Invalid credentials"},
-                },
-            }
-        },
-        "/auth/refresh": {
-            "post": {
-                "tags": ["Auth"],
-                "summary": "Refresh access token using refresh JWT",
-                "security": [{"Bearer": []}],
-                "responses": {
-                    "200": {"description": "New access_token returned"},
-                    "401": {"description": "Invalid or expired refresh token"},
                 },
             }
         },
         "/auth/logout": {
             "post": {
                 "tags": ["Auth"],
-                "summary": "Logout (invalidate session client-side)",
+                "summary": "Logout (blacklist token in MongoDB)",
                 "security": [{"Bearer": []}],
                 "responses": {
                     "204": {"description": "Logged out"},

@@ -1,11 +1,11 @@
 # BreachLens Backend API
 
-[![Tests](https://img.shields.io/badge/Tests-104%20passing-brightgreen.svg)](tests/)
-[![Coverage](https://img.shields.io/badge/Coverage-48%25-yellow.svg)](../evidence/backend/pytest-coverage-report/)
-[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
+[![Tests](https://img.shields.io/badge/Tests-586%20passing-brightgreen.svg)](tests/)
+[![Coverage](https://img.shields.io/badge/Coverage-88%25-brightgreen.svg)](htmlcov/)
+[![Python](https://img.shields.io/badge/Python-3.14-blue.svg)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.0+-green.svg)](https://flask.palletsprojects.com/)
 
-**Production-grade RESTful API for breach intelligence tracking.**
+**RESTful API for breach intelligence tracking (COM661 coursework).**
 
 ---
 
@@ -32,8 +32,8 @@ nano .env
 
 **Required Variables:**
 ```bash
-MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net/breachlens 
-JWT_SECRET_KEY=your-secret-key-min-32-chars
+MONGO_URI=mongodb://localhost:27017/breachlens
+SECRET_KEY=your-secret-key-min-32-chars
 PASSWORD_RESET_SECRET=another-secret-key
 ```
 
@@ -61,10 +61,10 @@ backend/
 │   ├── extensions.py             # Flask extensions
 │   ├── swagger_spec.py           # API documentation
 │   ├── routes/                   # REST endpoints
-│   │   ├── auth.py               # Authentication (5 endpoints)
-│   │   ├── breaches.py           # Breach CRUD (22 endpoints)
+│   │   ├── auth.py               # Authentication (8 endpoints)
+│   │   ├── breaches.py           # Breach CRUD (32 endpoints)
 │   │   ├── analytics.py          # Aggregations (10 endpoints)
-│   │   ├── users.py              # User management (7 endpoints)
+│   │   ├── users.py              # User management (4 endpoints)
 │   │   ├── admin.py              # Admin operations (6 endpoints)
 │   │   └── health.py             # Health checks (3 endpoints)
 │   ├── services/                 # Business logic layer
@@ -82,14 +82,19 @@ backend/
 │       ├── geo_utils.py          # GeoJSON utilities
 │       ├── audit.py              # Audit logging
 │       └── email.py              # Email utilities
-├── tests/                        # Test suite (104 tests)
+├── tests/                        # Test suite (586 tests)
 │   ├── conftest.py               # pytest fixtures
-│   ├── test_auth.py              # Auth tests (11)
-│   ├── test_breaches.py          # Breach CRUD tests (21)
-│   ├── test_subdocuments.py      # Sub-document tests (17)
-│   ├── test_security.py          # Security tests (40)
-│   ├── test_analytics.py         # Analytics tests
-│   └── test_performance.py       # Integration tests (14)
+│   ├── test_auth.py              # Auth endpoint tests (11)
+│   ├── test_breaches.py          # Breach CRUD route tests (21)
+│   ├── test_subdocuments.py      # Sub-document route tests (31)
+│   ├── test_security.py          # Security feature tests (40)
+│   ├── test_analytics.py         # Analytics endpoint tests (~10)
+│   ├── test_breach_service.py    # BreachService mock tests (~50)
+│   ├── test_models.py            # Schema & validator tests (~140)
+│   ├── test_services_integration.py # Service layer integration tests (~200)
+│   ├── test_admin.py             # Admin route tests (~25)
+│   ├── test_users.py             # User route tests (~30)
+│   └── test_performance.py       # Performance benchmarks (14, deselected)
 ├── seed/                         # Database seeding
 │   ├── seed_data.py              # Seed script (25+ breaches)
 │   └── breaches_hybrid.json      # Sample data
@@ -100,8 +105,7 @@ backend/
 ├── run.py                        # App entry point
 ├── requirements.txt              # Python dependencies
 ├── pytest.ini                    # pytest configuration
-├── .env                          # Environment variables (gitignored)
-└── generate_newman_report.sh    # Automated Newman testing
+└── .env                          # Environment variables (gitignored)
 ```
 
 ---
@@ -113,29 +117,28 @@ backend/
 source ../venv/bin/activate
 pytest tests/ -v
 
-# Expected: 104 passed, 1 skipped, 14 deselected, 1 warning
+# Expected: 586 passed, 2 skipped, 14 deselected, 1 warning in ~5s
 ```
 
 ### **Test Breakdown**
-| Module | Tests | Coverage |
-|--------|-------|----------|
-| test_auth.py | 11 | Authentication & JWT |
-| test_breaches.py | 21 | Breach CRUD operations |
-| test_subdocuments.py | 17 | Sub-document arrays |
-| test_security.py | 40 | Security features |
-| test_analytics.py | ~10 | Aggregation pipelines |
-| test_performance.py | 14 | Integration tests (optional) |
+| Module | Tests | Focus |
+|--------|-------|-------|
+| test_auth.py | 11 | Authentication & JWT endpoints |
+| test_breaches.py | 21 | Breach CRUD route operations |
+| test_subdocuments.py | 31 | All 4 sub-document arrays |
+| test_security.py | 40 | NoSQL injection, XSS, lockout |
+| test_analytics.py | ~10 | Aggregation pipeline endpoints |
+| test_breach_service.py | ~50 | BreachService logic (mock-based) |
+| test_models.py | ~140 | Schema validators + utility functions |
+| test_services_integration.py | ~200 | All services via mongomock (no mocks) |
+| test_admin.py | ~25 | Admin routes & RBAC |
+| test_users.py | ~30 | User profile & management routes |
+| test_performance.py | 14 | Integration benchmarks (deselected) |
 
 ### **Generate Coverage Report**
 ```bash
-pytest tests/ --cov=app --cov-report=html --cov-report=json
+pytest tests/ --cov=app --cov-report=html --cov-report=term
 open htmlcov/index.html
-```
-
-### **Run Newman API Tests**
-```bash
-./generate_newman_report.sh
-# Generates: ../evidence/backend/newman-report.html
 ```
 
 ### **Run Specific Test Modules**
@@ -148,20 +151,20 @@ pytest tests/ -m integration              # Integration tests
 
 ---
 
-## 📡 API Endpoints (51 Total)
+## 📡 API Endpoints (63 Total)
 
 ### **Base URL**: `http://localhost:5001/api/v1`
 
-### **Authentication** (5 endpoints)
+### **Authentication** (8 endpoints)
 ```
+GET    /login                  # Login via HTTP Basic Auth (module requirement)
 POST   /auth/register          # Register new user
-POST   /auth/login             # Login with JWT
-POST   /auth/refresh           # Refresh access token
-POST   /auth/logout            # Logout (revoke token)
+POST   /auth/login             # Login with JSON body
+POST   /auth/logout            # Logout (blacklist token in MongoDB)
 GET    /auth/me                # Get current user profile
 ```
 
-### **Breaches** (22 endpoints)
+### **Breaches** (32 endpoints)
 ```
 GET    /breaches               # List breaches (paginated, filtered)
 POST   /breaches               # Create breach [Analyst/Admin]
@@ -195,7 +198,7 @@ GET    /analytics/alert-acknowledgement # Alert stats
 GET    /analytics/summary               # Dashboard summary
 ```
 
-### **Users** (7 endpoints)
+### **Users** (4 endpoints)
 ```
 GET    /users                  # List all users [Admin]
 GET    /users/me               # Current user profile
@@ -231,11 +234,11 @@ GET    /health/live            # Liveness check
 
 ### **JWT Token Flow**
 ```
-1. POST /auth/login → Returns access_token + refresh_token
-2. Use access_token in header: Authorization: Bearer <token>
-3. Access token expires in 1 hour
-4. POST /auth/refresh with refresh_token → Get new access_token
-5. POST /auth/logout → Revoke tokens (Redis blacklist)
+1. GET  /api/v1/login with Basic Auth header → Returns {"token": "...", "token_type": "JWT"}
+2. Use token in header: x-access-token: <token>
+3. Token expires in 1 hour
+4. POST /auth/logout → Token added to MongoDB blacklist collection
+5. No refresh tokens — re-login required after expiry
 ```
 
 ### **Role-Based Access Control**
@@ -291,73 +294,44 @@ Each breach contains 4 embedded arrays:
 
 ### **Environment Variables**
 ```bash
-# Database
-MONGO_URI=mongodb+srv://...                 # MongoDB connection
-MONGO_MAX_POOL_SIZE=50                      # Connection pool
-MONGO_MIN_POOL_SIZE=10
+# Database (local MongoDB only)
+MONGO_URI=mongodb://localhost:27017/breachlens
 
 # Security
-SECRET_KEY=your-secret-key                  # Flask secret
-JWT_SECRET_KEY=jwt-secret-key               # JWT signing
+SECRET_KEY=your-secret-key                  # Flask + JWT signing
 JWT_ACCESS_TOKEN_EXPIRES=3600               # 1 hour
-JWT_REFRESH_TOKEN_EXPIRES=2592000           # 30 days
 PASSWORD_RESET_SECRET=reset-secret
-
-# Redis (optional)
-REDIS_URL=redis://localhost:6379/0          # Token blacklist + caching
 
 # Security
 MAX_LOGIN_ATTEMPTS=5                        # Account lockout
 ACCOUNT_LOCKOUT_DURATION=900                # 15 minutes
 
-# Observability
-SENTRY_DSN=https://...                      # Error tracking
-PROMETHEUS_ENABLED=true                     # Metrics endpoint
-LOG_LEVEL=INFO                              # Logging level
-
 # Email (for password reset)
 EMAIL_ENABLED=false                         # Enable email
-EMAIL_BACKEND=console                       # console|smtp|sendgrid
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USERNAME=your-email
-SMTP_PASSWORD=your-password
+EMAIL_BACKEND=console                       # console for development
 
 # Application
-FLASK_ENV=development                       # development|production
+FLASK_ENV=development
 PORT=5001                                   # API port
 CORS_ORIGINS=http://localhost:4200          # Frontend URL
+LOG_LEVEL=INFO
 ```
 
 See `.env.example` for complete list.
 
 ---
 
-## 📊 Monitoring
+## 📊 Health Checks
 
-### **Health Checks**
 ```bash
 # Basic health
 curl http://localhost:5001/health
 
-# Readiness (DB + dependencies)
+# Readiness (DB)
 curl http://localhost:5001/health/ready
 
 # Liveness
 curl http://localhost:5001/health/live
-```
-
-### **Prometheus Metrics**
-```bash
-# Available at:
-http://localhost:5001/metrics
-
-# Metrics include:
-# - Request count/rate by endpoint
-# - Response times (percentiles)
-# - Error rates
-# - Active requests
-# - Application info
 ```
 
 ### **Structured Logging**
@@ -365,59 +339,41 @@ http://localhost:5001/metrics
 # Logs output to:
 logs/breachlens.log               # Application logs
 logs/audit.log                    # Audit trail (security events)
-
-# JSON format for CloudWatch/Datadog
-{"timestamp": "...", "level": "INFO", "message": "..."}
 ```
 
 ---
 
 ## 🛡️ Security Features
 
-- ✅ **JWT + Refresh Tokens** - 1-hour access tokens, 30-day refresh
-- ✅ **Token Blacklist** - Redis-based revocation
+- ✅ **JWT (raw PyJWT)** - 1-hour access tokens, x-access-token header
+- ✅ **Token Blacklist** - MongoDB-based revocation (blacklist collection)
 - ✅ **Account Lockout** - 5 failed attempts = 15 min lockout
 - ✅ **Password Reset** - Secure token-based flow
 - ✅ **BCrypt Hashing** - 12 salt rounds
 - ✅ **Input Validation** - All fields validated server-side
 - ✅ **NoSQL Injection Protection** - Query parameter sanitization
 - ✅ **XSS Protection** - HTML content sanitization
-- ✅ **Security Headers** - CSP, X-Frame-Options, HSTS, X-Content-Type-Options
+- ✅ **Security Headers** - CSP, X-Frame-Options, X-Content-Type-Options
 - ✅ **Rate Limiting** - 100 req/min on auth endpoints
 - ✅ **Audit Logging** - All auth events logged
 - ✅ **CORS** - Configured per environment
 
 ---
 
-## 🚀 Deployment
+## 🚀 Running Locally
 
-### **MongoDB Atlas**
+### **Local MongoDB**
 ```bash
-1. Create free tier cluster at mongodb.com/atlas
-2. Create database user
-3. Whitelist IP: 0.0.0.0/0
-4. Get connection string
-5. Set MONGO_URI in .env
-```
+# macOS (Homebrew)
+brew tap mongodb/brew
+brew install mongodb-community
+brew services start mongodb-community
 
-### **Heroku**
-```bash
-heroku create breachlens-api
-heroku addons:create mongolab:sandbox
-heroku addons:create redistogo:nano
-heroku config:set JWT_SECRET_KEY=$(openssl rand -hex 32)
-heroku config:set PASSWORD_RESET_SECRET=$(openssl rand -hex 32)
-git push heroku main
-```
+# Verify
+mongosh --eval "db.version()"
 
-### **Docker** (Optional)
-```dockerfile
-FROM python:3.11-slim
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-COPY . .
-CMD ["gunicorn", "-b", "0.0.0.0:5001", "run:app"]
+# Connection string (already set in .env.example)
+MONGO_URI=mongodb://localhost:27017/breachlens
 ```
 
 ---
@@ -426,11 +382,17 @@ CMD ["gunicorn", "-b", "0.0.0.0:5001", "run:app"]
 
 ### **MongoDB Connection Failed**
 ```bash
-# Check MONGO_URI format:
-mongodb+srv://username:password@cluster.mongodb.net/breachlens
+# Check mongod is running:
+brew services list | grep mongodb
+# or
+pgrep mongod
+
+# Check MONGO_URI in .env:
+cat .env | grep MONGO_URI
+# Should be: mongodb://localhost:27017/breachlens
 
 # Test connection:
-python -c "from pymongo import MongoClient; MongoClient('YOUR_URI').server_info()"
+python -c "from pymongo import MongoClient; MongoClient('mongodb://localhost:27017').server_info()"
 ```
 
 ### **Tests Failing**
@@ -445,27 +407,15 @@ pip install -r requirements.txt
 pytest tests/ -m "not integration"
 ```
 
-### **Redis Warnings**
-```bash
-# Redis is optional - graceful degradation if unavailable
-# Token blacklist and caching will be disabled
-
-# To fix (optional):
-brew install redis          # macOS
-redis-server                # Start Redis
-```
-
 ---
 
 ## 📚 Additional Resources
 
 - **API Reference**: [../docs/API_SPEC.md](../docs/API_SPEC.md)
 - **Testing Guide**: [tests/README.md](tests/README.md)
-- **Production Guide**: [../docs/IMPROVEMENTS.md](../docs/IMPROVEMENTS.md)
-- **Submission Checklist**: [SUBMISSION_READY.md](SUBMISSION_READY.md)
 
 ---
 
 
-**Status**: ✅ Production Ready | 104/104 tests passing
+**Status**: ✅ 586/586 tests passing | 88% code coverage
 **API Version**: v1.0.0

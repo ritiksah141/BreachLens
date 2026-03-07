@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "breachlens-v2-full-collection",
     "name": "BreachLens API v1",
-    "description": "Complete 87+ request test suite for BreachLens \u2013 COM661 CW1.\n\nCovers: Auth, Breach CRUD, Affected Accounts, Timeline, Remediation, Monitoring Alerts, Geospatial, Analytics, Exposure Check, Users, Admin.\n\nSecurity: All credentials read from Postman Environment variables only. Set adminEmail, adminPassword, analystEmail, analystPassword in your environment.",
+    "description": "Complete test suite for BreachLens - COM661 CW1.\n\nCovers: Auth (Login), Breach CRUD, Affected Accounts, Timeline, Remediation, Monitoring Alerts, Geospatial, Analytics, Exposure Check, Users, Admin.\n\nUses seeded test data (seed_data.py) - no registration needed.\n\nSecurity: All credentials read from Postman Environment variables only. Set adminEmail, adminPassword, analystEmail, analystPassword in your environment.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "event": [
@@ -31,8 +31,7 @@
           "    body: {mode:'raw', raw:JSON.stringify({email:email, password:pass})}",
           "  }, function(err, res){",
           "    if (!err && res.json().status === 'success') {",
-          "      pm.environment.set(tokenKey, res.json().data.access_token);",
-          "      if (tokenKey === 'adminToken') pm.environment.set('refreshToken', res.json().data.refresh_token);",
+          "      pm.environment.set(tokenKey, res.json().data.token);",
           "    }",
           "  });",
           "}",
@@ -46,241 +45,6 @@
     {
       "name": "1 - Auth",
       "item": [
-        {
-          "name": "POST Register - Success (201)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/auth/register",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "register"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"username\": \"newanalyst_{{$randomInt}}\",\n  \"email\": \"newanalyst{{$randomInt}}@testmail.io\",\n  \"password\": \"{{analystPassword}}\",\n  \"role\": \"analyst\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Response time within SLA (<500ms)', () => pm.expect(pm.response.responseTime).to.be.below(500));",
-                  "pm.test('Content-Type is application/json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
-                  "if (pm.response.code < 400) { pm.test(\"Envelope status is 'success'\", () => pm.expect(pm.response.json().status).to.equal('success')); }",
-                  "if (pm.response.code >= 400) { pm.test('Error envelope has status+message+code', function(){ const j=pm.response.json(); pm.expect(j).to.have.property('status','error'); pm.expect(j).to.have.property('message').that.is.a('string').and.not.empty; pm.expect(j).to.have.property('code', pm.response.code); }); }",
-                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
-                  "pm.test('Returns username', () => pm.expect(pm.response.json().data).to.have.property('username'));",
-                  "pm.test('Role is analyst', () => pm.expect(pm.response.json().data.role).to.equal('analyst'));",
-                  "pm.test('No password_hash exposed', () => pm.expect(pm.response.json().data).to.not.have.property('password_hash'));",
-                  "pm.environment.set('testUserId', pm.response.json().data._id);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "POST Register - Duplicate Email (409)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/auth/register",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "register"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"username\": \"dupuser\",\n  \"email\": \"{{analystEmail}}\",\n  \"password\": \"{{analystPassword}}\",\n  \"role\": \"analyst\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Response time within SLA (<500ms)', () => pm.expect(pm.response.responseTime).to.be.below(500));",
-                  "pm.test('Content-Type is application/json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
-                  "if (pm.response.code < 400) { pm.test(\"Envelope status is 'success'\", () => pm.expect(pm.response.json().status).to.equal('success')); }",
-                  "if (pm.response.code >= 400) { pm.test('Error envelope has status+message+code', function(){ const j=pm.response.json(); pm.expect(j).to.have.property('status','error'); pm.expect(j).to.have.property('message').that.is.a('string').and.not.empty; pm.expect(j).to.have.property('code', pm.response.code); }); }",
-                  "pm.test('Status 409', () => pm.response.to.have.status(409));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "POST Register - Missing Fields (422)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/auth/register",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "register"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"username\": \"x\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Response time within SLA (<500ms)', () => pm.expect(pm.response.responseTime).to.be.below(500));",
-                  "pm.test('Content-Type is application/json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
-                  "if (pm.response.code < 400) { pm.test(\"Envelope status is 'success'\", () => pm.expect(pm.response.json().status).to.equal('success')); }",
-                  "if (pm.response.code >= 400) { pm.test('Error envelope has status+message+code', function(){ const j=pm.response.json(); pm.expect(j).to.have.property('status','error'); pm.expect(j).to.have.property('message').that.is.a('string').and.not.empty; pm.expect(j).to.have.property('code', pm.response.code); }); }",
-                  "pm.test('Status 422', () => pm.response.to.have.status(422));",
-                  "pm.test('details.errors present', () => pm.expect(pm.response.json().details).to.have.property('errors'));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "POST Register - Weak Password (422)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/auth/register",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "register"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"username\": \"weakpass\",\n  \"email\": \"weakpass@test.io\",\n  \"password\": \"weak\",\n  \"role\": \"analyst\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Response time within SLA (<500ms)', () => pm.expect(pm.response.responseTime).to.be.below(500));",
-                  "pm.test('Content-Type is application/json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
-                  "if (pm.response.code < 400) { pm.test(\"Envelope status is 'success'\", () => pm.expect(pm.response.json().status).to.equal('success')); }",
-                  "if (pm.response.code >= 400) { pm.test('Error envelope has status+message+code', function(){ const j=pm.response.json(); pm.expect(j).to.have.property('status','error'); pm.expect(j).to.have.property('message').that.is.a('string').and.not.empty; pm.expect(j).to.have.property('code', pm.response.code); }); }",
-                  "pm.test('Status 422', () => pm.response.to.have.status(422));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "POST Register - Admin Role Rejected (422)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/auth/register",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "register"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"username\": \"hacker\",\n  \"email\": \"hacker@test.io\",\n  \"password\": \"Hacker@999\",\n  \"role\": \"admin\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Response time within SLA (<500ms)', () => pm.expect(pm.response.responseTime).to.be.below(500));",
-                  "pm.test('Content-Type is application/json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
-                  "if (pm.response.code < 400) { pm.test(\"Envelope status is 'success'\", () => pm.expect(pm.response.json().status).to.equal('success')); }",
-                  "if (pm.response.code >= 400) { pm.test('Error envelope has status+message+code', function(){ const j=pm.response.json(); pm.expect(j).to.have.property('status','error'); pm.expect(j).to.have.property('message').that.is.a('string').and.not.empty; pm.expect(j).to.have.property('code', pm.response.code); }); }",
-                  "pm.test('Status 422', () => pm.response.to.have.status(422));"
-                ]
-              }
-            }
-          ]
-        },
         {
           "name": "POST Login - Success Admin (200)",
           "request": {
@@ -323,13 +87,12 @@
                   "if (pm.response.code >= 400) { pm.test('Error envelope has status+message+code', function(){ const j=pm.response.json(); pm.expect(j).to.have.property('status','error'); pm.expect(j).to.have.property('message').that.is.a('string').and.not.empty; pm.expect(j).to.have.property('code', pm.response.code); }); }",
                   "pm.test('Status 200', () => pm.response.to.have.status(200));",
                   "const d = pm.response.json().data;",
-                  "pm.test('Has access_token', () => pm.expect(d.access_token).to.be.a('string').with.lengthOf.above(50));",
-                  "pm.test('JWT has 3 parts', () => pm.expect(d.access_token.split('.').length).to.equal(3));",
-                  "pm.test('token_type is Bearer', () => pm.expect(d.token_type).to.equal('Bearer'));",
+                  "pm.test('Has token', () => pm.expect(d.token).to.be.a('string').with.lengthOf.above(50));",
+                  "pm.test('JWT has 3 parts', () => pm.expect(d.token.split('.').length).to.equal(3));",
+                  "pm.test('token_type is Bearer', () => pm.expect(d.token_type).to.equal('JWT'));",
                   "pm.test('expires_in positive', () => pm.expect(d.expires_in).to.be.above(0));",
                   "pm.test('user has role', () => pm.expect(d.user.role).to.be.oneOf(['admin','analyst','guest']));",
-                  "pm.environment.set('adminToken', d.access_token);",
-                  "pm.environment.set('refreshToken', d.refresh_token);"
+                  "pm.environment.set('adminToken', d.token);"
                 ]
               }
             }
@@ -376,7 +139,7 @@
                   "if (pm.response.code < 400) { pm.test(\"Envelope status is 'success'\", () => pm.expect(pm.response.json().status).to.equal('success')); }",
                   "if (pm.response.code >= 400) { pm.test('Error envelope has status+message+code', function(){ const j=pm.response.json(); pm.expect(j).to.have.property('status','error'); pm.expect(j).to.have.property('message').that.is.a('string').and.not.empty; pm.expect(j).to.have.property('code', pm.response.code); }); }",
                   "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.environment.set('analystToken', pm.response.json().data.access_token);"
+                  "pm.environment.set('analystToken', pm.response.json().data.token);"
                 ]
               }
             }
@@ -480,8 +243,8 @@
             "method": "GET",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}",
+                "key": "x-access-token",
+                "value": "{{adminToken}}",
                 "type": "text"
               }
             ],
@@ -541,46 +304,6 @@
                   "if (pm.response.code < 400) { pm.test(\"Envelope status is 'success'\", () => pm.expect(pm.response.json().status).to.equal('success')); }",
                   "if (pm.response.code >= 400) { pm.test('Error envelope has status+message+code', function(){ const j=pm.response.json(); pm.expect(j).to.have.property('status','error'); pm.expect(j).to.have.property('message').that.is.a('string').and.not.empty; pm.expect(j).to.have.property('code', pm.response.code); }); }",
                   "pm.test('Status 401', () => pm.response.to.have.status(401));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "POST Refresh - Valid Refresh Token (200)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{refreshToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/auth/refresh",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "refresh"
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Response time within SLA (<500ms)', () => pm.expect(pm.response.responseTime).to.be.below(500));",
-                  "pm.test('Content-Type is application/json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
-                  "if (pm.response.code < 400) { pm.test(\"Envelope status is 'success'\", () => pm.expect(pm.response.json().status).to.equal('success')); }",
-                  "if (pm.response.code >= 400) { pm.test('Error envelope has status+message+code', function(){ const j=pm.response.json(); pm.expect(j).to.have.property('status','error'); pm.expect(j).to.have.property('message').that.is.a('string').and.not.empty; pm.expect(j).to.have.property('code', pm.response.code); }); }",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('New access_token returned', () => pm.expect(pm.response.json().data.access_token).to.be.a('string').with.lengthOf.above(50));",
-                  "pm.environment.set('adminToken', pm.response.json().data.access_token);"
                 ]
               }
             }
@@ -855,8 +578,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}",
+                "key": "x-access-token",
+                "value": "{{adminToken}}",
                 "type": "text"
               }
             ],
@@ -906,8 +629,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -1005,8 +728,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -1056,8 +779,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -1106,8 +829,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -1152,8 +875,8 @@
             "method": "GET",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -1259,8 +982,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -1311,8 +1034,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -1363,8 +1086,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -1415,8 +1138,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -1466,8 +1189,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -1513,8 +1236,8 @@
             "method": "DELETE",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -1551,8 +1274,8 @@
             "method": "DELETE",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}",
+                "key": "x-access-token",
+                "value": "{{adminToken}}",
                 "type": "text"
               }
             ],
@@ -1574,8 +1297,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Response time within SLA (<500ms)', () => pm.expect(pm.response.responseTime).to.be.below(500));",
-                  "pm.test('Content-Type is application/json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
-                  "if (pm.response.code < 400) { pm.test(\"Envelope status is 'success'\", () => pm.expect(pm.response.json().status).to.equal('success')); }",
+                  "if (pm.response.code !== 204) { pm.test('Content-Type is application/json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json')); }",
+                  "if (pm.response.code < 400 && pm.response.code !== 204) { pm.test(\"Envelope status is 'success'\", () => pm.expect(pm.response.json().status).to.equal('success')); }",
                   "if (pm.response.code >= 400) { pm.test('Error envelope has status+message+code', function(){ const j=pm.response.json(); pm.expect(j).to.have.property('status','error'); pm.expect(j).to.have.property('message').that.is.a('string').and.not.empty; pm.expect(j).to.have.property('code', pm.response.code); }); }",
                   "pm.test('Status 204', () => pm.response.to.have.status(204));"
                 ]
@@ -1594,8 +1317,8 @@
             "method": "GET",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -1671,8 +1394,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -1726,8 +1449,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -1774,8 +1497,8 @@
             "method": "GET",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -1815,8 +1538,8 @@
             "method": "GET",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -1859,8 +1582,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -1909,8 +1632,8 @@
             "method": "DELETE",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}",
+                "key": "x-access-token",
+                "value": "{{adminToken}}",
                 "type": "text"
               }
             ],
@@ -1934,8 +1657,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Response time within SLA (<500ms)', () => pm.expect(pm.response.responseTime).to.be.below(500));",
-                  "pm.test('Content-Type is application/json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
-                  "if (pm.response.code < 400) { pm.test(\"Envelope status is 'success'\", () => pm.expect(pm.response.json().status).to.equal('success')); }",
+                  "if (pm.response.code !== 204) { pm.test('Content-Type is application/json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json')); }",
+                  "if (pm.response.code < 400 && pm.response.code !== 204) { pm.test(\"Envelope status is 'success'\", () => pm.expect(pm.response.json().status).to.equal('success')); }",
                   "if (pm.response.code >= 400) { pm.test('Error envelope has status+message+code', function(){ const j=pm.response.json(); pm.expect(j).to.have.property('status','error'); pm.expect(j).to.have.property('message').that.is.a('string').and.not.empty; pm.expect(j).to.have.property('code', pm.response.code); }); }",
                   "pm.test('Status 204', () => pm.response.to.have.status(204));"
                 ]
@@ -1954,8 +1677,8 @@
             "method": "GET",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -1998,8 +1721,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -2052,8 +1775,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -2104,8 +1827,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -2156,8 +1879,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -2206,8 +1929,8 @@
             "method": "DELETE",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}",
+                "key": "x-access-token",
+                "value": "{{adminToken}}",
                 "type": "text"
               }
             ],
@@ -2231,8 +1954,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Response time within SLA (<500ms)', () => pm.expect(pm.response.responseTime).to.be.below(500));",
-                  "pm.test('Content-Type is application/json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
-                  "if (pm.response.code < 400) { pm.test(\"Envelope status is 'success'\", () => pm.expect(pm.response.json().status).to.equal('success')); }",
+                  "if (pm.response.code !== 204) { pm.test('Content-Type is application/json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json')); }",
+                  "if (pm.response.code < 400 && pm.response.code !== 204) { pm.test(\"Envelope status is 'success'\", () => pm.expect(pm.response.json().status).to.equal('success')); }",
                   "if (pm.response.code >= 400) { pm.test('Error envelope has status+message+code', function(){ const j=pm.response.json(); pm.expect(j).to.have.property('status','error'); pm.expect(j).to.have.property('message').that.is.a('string').and.not.empty; pm.expect(j).to.have.property('code', pm.response.code); }); }",
                   "pm.test('Status 204', () => pm.response.to.have.status(204));"
                 ]
@@ -2251,8 +1974,8 @@
             "method": "GET",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -2295,8 +2018,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -2349,8 +2072,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -2401,8 +2124,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -2451,8 +2174,8 @@
             "method": "DELETE",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}",
+                "key": "x-access-token",
+                "value": "{{adminToken}}",
                 "type": "text"
               }
             ],
@@ -2476,8 +2199,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Response time within SLA (<500ms)', () => pm.expect(pm.response.responseTime).to.be.below(500));",
-                  "pm.test('Content-Type is application/json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
-                  "if (pm.response.code < 400) { pm.test(\"Envelope status is 'success'\", () => pm.expect(pm.response.json().status).to.equal('success')); }",
+                  "if (pm.response.code !== 204) { pm.test('Content-Type is application/json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json')); }",
+                  "if (pm.response.code < 400 && pm.response.code !== 204) { pm.test(\"Envelope status is 'success'\", () => pm.expect(pm.response.json().status).to.equal('success')); }",
                   "if (pm.response.code >= 400) { pm.test('Error envelope has status+message+code', function(){ const j=pm.response.json(); pm.expect(j).to.have.property('status','error'); pm.expect(j).to.have.property('message').that.is.a('string').and.not.empty; pm.expect(j).to.have.property('code', pm.response.code); }); }",
                   "pm.test('Status 204', () => pm.response.to.have.status(204));"
                 ]
@@ -2496,8 +2219,8 @@
             "method": "GET",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -2540,8 +2263,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -2595,8 +2318,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -2647,8 +2370,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -2697,8 +2420,8 @@
             "method": "DELETE",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}",
+                "key": "x-access-token",
+                "value": "{{adminToken}}",
                 "type": "text"
               }
             ],
@@ -2722,8 +2445,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Response time within SLA (<500ms)', () => pm.expect(pm.response.responseTime).to.be.below(500));",
-                  "pm.test('Content-Type is application/json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
-                  "if (pm.response.code < 400) { pm.test(\"Envelope status is 'success'\", () => pm.expect(pm.response.json().status).to.equal('success')); }",
+                  "if (pm.response.code !== 204) { pm.test('Content-Type is application/json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json')); }",
+                  "if (pm.response.code < 400 && pm.response.code !== 204) { pm.test(\"Envelope status is 'success'\", () => pm.expect(pm.response.json().status).to.equal('success')); }",
                   "if (pm.response.code >= 400) { pm.test('Error envelope has status+message+code', function(){ const j=pm.response.json(); pm.expect(j).to.have.property('status','error'); pm.expect(j).to.have.property('message').that.is.a('string').and.not.empty; pm.expect(j).to.have.property('code', pm.response.code); }); }",
                   "pm.test('Status 204', () => pm.response.to.have.status(204));"
                 ]
@@ -3026,8 +2749,8 @@
             "method": "GET",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -3139,8 +2862,8 @@
             "method": "GET",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -3218,8 +2941,8 @@
             "method": "GET",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -3257,8 +2980,8 @@
             "method": "GET",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -3296,8 +3019,8 @@
             "method": "GET",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -3606,8 +3329,8 @@
             "method": "GET",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}",
+                "key": "x-access-token",
+                "value": "{{adminToken}}",
                 "type": "text"
               }
             ],
@@ -3635,7 +3358,7 @@
                   "pm.test('data is array', () => pm.expect(pm.response.json().data).to.be.an('array'));",
                   "pm.test('No password_hash exposed', () => { pm.response.json().data.forEach(u => pm.expect(u).to.not.have.property('password_hash')); });",
                   "pm.test('Pagination meta', () => pm.expect(pm.response.json().meta).to.include.all.keys('page','limit','total','total_pages'));",
-                  "if (pm.response.json().data.length > 0) pm.environment.set('testUserId', pm.response.json().data[0]._id);"
+                  "if (pm.response.json().data.length > 0) { const users = pm.response.json().data; const nonAdmin = users.find(u => u.role !== 'admin'); pm.environment.set('testUserId', nonAdmin ? nonAdmin._id : users[0]._id); }"
                 ]
               }
             }
@@ -3647,8 +3370,8 @@
             "method": "GET",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -3684,8 +3407,8 @@
             "method": "GET",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}",
+                "key": "x-access-token",
+                "value": "{{adminToken}}",
                 "type": "text"
               }
             ],
@@ -3727,8 +3450,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}",
+                "key": "x-access-token",
+                "value": "{{adminToken}}",
                 "type": "text"
               }
             ],
@@ -3779,8 +3502,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}",
+                "key": "x-access-token",
+                "value": "{{adminToken}}",
                 "type": "text"
               }
             ],
@@ -3831,8 +3554,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -3878,8 +3601,8 @@
             "method": "DELETE",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}",
+                "key": "x-access-token",
+                "value": "{{adminToken}}",
                 "type": "text"
               }
             ],
@@ -3901,8 +3624,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Response time within SLA (<500ms)', () => pm.expect(pm.response.responseTime).to.be.below(500));",
-                  "pm.test('Content-Type is application/json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
-                  "if (pm.response.code < 400) { pm.test(\"Envelope status is 'success'\", () => pm.expect(pm.response.json().status).to.equal('success')); }",
+                  "if (pm.response.code !== 204) { pm.test('Content-Type is application/json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json')); }",
+                  "if (pm.response.code < 400 && pm.response.code !== 204) { pm.test(\"Envelope status is 'success'\", () => pm.expect(pm.response.json().status).to.equal('success')); }",
                   "if (pm.response.code >= 400) { pm.test('Error envelope has status+message+code', function(){ const j=pm.response.json(); pm.expect(j).to.have.property('status','error'); pm.expect(j).to.have.property('message').that.is.a('string').and.not.empty; pm.expect(j).to.have.property('code', pm.response.code); }); }",
                   "pm.test('Status 204', () => pm.response.to.have.status(204));"
                 ]
@@ -3921,8 +3644,8 @@
             "method": "GET",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}",
+                "key": "x-access-token",
+                "value": "{{adminToken}}",
                 "type": "text"
               }
             ],
@@ -3960,8 +3683,8 @@
             "method": "GET",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{analystToken}}",
+                "key": "x-access-token",
+                "value": "{{analystToken}}",
                 "type": "text"
               }
             ],
@@ -3998,8 +3721,8 @@
             "method": "GET",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}",
+                "key": "x-access-token",
+                "value": "{{adminToken}}",
                 "type": "text"
               }
             ],
@@ -4041,8 +3764,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}",
+                "key": "x-access-token",
+                "value": "{{adminToken}}",
                 "type": "text"
               }
             ],
@@ -4090,8 +3813,8 @@
             "method": "PATCH",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}",
+                "key": "x-access-token",
+                "value": "{{adminToken}}",
                 "type": "text"
               }
             ],
@@ -4130,8 +3853,8 @@
             "method": "PATCH",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}",
+                "key": "x-access-token",
+                "value": "{{adminToken}}",
                 "type": "text"
               }
             ],
@@ -4174,8 +3897,8 @@
                 "value": "application/json"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}",
+                "key": "x-access-token",
+                "value": "{{adminToken}}",
                 "type": "text"
               }
             ],

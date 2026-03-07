@@ -140,7 +140,7 @@ def list_all_users():
 @audit_log("user_activated")
 def activate_user(user_id: str):
     """Activate a user account (set is_active=True)."""
-    updated = user_service.update_user(user_id, {"is_active": True})
+    updated = user_service.activate_user(user_id)
     if not updated:
         return error_response("User not found.", 404)
 
@@ -192,7 +192,9 @@ def bulk_delete_breaches():
     data: dict = request.get_json(silent=True) or {}
     breach_ids = data.get("ids", [])
     if not isinstance(breach_ids, list) or not breach_ids:
-        return error_response("'ids' must be a non-empty list of breach ID strings.", 422)
+        return error_response("'ids' must be a non-empty list of breach ID strings.", 400)
+    if len(breach_ids) > 100:
+        return error_response("Maximum 100 IDs per request.", 422)
     deleted_count, invalid_ids = breach_service.bulk_delete(breach_ids)
 
     g.audit_details = {
@@ -202,7 +204,9 @@ def bulk_delete_breaches():
     }
 
     return success_response({
-        "deleted": deleted_count,
-        "invalid_ids": invalid_ids,
         "requested": len(breach_ids),
+        "deleted": deleted_count,
+        "failed": len(breach_ids) - deleted_count,
+        "partial_failure": deleted_count < len(breach_ids),
+        "invalid_ids": invalid_ids,
     })

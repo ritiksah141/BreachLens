@@ -330,7 +330,7 @@ def create_users():
         {
             "email": "newuser@example.com",
             "username": "newuser",
-            "password": "Password@123",
+            "password": "Password@123",  # pragma: allowlist secret
             "role": "analyst"
         }
     ]
@@ -354,11 +354,11 @@ python seed/seed_data.py --reset
 pytest tests/test_performance.py -v -m ""
 ```
 
-### **Newman API Tests**
+### **Postman API Tests**
 ```bash
 # Require seeded database
 python seed/seed_data.py --reset
-./generate_newman_report.sh
+# Then run Collection Runner in Postman Desktop App
 ```
 
 ---

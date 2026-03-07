@@ -97,9 +97,9 @@ BreachLens API Tests (Collection)
 │   ├── POST Login – Success (200)
 │   ├── POST Login – Wrong Password (401)
 │   ├── POST Login – Unknown Email (401)
+│   ├── GET Login – Basic Auth (200)
 │   ├── GET Me – Authenticated (200)
 │   ├── GET Me – No Token (401)
-│   ├── POST Refresh – Valid Refresh Token (200)
 │   └── POST Logout – Authenticated (204)
 │
 ├── 2️⃣ Breaches – CRUD
@@ -233,7 +233,7 @@ BreachLens API Tests (Collection)
 
 ### 4.1 Collection-Level Pre-Request Script (Auto JWT Injection)
 
-This script runs **before every request** in the collection that has `{{adminToken}}` or `{{analystToken}}` in its Authorization header. It checks token presence and fetches a new one if absent.
+This script runs **before every request** in the collection that has `{{adminToken}}` or `{{analystToken}}` in its `x-access-token` header. It checks token presence and fetches a new one if absent.
 
 ```javascript
 // Collection-level Pre-request Script
@@ -275,8 +275,8 @@ function ensureToken(role, emailKey, passwordKey, tokenKey, callback) {
             return;
         }
         const json = res.json();
-        if (json.status === "success" && json.data.access_token) {
-            pm.environment.set(tokenKey, json.data.access_token);
+        if (json.status === "success" && json.data.token) {
+            pm.environment.set(tokenKey, json.data.token);
             console.log(`[BreachLens QA] ${role} token refreshed.`);
         } else {
             console.error(`[BreachLens QA] Login failed for ${role}:`, json.message);
@@ -352,20 +352,20 @@ if (pm.response.code >= 400) {
 ```javascript
 pm.test("Status code is 200", () => pm.response.to.have.status(200));
 
-pm.test("Response contains access_token", function () {
+pm.test("Response contains token", function () {
     const json = pm.response.json();
-    pm.expect(json.data).to.have.property("access_token");
-    pm.expect(json.data.access_token).to.be.a("string").and.to.have.lengthOf.above(50);
+    pm.expect(json.data).to.have.property("token");
+    pm.expect(json.data.token).to.be.a("string").and.to.have.lengthOf.above(50);
 });
 
-pm.test("access_token is a valid JWT (3 parts)", function () {
-    const token = pm.response.json().data.access_token;
+pm.test("token is a valid JWT (3 parts)", function () {
+    const token = pm.response.json().data.token;
     const parts = token.split(".");
     pm.expect(parts).to.have.lengthOf(3);
 });
 
-pm.test("Response includes token_type Bearer", function () {
-    pm.expect(pm.response.json().data.token_type).to.equal("Bearer");
+pm.test("Response includes token_type JWT", function () {
+    pm.expect(pm.response.json().data.token_type).to.equal("JWT");
 });
 
 pm.test("Response includes expires_in integer", function () {
@@ -379,7 +379,7 @@ pm.test("Response includes user object with role", function () {
 });
 
 // Save token
-pm.environment.set("adminToken", pm.response.json().data.access_token);
+pm.environment.set("adminToken", pm.response.json().data.token);
 ```
 
 ### 5.3 Breaches – GET `/breaches` (List)
@@ -709,14 +709,14 @@ def admin_token(client):
     client.post("/api/v1/auth/register", json={
         "username": "testadmin",
         "email": "admin@test.com",
-        "password": "Admin@Test99",
+        "password": "Admin@Test99",  # pragma: allowlist secret
         "role": "admin"
     })
     response = client.post("/api/v1/auth/login", json={
         "email": "admin@test.com",
-        "password": "Admin@Test99"
+        "password": "Admin@Test99"  # pragma: allowlist secret
     })
-    return response.json["data"]["access_token"]
+    return response.json["data"]["token"]
 
 @pytest.fixture
 def analyst_token(client):
@@ -725,14 +725,14 @@ def analyst_token(client):
     client.post("/api/v1/auth/register", json={
         "username": "testanalyst",
         "email": "analyst@test.com",
-        "password": "Analyst@Test99",
+        "password": "Analyst@Test99",  # pragma: allowlist secret
         "role": "analyst"
     })
     response = client.post("/api/v1/auth/login", json={
         "email": "analyst@test.com",
-        "password": "Analyst@Test99"
+        "password": "Analyst@Test99"  # pragma: allowlist secret
     })
-    return response.json["data"]["access_token"]
+    return response.json["data"]["token"]
 
 @pytest.fixture
 def sample_breach():
@@ -826,7 +826,7 @@ class TestBreachService:
         create_response = client.post(
             "/api/v1/breaches",
             json=sample_breach,
-            headers={"Authorization": f"Bearer {admin_token}"}
+            headers={"x-access-token": admin_token},
         )
         assert create_response.status_code == 201
         breach_id = create_response.json["data"]["_id"]
@@ -854,7 +854,7 @@ class TestBreachService:
         response = client.post(
             "/api/v1/breaches",
             json=sample_breach,
-            headers={"Authorization": f"Bearer {admin_token}"}
+            headers={"x-access-token": admin_token},
         )
         assert response.status_code == 422
         assert "severity" in response.json.get("details", {})
@@ -864,13 +864,13 @@ class TestBreachService:
         create_response = client.post(
             "/api/v1/breaches",
             json=sample_breach,
-            headers={"Authorization": f"Bearer {admin_token}"}
+            headers={"x-access-token": admin_token},
         )
         breach_id = create_response.json["data"]["_id"]
         # Use analyst token (lower privilege)
         analyst_response = client.delete(
             f"/api/v1/breaches/{breach_id}",
-            headers={"Authorization": f"Bearer {analyst_token}"}
+            headers={"x-access-token": analyst_token},
         )
         assert analyst_response.status_code == 403
         # This confirms RBAC is enforced at route level
@@ -1178,19 +1178,19 @@ describe('AuthService', () => {
   });
 
   it('should return true for isAuthenticated() when valid token stored', () => {
-    localStorage.setItem('access_token', mockToken);
+    localStorage.setItem('token', mockToken);
     expect(service.isAuthenticated()).toBeTrue();
   });
 
   it('should extract role from JWT payload', () => {
-    localStorage.setItem('access_token', mockToken);
+    localStorage.setItem('token', mockToken);
     expect(service.getCurrentUserRole()).toBe('analyst');
   });
 
   it('should clear localStorage on logout()', () => {
-    localStorage.setItem('access_token', mockToken);
+    localStorage.setItem('token', mockToken);
     service.logout();
-    expect(localStorage.getItem('access_token')).toBeNull();
+    expect(localStorage.getItem('token')).toBeNull();
   });
 
   it('should call POST /auth/login and store token', () => {
@@ -1199,7 +1199,7 @@ describe('AuthService', () => {
     expect(req.request.method).toBe('POST');
     req.flush({
       status: 'success',
-      data: { access_token: mockToken, token_type: 'Bearer', expires_in: 3600 }
+      data: { token: mockToken, token_type: 'JWT', expires_in: 3600 }
     });
     expect(service.getToken()).toBe(mockToken);
   });
@@ -1323,19 +1323,19 @@ describe('AuthInterceptor', () => {
 
   afterEach(() => httpMock.verify());
 
-  it('should attach Authorization header when token is present', () => {
+  it('should attach x-access-token header when token is present', () => {
     mockAuthService.getToken.and.returnValue('mock-jwt-token');
     httpClient.get('/api/v1/breaches').subscribe();
     const req = httpMock.expectOne('/api/v1/breaches');
-    expect(req.request.headers.get('Authorization')).toBe('Bearer mock-jwt-token');
+    expect(req.request.headers.get('x-access-token')).toBe('mock-jwt-token');
     req.flush({});
   });
 
-  it('should NOT attach Authorization header when no token', () => {
+  it('should NOT attach x-access-token header when no token', () => {
     mockAuthService.getToken.and.returnValue(null);
     httpClient.get('/api/v1/breaches').subscribe();
     const req = httpMock.expectOne('/api/v1/breaches');
-    expect(req.request.headers.has('Authorization')).toBeFalse();
+    expect(req.request.headers.has('x-access-token')).toBeFalse();
     req.flush({});
   });
 });
@@ -1410,9 +1410,9 @@ declare global {
 }
 
 Cypress.Commands.add('loginAs', (role: 'admin' | 'analyst' | 'guest') => {
-  const credentials = {
-    admin:   { email: 'admin@breachlens.test',   password: 'Admin@Secure99' },
-    analyst: { email: 'analyst@breachlens.test', password: 'Analyst@Secure88' },
+  const credentials = {  // pragma: allowlist secret
+    admin:   { email: 'admin@breachlens.test',   password: 'Admin@Secure99' },  // pragma: allowlist secret
+    analyst: { email: 'analyst@breachlens.test', password: 'Analyst@Secure88' },  // pragma: allowlist secret
     guest:   { email: '',                         password: '' }
   };
 
@@ -1420,12 +1420,12 @@ Cypress.Commands.add('loginAs', (role: 'admin' | 'analyst' | 'guest') => {
 
   cy.request('POST', `${Cypress.env('apiUrl')}/auth/login`, credentials[role])
     .then(res => {
-      window.localStorage.setItem('access_token', res.body.data.access_token);
+      window.localStorage.setItem('token', res.body.data.token);
     });
 });
 
 Cypress.Commands.add('clearAuthState', () => {
-  window.localStorage.removeItem('access_token');
+  window.localStorage.removeItem('token');
 });
 ```
 

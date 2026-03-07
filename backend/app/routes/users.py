@@ -2,14 +2,19 @@
 users.py — User Management Blueprint for BreachLens.
 Prefix: /api/v1/users
 """
+import re
+
+import bcrypt
 from flask import Blueprint, request, g
 from app.middleware.auth_middleware import require_auth, require_role
 from app.services.user_service import UserService
 from app.utils.response import success_response, error_response
-from app.utils.validators import ALLOWED_ROLES
+from app.utils.validators import ALLOWED_ROLES, is_valid_email
 
 users_bp = Blueprint("users", __name__, url_prefix="/api/v1/users")
 user_service = UserService()
+
+_PASSWORD_RE = re.compile(r"^(?=.*[A-Z])(?=.*\d).{8,}$")
 
 
 # --------------------------------------------------------------------------- #
@@ -64,6 +69,24 @@ def update_user(user_id: str):
             return error_response("'username' must be 3–30 characters.", 422)
         allowed["username"] = data["username"]
 
+    if "email" in data:
+        if not is_valid_email(data["email"]):
+            return error_response("A valid email address is required.", 422)
+        allowed["email"] = data["email"].lower()
+
+    if "password" in data:
+        if g.current_user_id != user_id:
+            return error_response("You can only change your own password.", 403)
+        if not _PASSWORD_RE.match(data["password"]):
+            return error_response(
+                "Password must be at least 8 characters and include one uppercase letter and one digit.",
+                422,
+            )
+        password_hash = bcrypt.hashpw(
+            data["password"].encode("utf-8"), bcrypt.gensalt(rounds=12)
+        ).decode("utf-8")
+        allowed["password_hash"] = password_hash
+
     if "role" in data:
         if current_role != "admin":
             return error_response("Only admins can change user roles.", 403)
@@ -79,7 +102,10 @@ def update_user(user_id: str):
     if not allowed:
         return error_response("No valid fields to update.", 400)
 
-    updated = user_service.update_user(user_id, allowed)
+    try:
+        updated = user_service.update_user(user_id, allowed)
+    except ValueError as exc:
+        return error_response(str(exc), 409)
     if not updated:
         return error_response("User not found.", 404)
     return success_response(updated)

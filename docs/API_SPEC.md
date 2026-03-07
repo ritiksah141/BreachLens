@@ -7,7 +7,7 @@
 ---
 
 > **Design Principles**
-> All endpoints follow strict REST conventions: noun-based URIs, correct HTTP verbs, appropriate status codes, versioned under `/api/v1/`, and a uniform JSON response envelope. Authentication uses Bearer JWT tokens. Role hierarchy: `admin > analyst > guest (unauthenticated)`.
+> All endpoints follow strict REST conventions: noun-based URIs, correct HTTP verbs, appropriate status codes, versioned under `/api/v1/`, and a uniform JSON response envelope. Authentication uses JWT tokens sent via the `x-access-token` header (raw PyJWT). Login supports HTTP Basic Authentication (`GET /api/v1/login`). Role hierarchy: `admin > analyst > guest (unauthenticated)`.
 
 ---
 
@@ -33,11 +33,42 @@
 
 | # | Method | Endpoint | Description | Auth Required | Role Required | Request Body | Success Code | Error Codes |
 |---|--------|----------|-------------|:---:|:---:|---|:---:|---|
+| 1.0 | `GET` | `/login` | Authenticate via HTTP Basic Auth and receive JWT | ❌ (Basic Auth) | None | None (credentials in `Authorization: Basic` header) | `200` | `400`, `401` |
 | 1.1 | `POST` | `/auth/register` | Register a new user account | ❌ | None | `{username, email, password, role?}` | `201` | `400`, `409`, `422` |
-| 1.2 | `POST` | `/auth/login` | Authenticate and receive JWT access token | ❌ | None | `{email, password}` | `200` | `400`, `401`, `422` |
-| 1.3 | `POST` | `/auth/refresh` | Exchange refresh token for new access token | ✅ (Refresh token) | Any authenticated | None | `200` | `401` |
-| 1.4 | `POST` | `/auth/logout` | Invalidate the current session (token blacklist) | ✅ | Any authenticated | None | `204` | `401` |
-| 1.5 | `GET` | `/auth/me` | Return the current authenticated user's profile | ✅ | Any authenticated | None | `200` | `401` |
+| 1.2 | `POST` | `/auth/login` | Authenticate via JSON body and receive JWT | ❌ | None | `{email/username, password}` | `200` | `400`, `401`, `422` |
+| 1.3 | `POST` | `/auth/logout` | Invalidate the current session (token blacklist) | ✅ | Any authenticated | None | `204` | `401` |
+| 1.4 | `GET` | `/auth/me` | Return the current authenticated user's profile | ✅ | Any authenticated | None | `200` | `401` |
+
+### Endpoint Detail: GET `/login` (Module-Required Basic Auth)
+
+> This is the **module-required** login endpoint. Credentials are sent via the `Authorization: Basic base64(username:password)` header.
+
+**Request Headers:**
+```
+Authorization: Basic base64(username:password)
+```
+
+**Request Body:** None
+
+**Success Response `200`:**
+```json
+{
+  "status": "success",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIs...",
+    "token_type": "JWT",
+    "expires_in": 3600,
+    "user": {
+      "_id": "64ab1234...",
+      "username": "priya_analyst",
+      "email": "priya@example.com",
+      "role": "analyst"
+    }
+  }
+}
+```
+
+> The returned `token` must be sent in subsequent requests via the `x-access-token` header.
 
 ### Endpoint Detail: POST `/auth/register`
 
@@ -46,7 +77,7 @@
 {
   "username": "string (required, 3–30 chars, alphanumeric + underscore)",
   "email": "string (required, valid email format)",
-  "password": "string (required, min 8 chars, must contain uppercase + digit)",
+  "password": "string (required, min 8 chars, must contain uppercase + digit)",  // pragma: allowlist secret
   "role": "string (optional, default: 'guest', enum: guest | analyst)"
 }
 ```
@@ -71,8 +102,8 @@
 **Request Body:**
 ```json
 {
-  "email": "string (required)",
-  "password": "string (required)"
+  "email": "string (required, or use 'username' instead)",
+  "password": "string (required)"  // pragma: allowlist secret
 }
 ```
 
@@ -81,9 +112,8 @@
 {
   "status": "success",
   "data": {
-    "access_token": "eyJhbGciOiJIUzI1NiIs...",
-    "refresh_token": "eyJhbGciOiJIUzI1NiIs...<long-lived>",
-    "token_type": "Bearer",
+    "token": "eyJhbGciOiJIUzI1NiIs...",
+    "token_type": "JWT",
     "expires_in": 3600,
     "user": {
       "_id": "64ab1234...",
@@ -93,59 +123,25 @@
   }
 }
 ```
-> Both tokens are returned on login. The `access_token` expires in **3600 seconds (1 hour)**. The `refresh_token` expires in **2592000 seconds (30 days)**.
-
-### Endpoint Detail: POST `/auth/refresh`
-
-> The refresh token is sent as a standard `Authorization: Bearer <refresh_token>` header — not in the request body. The endpoint implements **refresh token rotation**: both a new `access_token` and a new `refresh_token` are issued, and the old refresh token is immediately invalidated (marked as used in the refresh token table or added to a blacklist). Reused tokens are rejected with `401 Unauthorized`.
-
-**Request Headers:**
-```
-Authorization: Bearer <refresh_token>
-```
-
-**Request Body:** None
-
-**Success Response `200`:**
-```json
-{
-  "status": "success",
-  "data": {
-    "access_token": "eyJhbGciOiJIUzI1NiIs...<new>",
-    "refresh_token": "eyJhbGciOiJIUzI1NiIs...<new_rotated>",
-    "token_type": "Bearer",
-    "expires_in": 3600
-  }
-}
-```
-
-> **Both** the access token and refresh token are rotated. The old refresh token is invalidated and must not be reused. Clients must store the new refresh token for subsequent refresh requests.
-
-**Error Responses:**
-| Code | Cause |
-|------|-------|
-| `401` | Missing, expired, or invalid refresh token; or access token supplied instead of refresh token |
+> The token expires in **3600 seconds (1 hour)**. Send it in subsequent requests via the `x-access-token` header.
 
 ### Endpoint Detail: POST `/auth/logout`
 
 **Request Headers:**
 ```
-Authorization: Bearer <access_token>
+x-access-token: <JWT token>
 ```
 
 **Request Body:** None
 
-**Success Response `204`:** Empty body. The access token is added to the server-side blacklist and immediately invalidated.
-
-**Blacklist Persistence Strategy:**
-The server-side blacklist must be stored in a durable, distributed store (Redis recommended) to ensure blacklisted tokens persist across restarts and work correctly in multi-instance deployments. Implementation:
-- Store token identifiers (hashed JTI or signature hash) not raw tokens
-- Use Redis keys with TTL equal to the remaining access token lifetime (e.g., `blacklist:{token_hash}` with TTL matching token expiry)
-- For database implementations, store token hashes with indexed lookup and expiry column
-- Ensure TTL/cleanup matches token expiry to prevent unbounded growth
-- In-memory stores are acceptable only for single-instance development environments
+**Success Response `204`:** Empty body. The **full token** is stored in the MongoDB `blacklist` collection and immediately invalidated. The `@jwt_required` decorator checks for blacklisted tokens via `find_one({"token": token})` on every protected request.
 
 ### Endpoint Detail: GET `/auth/me`
+
+**Request Headers:**
+```
+x-access-token: <JWT token>
+```
 
 **Success Response `200`:**
 ```json
@@ -721,9 +717,9 @@ This endpoint validates all IDs first, then deletes valid ones sequentially. If 
 ```json
 {
   "ids": [
-    "64ab1234cdef567890abcdef",
-    "64ab5678cdef567890abcdef",
-    "64ab9012cdef567890abcdef"
+    "64ab1234cdef567890abcdef",  // pragma: allowlist secret
+    "64ab5678cdef567890abcdef",  // pragma: allowlist secret
+    "64ab9012cdef567890abcdef"   // pragma: allowlist secret
   ]
 }
 ```
@@ -829,7 +825,7 @@ This endpoint validates all IDs first, then deletes valid ones sequentially. If 
 
 ### Rate Limiting
 
-BreachLens applies request rate limiting via **Flask-Limiter** with Redis storage (required for production multi-instance deployments). Limits are enforced **per IP address and per user ID** (for authenticated requests).
+BreachLens applies request rate limiting via **Flask-Limiter** with in-memory storage. Limits are enforced **per IP address and per user ID** (for authenticated requests).
 
 #### Rate Limit Table
 
@@ -844,13 +840,6 @@ BreachLens applies request rate limiting via **Flask-Limiter** with Redis storag
 | `DELETE /admin/breaches/bulk` | N/A | 5/hour | Admin bulk delete |
 | **Default (all other endpoints)** | 200/day, 50/hour | N/A | Global fallback |
 
-#### Production Configuration
-
-**Storage Backend:**
-- ❌ In-memory storage (development only, not suitable for production)
-- ✅ Redis storage (required for multi-instance deployments)
-- Configure Flask-Limiter with Redis connection string: `RATELIMIT_STORAGE_URL=redis://localhost:6379`
-
 #### Security Mitigations
 
 | Mitigation | Implementation |
@@ -858,8 +847,6 @@ BreachLens applies request rate limiting via **Flask-Limiter** with Redis storag
 | **Exponential Backoff** | After 3 failed `POST /auth/login` attempts, enforce 2^n second delays (2s, 4s, 8s, ...) |
 | **CAPTCHA** | Require CAPTCHA after 5 failed login attempts from same IP |
 | **Account Lockout** | Lock account after 5 failed attempts (15-minute lockout, already implemented) |
-| **Distributed Rate Limiting** | Use Redis shared across all API instances to prevent per-instance bypass |
-| **IP Whitelist** | Allow admin IPs to bypass rate limits (configure `RATELIMIT_WHITELIST` env var) |
 
 **Response when limit exceeded — `429 Too Many Requests`:**
 ```json
@@ -927,11 +914,11 @@ Every `422` response includes a `details` object with field-level error messages
 
 | # | Method | Endpoint | Auth | Role |
 |---|--------|----------|:----:|------|
+| 1.0 | GET | `/login` | Basic Auth | — |
 | 1.1 | POST | `/auth/register` | ❌ | — |
 | 1.2 | POST | `/auth/login` | ❌ | — |
-| 1.3 | POST | `/auth/refresh` | ✅ | Any |
-| 1.4 | POST | `/auth/logout` | ✅ | Any |
-| 1.5 | GET | `/auth/me` | ✅ | Any |
+| 1.3 | POST | `/auth/logout` | ✅ | Any |
+| 1.4 | GET | `/auth/me` | ✅ | Any |
 | 2.1 | GET | `/breaches` | ❌ | — |
 | 2.2 | GET | `/breaches/{id}` | ❌ | — |
 | 2.3 | POST | `/breaches` | ✅ | analyst, admin |
@@ -982,7 +969,7 @@ Every `422` response includes a `details` object with field-level error messages
 | 11.4 | PATCH | `/admin/users/{id}/deactivate` | ✅ | admin |
 | 11.5 | DELETE | `/admin/breaches/bulk` | ✅ | admin |
 
-**Total Endpoints: 51**
+**Total Endpoints: 63**
 
 ---
 

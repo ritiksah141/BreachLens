@@ -10,7 +10,7 @@
 ## 📚 Documentation Files
 
 ### **1. PRD.md** (Product Requirements Document)
-**Lines**: 694 | **Status**: ✅ Complete
+**Lines**: 478 | **Status**: ✅ Complete
 
 **Contents:**
 - Project vision and objectives
@@ -44,7 +44,7 @@
 
 **Contents:**
 - Complete REST API reference
-- 51 endpoints across 6 blueprints
+- 63 endpoints across 6 blueprints
 - Request/response schemas for every endpoint
 - Authentication flow documentation
 - JWT token lifecycle
@@ -64,10 +64,10 @@
 - Academic reviewers assessing implementation
 
 **Key Sections:**
-- Authentication Endpoints (5)
-- Breach Endpoints (22)
+- Authentication Endpoints (8)
+- Breach Endpoints (32)
 - Analytics Endpoints (10)
-- User Endpoints (7)
+- User Endpoints (4)
 - Admin Endpoints (6)
 - Health Endpoints (3)
 
@@ -168,8 +168,8 @@ Create a new breach record.
 
 ---
 
-### **5. IMPROVEMENTS.md** (Production Roadmap)
-**Lines**: 2107 | **Status**: ✅ All features implemented
+### **5. IMPROVEMENTS.md** (Future Roadmap)
+**Lines**: 2107 | **Status**: ✅ Core features implemented
 
 **Contents:**
 - Production-ready feature catalog
@@ -191,7 +191,7 @@ Create a new breach record.
 
 **Feature Categories:**
 1. ✅ **Security** (11/11 implemented)
-   - JWT + Refresh tokens
+   - JWT (raw PyJWT, `x-access-token` header, MongoDB blacklist)
    - 3-tier RBAC
    - Account lockout
    - Password reset
@@ -209,13 +209,10 @@ Create a new breach record.
    - Pagination
    - Async operations
 
-3. ✅ **Observability** (6/6 implemented)
-   - Sentry error tracking
-   - Prometheus metrics
-   - Structured JSON logging
+3. ✅ **Observability** (3/3 implemented)
    - Health checks (3 endpoints)
    - Request logging middleware
-   - Performance monitoring
+   - Structured logging
 
 4. ✅ **MongoDB Advanced** (7/7 implemented)
    - 8 aggregation pipelines
@@ -263,7 +260,7 @@ Create a new breach record.
 | **Total Lines** | 6,000+ |
 | **Diagrams** | 12+ (Mermaid, ASCII) |
 | **Code Examples** | 200+ |
-| **API Endpoints Documented** | 51 |
+| **API Endpoints Documented** | 63 |
 | **Test Cases Documented** | 119 (104 passing + 1 skipped + 14 deselected) |
 | **Completion Status** | 100% |
 
@@ -309,7 +306,7 @@ Create a new breach record.
 ### **Common Questions**
 
 **Q: What endpoints are available?**
-A: See [API_SPEC.md](API_SPEC.md) - 51 endpoints documented
+A: See [API_SPEC.md](API_SPEC.md) - 63 endpoints documented
 
 **Q: How do I run tests?**
 A: See [QA_STRATEGY.md](QA_STRATEGY.md) Section 3
@@ -333,8 +330,9 @@ A: See [SUBMISSION_PRIORITY.md](SUBMISSION_PRIORITY.md) - 95% ready (just Newman
 ### **Version History**
 - **v1.0** (15 Feb 2026) - Initial documentation created
 - **v1.1** (20 Feb 2026) - Added QA_STRATEGY.md, IMPROVEMENTS.md
-- **v1.2** (25 Feb 2026) - Updated API_SPEC.md with all 51 endpoints
+- **v1.2** (25 Feb 2026) - Updated API_SPEC.md with all endpoints
 - **v1.3** (27 Feb 2026) - Added SUBMISSION_PRIORITY.md, test fixes documented
+- **v1.4** (7 Mar 2026) - Corrected endpoint count to 63 (was 51)
 
 ### **Maintenance**
 - All documentation is version-controlled in Git

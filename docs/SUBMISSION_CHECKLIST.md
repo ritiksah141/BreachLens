@@ -9,11 +9,11 @@
 
 ### **1. Code & Implementation** ✅ COMPLETE
 
-- [x] All 51 API endpoints implemented
+- [x] All 63 API endpoints implemented
 - [x] 4 sub-document arrays (affected_accounts, timeline, remediation, monitoring_alerts)
 - [x] 8 MongoDB aggregation pipelines
 - [x] 7 database indexes (including 2dsphere geospatial)
-- [x] JWT authentication + refresh tokens
+- [x] JWT authentication (raw PyJWT, `x-access-token` header, MongoDB blacklist)
 - [x] 3-tier RBAC (Admin/Analyst/Guest)
 - [x] Input validation on all endpoints
 - [x] Security features (NoSQL injection protection, XSS sanitization, security headers)
@@ -28,19 +28,26 @@
 
 ### **2. Testing Evidence** 🔄 ALMOST COMPLETE
 
-- [x] **Unit Tests**: 104 tests passing (100% pass rate)
-- [x] **Coverage Report**: 48% overall (70%+ on critical modules)
-  - HTML report: `evidence/backend/pytest-coverage-report/index.html`
+- [x] **Unit Tests**: 586 tests passing (100% pass rate)
+- [x] **Coverage Report**: 88% overall
+  - HTML report: `backend/htmlcov/index.html`
   - JSON report: `evidence/backend/coverage.json`
-- [x] **Security Tests**: 40 tests (account lockout, NoSQL injection, XSS)
-- [x] **Postman Collection**: 87+ requests
-- [ ] **Newman HTML Report**: ⚠️ NEEDS GENERATION
+- [x] **Security Tests**: Included in 586 tests (account lockout, NoSQL injection, XSS)
+- [x] **Postman Collection**: 87 requests, 411 assertions
+- [ ] **Postman Evidence PDFs**: ⚠️ NEEDS GENERATION
 
 **Action Required:**
 ```bash
+# 1. Start backend
 cd backend
-./generate_newman_report.sh
-# Output: evidence/backend/newman-report.html
+python seed/seed_data.py --reset
+python run.py
+
+# 2. In Postman Desktop App:
+#    - Run full collection (87 requests, ~411 assertions)
+#    - Export Collection Runner PDF
+#    - Export API Documentation PDF
+# See: backend/postman/README.md for detailed instructions
 ```
 
 ---
@@ -120,15 +127,14 @@ pip list | grep -E "(Flask|pymongo|pytest|bcrypt)"
 # Should show all packages installed
 
 # 4. Check .env file exists and has required variables
-cat .env | grep -E "(MONGO_URI|JWT_SECRET_KEY|PASSWORD_RESET_SECRET)"
-# Should show all three variables
+cat .env | grep -E "(MONGO_URI|SECRET_KEY)"
+# Should show required variables
 ```
 
 **Expected Output:**
 ```
-MONGO_URI=mongodb+srv://...
-JWT_SECRET_KEY=your-secret-key
-PASSWORD_RESET_SECRET=your-reset-secret
+MONGO_URI=mongodb://localhost:27017/breachlens
+SECRET_KEY=your-secret-key
 ```
 
 ---
@@ -269,74 +275,66 @@ curl -X POST http://localhost:5001/api/v1/auth/register \
   -d '{
     "email": "test@example.com",
     "username": "testuser",
-    "password": "Test@123",
+    "password": "Test@123",  # pragma: allowlist secret
     "role": "guest"
   }'
 
 # Expected: 201 Created with user object
 
-# 2. Login
-TOKEN=$(curl -X POST http://localhost:5001/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "test@example.com",
-    "password": "Test@123"
-  }' | jq -r '.access_token')
+# 2. Login (Basic Auth — module requirement)
+TOKEN=$(curl -X GET http://localhost:5001/api/v1/login \
+  -u "testuser:Test@123" -s | jq -r '.data.token')
 
 echo $TOKEN
 # Should print JWT token
 
 # 3. Get breaches (authenticated)
 curl -X GET http://localhost:5001/api/v1/breaches \
-  -H "Authorization: Bearer $TOKEN" | jq '.data | length'
+  -H "x-access-token: $TOKEN" | jq '.data | length'
 
 # Expected: 25 (number of seeded breaches)
 
 # 4. Get single breach
 BREACH_ID=$(curl -X GET http://localhost:5001/api/v1/breaches \
-  -H "Authorization: Bearer $TOKEN" | jq -r '.data[0]._id')
+  -H "x-access-token: $TOKEN" | jq -r '.data[0]._id')
 
 curl -X GET "http://localhost:5001/api/v1/breaches/$BREACH_ID" \
-  -H "Authorization: Bearer $TOKEN" | jq '.title'
+  -H "x-access-token: $TOKEN" | jq '.title'
 
 # Expected: Breach title returned
 
 # 5. Test analytics endpoint
 curl -X GET http://localhost:5001/api/v1/analytics/risk-by-industry \
-  -H "Authorization: Bearer $TOKEN" | jq '.'
+  -H "x-access-token: $TOKEN" | jq '.'
 
 # Expected: Array of industry risk data
 
 # 6. Test geospatial query (near London)
 curl -X GET "http://localhost:5001/api/v1/breaches/geo/near?lng=-0.1278&lat=51.5074&max_distance=100000" \
-  -H "Authorization: Bearer $TOKEN" | jq '.data | length'
+  -H "x-access-token: $TOKEN" | jq '.data | length'
 
 # Expected: Number of breaches near London
 
 # 7. Test admin endpoint (should fail with guest user)
 curl -X GET http://localhost:5001/api/v1/admin/stats \
-  -H "Authorization: Bearer $TOKEN"
+  -H "x-access-token: $TOKEN"
 
 # Expected: 403 Forbidden (correct behavior)
 
-# 8. Login as admin
-ADMIN_TOKEN=$(curl -X POST http://localhost:5001/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "admin@breachlens.io",
-    "password": "Admin@123"
-  }' | jq -r '.access_token')
+# 8. Login as admin (Basic Auth)
+ADMIN_TOKEN=$(curl -X GET http://localhost:5001/api/v1/login \
+  -u "admin_breach:Admin@123" -s | jq -r '.data.token')
 
 # 9. Test admin endpoint (should succeed)
 curl -X GET http://localhost:5001/api/v1/admin/stats \
-  -H "Authorization: Bearer $ADMIN_TOKEN" | jq '.'
+  -H "x-access-token: $ADMIN_TOKEN" | jq '.'
 
 # Expected: System statistics returned
 ```
 
 **Success Criteria:**
 - ✅ All endpoints return expected status codes
-- ✅ Authentication working (JWT tokens)
+- ✅ Authentication working (JWT via `x-access-token` header)
 - ✅ Authorization working (RBAC)
 - ✅ Data returned correctly formatted
 - ✅ Geospatial queries working
@@ -380,7 +378,7 @@ open ../evidence/backend/newman-report.html
 for i in {1..6}; do
   curl -X POST http://localhost:5001/api/v1/auth/login \
     -H "Content-Type: application/json" \
-    -d '{"email": "test@example.com", "password": "WrongPassword"}' \
+    -d '{"email": "test@example.com", "password": "WrongPassword"}' \  # pragma: allowlist secret
     -s | jq '.message'
 done
 
@@ -388,7 +386,7 @@ done
 
 # 2. Test NoSQL injection protection
 curl -X GET "http://localhost:5001/api/v1/breaches?severity[\$ne]=critical" \
-  -H "Authorization: Bearer $TOKEN"
+  -H "x-access-token: $TOKEN"
 
 # Expected: 422 or sanitized query (not server error)
 
@@ -398,7 +396,7 @@ curl -X POST http://localhost:5001/api/v1/auth/register \
   -d '{
     "email": "xss@test.com",
     "username": "<script>alert('XSS')</script>",
-    "password": "Test@123",
+    "password": "Test@123",  # pragma: allowlist secret
     "role": "guest"
   }' | jq '.user.username'
 
@@ -423,16 +421,16 @@ curl -I http://localhost:5001/api/v1/breaches | grep -E "(X-Frame-Options|X-Cont
 ```bash
 # Get a breach ID
 BREACH_ID=$(curl -X GET http://localhost:5001/api/v1/breaches \
-  -H "Authorization: Bearer $ADMIN_TOKEN" -s | jq -r '.data[0]._id')
+  -H "x-access-token: $ADMIN_TOKEN" -s | jq -r '.data[0]._id')
 
 # 1. Test affected accounts
 curl -X GET "http://localhost:5001/api/v1/breaches/$BREACH_ID/accounts" \
-  -H "Authorization: Bearer $ADMIN_TOKEN" -s | jq '. | length'
+  -H "x-access-token: $ADMIN_TOKEN" -s | jq '. | length'
 # Expected: Number of affected accounts
 
 # 2. Add affected account
 curl -X POST "http://localhost:5001/api/v1/breaches/$BREACH_ID/accounts" \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "x-access-token: $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "email": "victim@example.com",
@@ -444,17 +442,17 @@ curl -X POST "http://localhost:5001/api/v1/breaches/$BREACH_ID/accounts" \
 
 # 3. Test timeline
 curl -X GET "http://localhost:5001/api/v1/breaches/$BREACH_ID/timeline" \
-  -H "Authorization: Bearer $ADMIN_TOKEN" -s | jq '. | length'
+  -H "x-access-token: $ADMIN_TOKEN" -s | jq '. | length'
 # Expected: Number of timeline events
 
 # 4. Test remediation
 curl -X GET "http://localhost:5001/api/v1/breaches/$BREACH_ID/remediation" \
-  -H "Authorization: Bearer $ADMIN_TOKEN" -s | jq '. | length'
+  -H "x-access-token: $ADMIN_TOKEN" -s | jq '. | length'
 # Expected: Number of remediation actions
 
 # 5. Test monitoring alerts
 curl -X GET "http://localhost:5001/api/v1/breaches/$BREACH_ID/alerts" \
-  -H "Authorization: Bearer $ADMIN_TOKEN" -s | jq '. | length'
+  -H "x-access-token: $ADMIN_TOKEN" -s | jq '. | length'
 # Expected: Number of monitoring alerts
 ```
 
@@ -528,9 +526,10 @@ BreachLens/
 │   ├── SUBMISSION_PRIORITY.md        # This guide ✅
 │   └── README.md                     # Docs index ✅
 ├── evidence/backend/
-│   ├── pytest-coverage-report/       # Coverage HTML ✅
+│   ├── htmlcov/                      # Coverage HTML ✅
 │   ├── coverage.json                 # Coverage JSON ✅
-│   ├── newman-report.html            # API tests ⚠️
+│   ├── postman-collection-runner.pdf # API tests (generate via Postman GUI) ⚠️
+│   ├── postman-api-documentation.pdf # API docs (generate via Postman GUI) ⚠️
 │   └── README.md                     # Evidence summary ✅
 ├── README.md                         # Project overview ✅
 └── LICENSE                           # MIT License ✅
@@ -548,12 +547,24 @@ BreachLens/
 
 ## 🎯 Final Submission Steps
 
-### **1. Generate Newman Report** ⚠️ REQUIRED
+### **1. Generate Postman PDFs** ⚠️ REQUIRED
 
 ```bash
+# 1. Start backend
 cd backend
-python run.py  # In one terminal
-./generate_newman_report.sh  # In another terminal
+python seed/seed_data.py --reset
+python run.py
+
+# 2. Open Postman Desktop App:
+#    - Import collection & environment from backend/postman/
+#    - Run full collection (87 requests, ~411 assertions pass)
+#    - Click "View Summary" → Cmd+P → Save as PDF
+#    - Save as: evidence/backend/postman-collection-runner.pdf
+#
+#    - Click collection → "View Documentation" → Cmd+P → Save as PDF
+#    - Save as: evidence/backend/postman-api-documentation.pdf
+
+# See detailed guide: backend/postman/README.md
 ```
 
 ### **2. Create Submission Archive**
@@ -625,7 +636,7 @@ rm -rf temp-verify
 ### **Functionality (15%)** - Targeting 15/15
 
 - All requirements met ✅
-- 51 endpoints working ✅
+- 63 endpoints working ✅
 - Full CRUD + sub-documents ✅
 - JWT + RBAC implemented ✅
 - Geospatial queries working ✅
@@ -691,8 +702,8 @@ python -c "from pymongo import MongoClient; print(MongoClient('YOUR_MONGO_URI').
 # Check .env file
 cat .env | grep MONGO_URI
 
-# Verify whitelist on MongoDB Atlas
-# Login to cloud.mongodb.com → Network Access → Add 0.0.0.0/0
+# MongoDB runs locally — no Atlas required
+# Ensure mongod is running: brew services start mongodb-community
 ```
 
 ---
@@ -714,5 +725,5 @@ cat .env | grep MONGO_URI
 
 ---
 
-**Status**: ✅ 99% Ready (Just needs Newman report)
+**Status**: ✅ 99% Ready (Just needs Postman PDF exports)
 **Estimated Time to Submit**: 10 minutes

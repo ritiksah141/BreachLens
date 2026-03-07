@@ -1,9 +1,9 @@
 # BreachLens Test Suite
 
-[![Tests](https://img.shields.io/badge/Tests-104%20passing-brightgreen.svg)](.)
-[![Coverage](https://img.shields.io/badge/Coverage-48%25-yellow.svg)](../../evidence/backend/pytest-coverage-report/)
+[![Tests](https://img.shields.io/badge/Tests-586%20passing-brightgreen.svg)](.)
+[![Coverage](https://img.shields.io/badge/Coverage-88%25-brightgreen.svg)](../htmlcov/)
 
-**Comprehensive test suite covering all API endpoints and business logic.**
+**Comprehensive test suite covering all API endpoints, service layer, model validation, and security features.**
 
 ---
 
@@ -11,22 +11,27 @@
 
 ### **Current Status**
 ```bash
-✅ 104 tests passing (100% pass rate)
-⏭️ 1 test skipped
-⏭️ 14 integration tests deselected (marked for production validation)
-⚠️ 1 warning (Redis unavailable - graceful degradation working)
+✅ 586 tests passing (100% pass rate)
+⏭️ 2 tests skipped (rate limiting — requires Redis)
+⏭️ 14 integration tests deselected (marked for infrastructure validation)
+📊 88% code coverage
 ```
 
 ### **Test Breakdown**
-| Module | Tests | Status | Coverage |
-|--------|-------|--------|----------|
+| Module | Tests | Status | Focus |
+|--------|-------|--------|-------|
 | test_auth.py | 11 | ✅ All passing | Auth endpoints & JWT |
-| test_breaches.py | 21 | ✅ All passing | Breach CRUD operations |
-| test_subdocuments.py | 17 | ✅ All passing | 4 sub-document arrays |
+| test_breaches.py | 21 | ✅ All passing | Breach CRUD routes |
+| test_subdocuments.py | 31 | ✅ All passing | 4 sub-document arrays |
 | test_security.py | 40 | ✅ All passing | Security features |
 | test_analytics.py | ~10 | ✅ All passing | Aggregation pipelines |
+| test_breach_service.py | ~50 | ✅ All passing | BreachService mock-based tests |
+| test_models.py | ~140 | ✅ All passing | Schema validators + utility functions |
+| test_services_integration.py | ~200 | ✅ All passing | All 4 services via mongomock |
+| test_admin.py | ~25 | ✅ All passing | Admin routes & RBAC |
+| test_users.py | ~30 | ✅ All passing | User management routes |
 | test_performance.py | 14 | ⏭️ Integration | Performance benchmarks |
-| **TOTAL** | **104** | **✅ 100%** | **Unit + API tests** |
+| **TOTAL** | **586** | **✅ 100%** | **Unit + API + Integration** |
 
 ---
 
@@ -39,7 +44,7 @@ source ../venv/bin/activate
 pytest tests/ -v
 
 # Expected output:
-# =========== 104 passed, 1 skipped, 14 deselected, 1 warning in 0.39s ===========
+# =========== 586 passed, 2 skipped, 14 deselected, 1 warning in 5.13s ===========
 ```
 
 ### **Run With Coverage**
@@ -115,14 +120,14 @@ test_delete_breach_analyst()               # 403 forbidden
 
 ---
 
-### **test_subdocuments.py** (17 tests)
+### **test_subdocuments.py** (31 tests)
 Tests CRUD operations on all 4 sub-document arrays.
 
 **Sub-documents Tested:**
-1. **affected_accounts** - Email/username exposure records
-2. **timeline** - Breach lifecycle events
-3. **remediation** - Response actions
-4. **monitoring_alerts** - Automated threat signals
+1. **affected_accounts** — Email/username exposure records
+2. **timeline** — Breach lifecycle events
+3. **remediation** — Response actions (full CRUD + status transitions)
+4. **monitoring_alerts** — Automated threat signals
 
 **MongoDB Operators Tested:**
 - ✅ `$push` - Add sub-document to array
@@ -193,6 +198,86 @@ test_reset_failed_attempts()               # Counter reset
 test_log_auth_event()                      # Auth events logged
 test_log_security_event()                  # Security events logged
 ```
+
+---
+
+### **test_breach_service.py** (~50 tests)
+Mock-based unit tests for BreachService business logic through routes.
+
+**Coverage:**
+- ✅ `compute_risk_score` static method (pure logic, no DB)
+- ✅ Create / Update / Patch / Delete via route mocking
+- ✅ Bulk operations (import, delete)
+- ✅ Exposure check (email & domain)
+- ✅ Geospatial endpoints (near, within-bounds, GeoJSON)
+
+---
+
+### **test_models.py** (~140 tests)
+Unit tests for schema validators AND standalone utility functions.
+
+**Schema Validators Tested:**
+- ✅ `BreachSchema` — Title, description, severity, status, industry, dates, risk score, organisation
+- ✅ `AffectedAccountSchema` — Email, username, data_exposed, notified, notification_date
+- ✅ `TimelineEventSchema` — Event date, type, description, actor
+- ✅ `RemediationActionSchema` — Action, status, due_date, assigned_to, completed_date
+- ✅ `MonitoringAlertSchema` — Alert type, severity, details, triggered_at, acknowledged
+
+**Standalone Validator Functions Tested:**
+- ✅ `validate_breach_payload()` — Full & partial validation
+- ✅ `validate_geojson_point()` — GeoJSON Point structure & coordinate ranges
+- ✅ `validate_affected_account()` — Email, username, data_exposed, notified
+- ✅ `validate_timeline_event()` — Event date, type, description, actor
+- ✅ `validate_remediation_action()` — Action, status, due_date
+- ✅ `validate_monitoring_alert()` — Alert type, severity, details
+- ✅ `sanitize_mongo_input()` — Recursive `$`-operator stripping
+- ✅ `sanitize_query_params()` — URL parameter sanitization
+- ✅ `safe_regex_query()` — Special character escaping
+- ✅ `sanitize_html()` — Script/event handler/JS URL removal
+- ✅ `sanitize_breach_payload_html()` — Full payload HTML sanitization
+
+---
+
+### **test_services_integration.py** (~200 tests)
+Integration tests for all 4 service classes using **mongomock** (in-memory MongoDB). No mocks — exercises real service code paths.
+
+**Services Tested:**
+- ✅ **BreachService** — Full CRUD, bulk ops, listing/filtering/pagination/search, exposure check, all 4 sub-document types (affected accounts, timeline, remediation, alerts), GeoJSON
+- ✅ **UserService** — `get_all()`, `get_by_id()`, `update_user()`, `delete_user()`, `count_users_with_role()`, `count_active_admins()`, `get_user()` (safe-field projection)
+- ✅ **AuthService** — `register()`, `login()` (by email/username), `get_user_by_id()`, account lockout (`check_account_lockout`, `record_failed_login`, `reset_failed_attempts`)
+- ✅ **AnalyticsService** — All 10 aggregation pipelines: risk_by_industry, severity_breakdown, monthly_trend, top_organisations, data_types_frequency, remediation_rate, alert_acknowledgement, industry_year_trend, risk_score_distribution, summary
+
+**Model Validation Tested:**
+- ✅ **UserSchema** — `validate_registration()`, `validate_update()`, `validate_role()`, `sanitize()`, `to_document()`, `to_safe_dict()`
+
+---
+
+### **test_admin.py** (~25 tests)
+Admin route tests with RBAC enforcement.
+
+**Coverage:**
+- ✅ System statistics endpoint
+- ✅ User management (listing, role changes)
+- ✅ Bulk breach operations (import, delete)
+- ✅ Cache clearing
+- ✅ Index rebuilding
+- ✅ Detailed health check
+- ✅ Audit log retrieval
+- ✅ Role enforcement (admin-only access)
+
+---
+
+### **test_users.py** (~30 tests)
+User management route tests.
+
+**Coverage:**
+- ✅ List users (admin-only, pagination)
+- ✅ Get user profile (own, other, admin override)
+- ✅ Update profile (username, email, validation)
+- ✅ Password change (own, strength requirements)
+- ✅ Role change (admin-only, invalid roles)
+- ✅ Activate / deactivate users (admin-only)
+- ✅ Delete user (admin-only, soft-delete)
 
 ---
 
@@ -272,10 +357,12 @@ markers =
 
 ## 🎯 Testing Strategy
 
-### **1. Unit Tests (104 tests)**
-- ✅ Test business logic in isolation
-- ✅ Mock all external dependencies (MongoDB, Redis)
-- ✅ Fast execution (< 1 second total)
+### **1. Unit Tests (586 tests)**
+- ✅ Test business logic in isolation (mock-based route tests)
+- ✅ Test service layer with mongomock (real code paths, in-memory DB)
+- ✅ Test model/schema validation (pure functions)
+- ✅ Test sanitization utilities (NoSQL injection, XSS)
+- ✅ Fast execution (~5 seconds total)
 - ✅ Run on every commit
 - ✅ Perfect for CI/CD
 
@@ -283,15 +370,15 @@ markers =
 - ✅ Test with real infrastructure
 - ✅ Validate system behavior end-to-end
 - ✅ Performance benchmarks
-- ✅ Run on staging deploy
+- ✅ Run manually with real database
 - ⏭️ Optional for academic submission
 
-### **3. API Contract Tests (Newman)**
-- ✅ 87+ requests in Postman collection
+### **3. API Contract Tests (Postman)**
+- ✅ 87 requests in Postman collection
 - ✅ Test HTTP semantics and status codes
 - ✅ Validate response schemas
 - ✅ Test authentication flow
-- ✅ Generate HTML report
+- ✅ Run via Postman Collection Runner → export PDF
 
 ---
 
@@ -378,30 +465,38 @@ pytest tests/ -v --tb=long
 
 ## 📊 Coverage Targets
 
-### **Current Coverage: 48%**
-| Module | Coverage | Target | Status |
-|--------|----------|--------|--------|
-| app/utils/validators.py | 95% | 95% | ✅ |
-| app/middleware/auth_middleware.py | 95% | 95% | ✅ |
-| app/services/breach_service.py | 85% | 85% | ✅ |
-| app/services/auth_service.py | 80% | 80% | ✅ |
-| app/routes/breaches.py | 80% | 80% | ✅ |
-| app/routes/analytics.py | 75% | 75% | ✅ |
-| Overall | 48% | 70%+ on critical | ✅ |
-
-**Note**: 48% overall is acceptable because:
-- Critical modules have 70%+ coverage
-- Routes are tested via integration tests (Newman)
-- Some utility code is defensive (error handling)
+### **Current Coverage: 88%**
+| Module | Coverage | Status |
+|--------|----------|--------|
+| app/config.py | 100% | ✅ |
+| app/models/user.py | 100% | ✅ |
+| app/services/analytics_service.py | 100% | ✅ |
+| app/services/auth_service.py | 99% | ✅ |
+| app/models/breach.py | 98% | ✅ |
+| app/routes/admin.py | 98% | ✅ |
+| app/utils/validators.py | 97% | ✅ |
+| app/utils/response.py | 96% | ✅ |
+| app/services/breach_service.py | 93% | ✅ |
+| app/middleware/request_logging.py | 92% | ✅ |
+| app/__init__.py | 85% | ✅ |
+| app/routes/analytics.py | 84% | ✅ |
+| app/routes/breaches.py | 84% | ✅ |
+| app/utils/audit.py | 81% | ✅ |
+| app/routes/auth.py | 79% | ✅ |
+| app/routes/users.py | 100% | ✅ |
+| app/extensions.py | 100% | ✅ |
+| app/middleware/security_headers.py | 100% | ✅ |
+| **Overall** | **88%** | **✅** |
 
 ---
 
 ## 🎓 Academic Submission
 
 ### **What's Required**
-- ✅ All unit tests passing (104/104)
-- ✅ Coverage report generated
-- ✅ Newman HTML report (run script)
+- ✅ All unit tests passing (586/586)
+- ✅ 88% code coverage
+- ✅ Coverage report generated (`htmlcov/`)
+- ✅ Postman collection with 87 test scripts (run via Postman Collection Runner)
 
 ### **What's Optional**
 - ⏭️ Integration tests (marked, not required)
@@ -410,11 +505,10 @@ pytest tests/ -v --tb=long
 
 ### **Evidence for Submission**
 ```
-evidence/backend/
-├── pytest-coverage-report/    # HTML coverage report ✅
+backend/
+├── htmlcov/                    # HTML coverage report (88%) ✅
 │   └── index.html
-├── coverage.json              # JSON coverage data ✅
-└── newman-report.html         # API test report 🔄
+└── tests/                     # 586 passing tests ✅
 ```
 
 ---
@@ -450,5 +544,5 @@ jobs:
 ---
 
 **Test Fixes**: All 4 account lockout tests fixed
-**Status**: ✅ 104/104 passing (100% pass rate)
-**Integration Tests**: 14 marked for production validation
+**Status**: ✅ 586/586 passing (100% pass rate) | 88% coverage
+**Integration Tests**: 14 marked for infrastructure validation

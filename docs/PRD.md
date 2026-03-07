@@ -245,7 +245,7 @@ BreachLens directly addresses each gap above by providing a purpose-built, API-f
 app/
 ├── __init__.py          # create_app() factory
 ├── config.py            # Config classes (Dev/Prod/Test)
-├── extensions.py        # PyMongo, JWT, CORS instances
+├── extensions.py        # PyMongo, CORS, Limiter instances
 ├── routes/
 │   ├── auth.py          # /api/v1/auth/*
 │   ├── breaches.py      # /api/v1/breaches/*
@@ -271,22 +271,22 @@ app/
 
 #### EPIC-BE-03: Authentication & Role-Based Access Control
 
-**Description:** Implement JWT-based authentication with access token issuance, route-level RBAC, and secure password management.
+**Description:** Implement JWT-based authentication with raw PyJWT (`jwt.encode`/`jwt.decode`), HTTP Basic Auth login, `x-access-token` header, route-level RBAC, and secure password management.
 
 **Stories:**
 
 | Story ID | Description | Acceptance Criteria |
 |----------|-------------|---------------------|
 | BE-03-01 | Implement user registration with BCrypt password hashing | `POST /api/v1/auth/register` returns 201, password never stored in plaintext |
-| BE-03-02 | Implement login with JWT access token issuance | `POST /api/v1/auth/login` returns `{"access_token": "...", "token_type": "Bearer", "expires_in": 3600}` |
-| BE-03-03 | Implement `@require_auth` decorator | 401 returned for missing/invalid token |
-| BE-03-04 | Implement `@require_role(*roles)` decorator | 403 returned for insufficient role |
-| BE-03-05 | Implement token refresh endpoint | `POST /api/v1/auth/refresh` returns new access token |
+| BE-03-02 | Implement login with JWT token issuance (Basic Auth + JSON) | `GET /api/v1/login` (Basic Auth) and `POST /api/v1/auth/login` (JSON) return `{"token": "...", "token_type": "JWT", "expires_in": 3600}` |
+| BE-03-03 | Implement `@jwt_required` and `@require_auth` decorators | 401 returned for missing/invalid/blacklisted token |
+| BE-03-04 | Implement `@admin_required` and `@require_role(*roles)` decorators | 403 returned for insufficient role |
+| BE-03-05 | Implement token blacklist via MongoDB `blacklist` collection | Full token stored and checked via `find_one({"token": token})` |
 | BE-03-06 | All protected routes enforce role correctly | Validated in Postman collection across all three roles |
 
 **Guest Authentication Model:**
 
-Guest is an **unauthenticated state** (no JWT token), not a bearer-token role. Unauthenticated users can access specific public endpoints without authentication. The `@require_auth` decorator is bypassed for these endpoints by omitting the decorator entirely from the route handler.
+Guest is an **unauthenticated state** (no JWT token), not a role in the token payload. Unauthenticated users can access specific public endpoints without authentication. The `@jwt_required` decorator is bypassed for these endpoints by omitting the decorator entirely from the route handler.
 
 **Important:** "Guest" does not appear in JWT role claims. It represents the absence of authentication, detected by checking `g.current_user_id` (present = authenticated, absent/None = guest).
 
@@ -610,7 +610,7 @@ Simplified: compute the average weight across all data types in the array, then 
 | JWT signing | HS256 algorithm, 1-hour expiry for access token |
 | Role enforcement | Server-side on every protected route, never trust client-supplied role |
 | Input sanitisation | All string inputs stripped of leading/trailing whitespace; HTML entities not accepted |
-| HTTPS | Configured via reverse proxy in production (Nginx); enforced in production config |
+| HTTPS | Not enforced in local development; documented for future deployment |
 | Sensitive field redaction | Guest role: `affected_accounts` array omitted from responses |
 | Rate limiting | `flask-limiter`: 100 req/min per IP on auth endpoints |
 
@@ -655,7 +655,7 @@ Simplified: compute the average weight across all data types in the array, then 
 | **Strict RESTful API** | Noun-based URIs, correct HTTP verbs, all 9 required status codes, versioned (`/api/v1/`) | `API_SPEC.md`, Postman collection |
 | **Full CRUD + Sub-document CRUD** | Top-level breach CRUD + CRUD on all 4 sub-document arrays with `$push`, `$pull`, `$set`, positional `$` | `app/routes/breaches.py` |
 | **Robust validation** | Type, range, enum, email, URL, GeoJSON, date ordering validation on all mutation endpoints | `app/utils/validators.py` |
-| **JWT + RBAC** | Admin/Analyst/Guest roles, `@require_auth`, `@require_role`, token refresh | `app/middleware/auth_middleware.py` |
+| **JWT + RBAC** | Admin/Analyst/Guest roles, `@jwt_required`, `@admin_required`, `@require_role`, raw PyJWT, `x-access-token` header, MongoDB blacklist | `app/middleware/auth_middleware.py` |
 | **Centralised error handling** | All errors via registered error handlers, uniform JSON schema | `app/__init__.py` error handlers |
 | **Angular exceeds demonstration** | Route Guards, HTTP Interceptors, Reactive Forms, Chart.js (6 chart types), Leaflet map, lazy loading | `src/app/` |
 | **Automated testing** | Postman collection with pre-request scripts, schema assertions, Newman CI runner | `postman/`, `QA_STRATEGY.md` |
@@ -667,13 +667,13 @@ Simplified: compute the average weight across all data types in the array, then 
 
 | Constraint | Detail |
 |-----------|--------|
-| Database | MongoDB 7.x (Atlas free tier or local instance) |
+| Database | MongoDB 7.x (local instance only — no Atlas) |
 | Backend runtime | Python 3.11+ |
 | Frontend runtime | Node.js 20+, Angular CLI 17+ |
 | Auth | JWT only (no OAuth2/OIDC in scope) |
 | Testing | Postman/Newman for backend; Jasmine/Karma for Angular unit tests |
 | Data seeding | Synthetic breach data only (no real PII) |
-| Deployment | Local development; production configuration documented but not required for submission |
+| Deployment | Local development only (not required for submission) |
 
 ---
 
