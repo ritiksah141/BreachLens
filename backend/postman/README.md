@@ -1,7 +1,7 @@
 # BreachLens Postman Collection
 
 [![Postman Tests](https://img.shields.io/badge/Postman-87%20requests-blue.svg)](BreachLens.postman_collection.json)
-[![API Version](https://img.shields.io/badge/API-v1.0-green.svg)](../../docs/API_SPEC.md)
+[![API Version](https://img.shields.io/badge/API-v1.0-green.svg)](../README.md#-api-endpoints-63-total)
 
 **Comprehensive API test collection for all 63 endpoints.**
 
@@ -515,8 +515,8 @@ if (pm.environment.get("test_role") === "admin") {
     "method": "POST",
     "header": [
       {
-        "key": "Authorization",
-        "value": "Bearer {{access_token}}"
+        "key": "x-access-token",
+        "value": "{{access_token}}"
       }
     ],
     "body": {
@@ -871,9 +871,9 @@ evidence/ (or submission folder)
 
 ## 📚 Additional Resources
 
-- **API Specification**: [../../docs/API_SPEC.md](../../docs/API_SPEC.md)
-- **Backend Setup Guide**: [../README.md](../README.md)
-- **QA Strategy**: [../../docs/QA_STRATEGY.md](../../docs/QA_STRATEGY.md)
+- **Backend README**: [../README.md](../README.md) - Complete API specification, authentication guide, and testing strategy
+- **Testing Guide**: [../tests/README.md](../tests/README.md) - Comprehensive test documentation
+- **Seeding Guide**: [../seed/README.md](../seed/README.md) - Database setup and data generation
 - **Test Suite**: [../tests/README.md](../tests/README.md)
 - **Postman Learning Center**: https://learning.postman.com/
 

@@ -38,8 +38,7 @@ Requires a valid JWT token in the request.
 
 **Token Sources** (checked in order):
 1. `x-access-token` header (primary)
-2. `Authorization: Bearer <token>` header
-3. HTTP Basic Auth (fallback for COM661 requirement)
+2. HTTP Basic Auth (fallback for COM661 requirement)
 
 **Usage:**
 ```python
@@ -412,4 +411,4 @@ def get_user(user_id):
 - [Routes Documentation](../routes/README.md) - API endpoints using middleware
 - [Services Documentation](../services/README.md) - Business logic layer
 - [Utils Documentation](../utils/README.md) - Helper functions
-- [Authentication Flow](../../../docs/API_SPEC.md#authentication) - Complete auth documentation
+- [Backend README](../../README.md) - Complete API specification, authentication flow, database architecture

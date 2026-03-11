@@ -89,7 +89,7 @@
                   "const d = pm.response.json().data;",
                   "pm.test('Has token', () => pm.expect(d.token).to.be.a('string').with.lengthOf.above(50));",
                   "pm.test('JWT has 3 parts', () => pm.expect(d.token.split('.').length).to.equal(3));",
-                  "pm.test('token_type is Bearer', () => pm.expect(d.token_type).to.equal('JWT'));",
+                  "pm.test('token_type is JWT', () => pm.expect(d.token_type).to.equal('JWT'));",
                   "pm.test('expires_in positive', () => pm.expect(d.expires_in).to.be.above(0));",
                   "pm.test('user has role', () => pm.expect(d.user.role).to.be.oneOf(['admin','analyst','guest']));",
                   "pm.environment.set('adminToken', d.token);"

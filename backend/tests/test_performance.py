@@ -39,7 +39,7 @@ class TestPerformance:
         start = time.time()
         response = client.get(
             "/api/v1/analytics/risk-by-industry",
-            headers={"Authorization": f"Bearer {analyst_token}"}
+            headers={"x-access-token": analyst_token}
         )
         duration_ms = (time.time() - start) * 1000
 
@@ -52,7 +52,7 @@ class TestPerformance:
         create_response = client.post(
             "/api/v1/breaches",
             json=sample_breach,
-            headers={"Authorization": f"Bearer {admin_token}"}
+            headers={"x-access-token": admin_token}
         )
         assert create_response.status_code == 201
         breach_id = create_response.json["data"].get("id") or create_response.json["data"].get("_id")
@@ -87,7 +87,7 @@ class TestPerformance:
     def test_caching_improves_performance(self, client, analyst_token):
         """Verify that caching significantly improves analytics endpoint performance."""
         endpoint = "/api/v1/analytics/risk-by-industry"
-        headers = {"Authorization": f"Bearer {analyst_token}"}
+        headers = {"x-access-token": analyst_token}
 
         # First request (cold cache)
         start = time.time()
@@ -175,7 +175,7 @@ class TestConcurrency:
             return client.post(
                 "/api/v1/breaches",
                 json=data,
-                headers={"Authorization": f"Bearer {admin_token}"}
+                headers={"x-access-token": admin_token}
             )
 
         with ThreadPoolExecutor(max_workers=5) as executor:
@@ -194,7 +194,7 @@ class TestConcurrency:
         create_response = client.post(
             "/api/v1/breaches",
             json=sample_breach,
-            headers={"Authorization": f"Bearer {admin_token}"}
+            headers={"x-access-token": admin_token}
         )
         assert create_response.status_code == 201
         breach_id = create_response.json["data"].get("id") or create_response.json["data"].get("_id")
@@ -217,7 +217,7 @@ class TestConcurrency:
                 response = client.patch(
                     f"/api/v1/breaches/{breach_id}",
                     json={"status": update_data["status"]},
-                    headers={"Authorization": f"Bearer {admin_token}"}
+                    headers={"x-access-token": admin_token}
                 )
                 if response.status_code != 200:
                     write_errors.append(response.status_code)
@@ -247,7 +247,7 @@ class TestConcurrency:
         def make_request():
             response = client.get(
                 "/api/v1/analytics/summary",
-                headers={"Authorization": f"Bearer {admin_token}"}
+                headers={"x-access-token": admin_token}
             )
             return response.status_code
 

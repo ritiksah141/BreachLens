@@ -470,9 +470,9 @@ ValueError: time data '...' does not match format
 
 ## 📚 Additional Resources
 
-- **Data Model**: [../../docs/PRD.md](../../docs/PRD.md) Section 4
-- **API Endpoints**: [../../docs/API_SPEC.md](../../docs/API_SPEC.md)
-- **MongoDB Indexes**: [../../docs/AGENTS.md](../../docs/AGENTS.md) Section 5
+- **Backend README**: [../README.md](../README.md) - Complete database schema, indexes, API specification
+- **Testing Guide**: [../tests/README.md](../tests/README.md) - How to test with seeded data
+- **API Testing**: [../postman/README.md](../postman/README.md) - Postman collection usage
 - **Backend Setup**: [../README.md](../README.md)
 
 ---

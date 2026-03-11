@@ -383,4 +383,4 @@ python -c "from app import create_app; app = create_app(); print('\\n'.join(str(
 - [Services Documentation](../services/README.md) - Business logic layer
 - [Models Documentation](../models/README.md) - Validation schemas
 - [Middleware Documentation](../middleware/README.md) - Auth & logging
-- [API Specification](../../../docs/API_SPEC.md) - Complete API docs
+- [Backend README](../../README.md) - Complete API specification, endpoints, authentication

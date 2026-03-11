@@ -25,6 +25,7 @@ def app():
         "TESTING": True,
         "RATELIMIT_ENABLED": False,
         "WTF_CSRF_ENABLED": False,
+        "CACHE_TYPE": "NullCache",  # Disable caching in tests
     })
     return application
 

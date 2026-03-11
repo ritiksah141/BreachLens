@@ -26,6 +26,10 @@ class Config:
     RATELIMIT_ENABLED: bool = os.getenv("RATELIMIT_ENABLED", "true").lower() not in ("false", "0", "no")
     RATELIMIT_DEFAULT: str = "200 per day;50 per hour"
 
+    # Flask-Caching configuration
+    CACHE_TYPE: str = os.getenv("CACHE_TYPE", "SimpleCache")  # Options: SimpleCache, RedisCache, FileSystemCache
+    CACHE_DEFAULT_TIMEOUT: int = int(os.getenv("CACHE_DEFAULT_TIMEOUT", 300))
+
     # Request logging settings
     REQUEST_IP_POLICY: str = os.getenv("REQUEST_IP_POLICY", "anonymize")  # Options: "full", "anonymize", "none"
     IP_ANONYMIZATION_SALT: str = os.getenv("IP_ANONYMIZATION_SALT", "default-breach-lens-salt-change-in-production")
@@ -51,6 +55,7 @@ class TestingConfig(Config):
     RATELIMIT_ENABLED: bool = False
     RATELIMIT_DEFAULT: str = "10000 per hour"
     WTF_CSRF_ENABLED: bool = False
+    CACHE_TYPE: str = "NullCache"  # Disable caching in tests to avoid Python 3.14 serialization issues
 
 
 config: dict = {

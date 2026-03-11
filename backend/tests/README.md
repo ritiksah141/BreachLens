@@ -536,10 +536,9 @@ jobs:
 
 ## 📚 Additional Resources
 
-- **API Documentation**: [../docs/API_SPEC.md](../docs/API_SPEC.md)
-- **Testing Strategy**: [../docs/QA_STRATEGY.md](../docs/QA_STRATEGY.md)
-- **Backend Setup**: [../README.md](../README.md)
-- **Submission Guide**: [../SUBMISSION_READY.md](../SUBMISSION_READY.md)
+- **Backend README**: [../README.md](../README.md) - Complete API specification, authentication, database architecture, testing strategy
+- **Postman Guide**: [../postman/README.md](../postman/README.md) - API testing with Postman/Newman
+- **Seeding Guide**: [../seed/README.md](../seed/README.md) - Database setup and data generation
 
 ---
 
