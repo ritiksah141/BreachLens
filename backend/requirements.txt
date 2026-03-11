@@ -1,7 +1,5 @@
 # Core framework
 Flask==3.0.3
-Werkzeug==3.1.6
-click==8.3.1
 
 # Database
 Flask-PyMongo==2.3.0

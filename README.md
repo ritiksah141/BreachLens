@@ -94,7 +94,7 @@ The system is built with a RESTful API backend (Flask + MongoDB) designed for sc
 - **State Management**: NgRx or RxJS (planned)
 
 ### **Development Tools**
-- **API Testing**: Postman (87 test requests)
+- **API Testing**: Postman (64 requests, 108 test assertions)
 - **Code Quality**: pytest, coverage.py, pre-commit hooks
 - **Security Scanning**: detect-secrets
 - **Version Control**: Git with branch protection
@@ -394,7 +394,7 @@ open htmlcov/index.html
 
 ### **API Testing with Postman**
 
-The [`backend/postman/`](backend/postman/) directory contains a complete Postman collection with **87 test requests** covering all 63 endpoints.
+The [`backend/postman/`](backend/postman/) directory contains a complete Postman collection with **64 requests** and **108 test assertions** covering all major API endpoints.
 
 ```bash
 # Import collection

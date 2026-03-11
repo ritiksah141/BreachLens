@@ -101,7 +101,7 @@ Create a new breach record.
 - Test pyramid (unit, integration, E2E)
 - Unit test specifications (119 total: 104 passing + 1 skipped + 14 deselected)
 - Integration test plans (14 tests)
-- Newman API test collection (87+ requests)
+- Newman API test collection (64 requests, 108 assertions)
 - Security testing checklist
 - Performance benchmarks
 - Code coverage targets (48% achieved)
@@ -128,7 +128,7 @@ Create a new breach record.
 **Testing Summary:**
 - 104 unit tests passing (119 total: 104 passing + 1 skipped + 14 deselected)
 - 14 integration tests (marked optional)
-- 87+ Newman API tests
+- 64 Newman API requests (108 assertions)
 - 40 security-focused tests
 - Coverage: 48% overall, 70%+ on critical modules
 
@@ -246,7 +246,7 @@ Create a new breach record.
 - ✅ Backend implementation (100%)
 - ✅ Unit tests (104 passing; 119 total including 1 skipped + 14 deselected)
 - ✅ Documentation (6 files complete)
-- ✅ API tests (87+ requests ready)
+- ✅ API tests (64 requests, 108 assertions)
 - 🔄 Newman report (script ready, needs MongoDB)
 - ❌ Frontend (planned for CW2)
 

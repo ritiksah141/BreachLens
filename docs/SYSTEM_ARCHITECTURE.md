@@ -1302,7 +1302,7 @@ All API responses follow a consistent envelope format:
                ╱  │  ╲
               ╱   │   ╲
              ╱    │    ╲
-            ╱  E2E│     ╲      ← Postman/Newman (87 tests)
+            ╱  E2E│     ╲      ← Postman/Newman (64 requests)
            ╱   Tests     ╲       Full API workflows
           ╱───────────────╲
          ╱       │         ╲

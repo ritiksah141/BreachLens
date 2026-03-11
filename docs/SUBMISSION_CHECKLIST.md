@@ -33,7 +33,7 @@
   - HTML report: `backend/htmlcov/index.html`
   - JSON report: `evidence/backend/coverage.json`
 - [x] **Security Tests**: Included in 586 tests (account lockout, NoSQL injection, XSS)
-- [x] **Postman Collection**: 87 requests, 411 assertions
+- [x] **Postman Collection**: 64 requests, 108 assertions
 - [ ] **Postman Evidence PDFs**: ⚠️ NEEDS GENERATION
 
 **Action Required:**
@@ -44,7 +44,7 @@ python seed/seed_data.py --reset
 python run.py
 
 # 2. In Postman Desktop App:
-#    - Run full collection (87 requests, ~411 assertions)
+#    - Run full collection (64 requests, ~108 assertions)
 #    - Export Collection Runner PDF
 #    - Export API Documentation PDF
 # See: backend/postman/README.md for detailed instructions
@@ -364,7 +364,7 @@ open ../evidence/backend/newman-report.html
 ```
 
 **Success Criteria:**
-- ✅ All API tests passing (87+ requests)
+- ✅ All API tests passing (64 requests, 108 assertions)
 - ✅ No 5xx errors
 - ✅ Authentication flow working
 - ✅ HTML report generated
@@ -557,7 +557,7 @@ python run.py
 
 # 2. Open Postman Desktop App:
 #    - Import collection & environment from backend/postman/
-#    - Run full collection (87 requests, ~411 assertions pass)
+#    - Run full collection (64 requests, ~108 assertions pass)
 #    - Click "View Summary" → Cmd+P → Save as PDF
 #    - Save as: evidence/backend/postman-collection-runner.pdf
 #
@@ -622,7 +622,7 @@ rm -rf temp-verify
 - 104 unit tests (100% passing) ✅
 - 48% coverage (70%+ critical) ✅
 - 40 security tests ✅
-- Newman API tests (87+ requests) ✅
+- Newman API tests (64 requests, 108 assertions) ✅
 - Professional test organization ✅
 
 ### **Documentation (20%)** - Targeting 19/20

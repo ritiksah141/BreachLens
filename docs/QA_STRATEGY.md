@@ -37,7 +37,7 @@ BreachLens adopts a **multi-layer testing strategy** that mirrors professional s
 
 | Objective | Target | Evidence Produced |
 |-----------|--------|-------------------|
-| All 87 API endpoints have automated Postman tests | 100% endpoint coverage | Newman HTML report |
+| All 63 API endpoints have automated Postman tests (108 assertions) | 100% endpoint coverage | Newman HTML report |
 | All tests assert status codes, response schemas, and data correctness | Pass/fail per assertion | Postman test results |
 | JWT injection fully automated — no manual token copy/paste | Pre-request scripts | Postman collection file |
 | Angular services have ≥ 90% code coverage | >90% | Karma coverage report |
@@ -670,7 +670,7 @@ kill $FLASK_PID
 ├─────────────────────────┼───────────────────┼──────────────────┤
 │      prerequest-scripts │                28 │                0 │
 ├─────────────────────────┼───────────────────┼──────────────────┤
-│              assertions │               387 │                0 │
+│              assertions │               108 │                0 │
 ├─────────────────────────┼───────────────────┼──────────────────┤
 │ total run duration: 8.4s│                   │                  │
 │ total data received: 184│                   │                  │
@@ -1632,7 +1632,7 @@ submission/
 
 | # | Evidence Item | Tool | Demonstrates |
 |---|--------------|------|-------------|
-| E1 | Newman HTML report (all green) | Newman + htmlextra | 87 endpoints tested, all assertions pass |
+| E1 | Newman HTML report (all green) | Newman + htmlextra | 64 requests tested, 108 assertions pass |
 | E2 | Postman collection structure screenshot | Postman UI | Collection architecture, folder organisation |
 | E3 | Collection Runner screenshot | Postman UI | Visual pass/fail confirmation |
 | E4 | Pre-request script screenshot | Postman UI | JWT auto-injection implemented |
@@ -1674,15 +1674,18 @@ submission/
 
 | Category | Requests | Target Pass Rate |
 |----------|----------|-----------------|
-| Auth endpoints | 11 | 100% |
-| Breach CRUD | 22 | 100% |
-| Sub-document CRUD (all 4 arrays) | 20 | 100% |
-| Geospatial endpoints | 6 | 100% |
-| Analytics endpoints | 10 | 100% |
-| Exposure check | 5 | 100% |
-| User management | 7 | 100% |
-| Admin endpoints | 6 | 100% |
-| **Total** | **87+** | **100%** |
+| Auth endpoints | 5 | 100% |
+| Breach CRUD | 16 | 100% |
+| Affected Accounts | 6 | 100% |
+| Timeline | 4 | 100% |
+| Remediation | 4 | 100% |
+| Monitoring Alerts | 4 | 100% |
+| Geospatial endpoints | 4 | 100% |
+| Analytics endpoints | 6 | 100% |
+| Exposure check | 4 | 100% |
+| User management | 5 | 100% |
+| Admin endpoints | 5 | 100% |
+| **Total** | **63** | **100%** |
 
 ---
 

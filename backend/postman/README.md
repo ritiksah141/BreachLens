@@ -1,11 +1,11 @@
 # BreachLens Postman Collection
 
-[![Postman Tests](https://img.shields.io/badge/Postman-87%20requests-blue.svg)](BreachLens.postman_collection.json)
+[![Postman Tests](https://img.shields.io/badge/Postman-64%20requests-blue.svg)](BreachLens.postman_collection.json)
 [![API Version](https://img.shields.io/badge/API-v1.0-green.svg)](../README.md#-api-endpoints-63-total)
 
 **Comprehensive API test collection for all 63 endpoints.**
 
-> **Note:** The collection contains **87 requests** testing **63 unique endpoints**. Some endpoints have multiple test scenarios (e.g., success cases, validation errors, permission checks).
+> **Note:** The collection contains **64 requests** with **108 test assertions** covering all major API functionality including success cases, validation errors, and permission checks.
 
 ---
 
@@ -26,7 +26,7 @@ python run.py
 #    - Activate environment: Top-right → "BreachLens Local"
 #    - Right-click collection → "Run collection"
 #    - Click "Run BreachLens API v1"
-#    - Wait ~60 seconds (87 requests)
+#    - Wait ~30 seconds (64 requests)
 #    - Click "View Summary" → Cmd+P → Save as PDF ✅
 #    - Click collection → "View Documentation" → Cmd+P → Save as PDF ✅
 
@@ -44,15 +44,20 @@ python run.py
 ## 📦 Files
 
 ### **BreachLens.postman_collection.json**
-Complete Postman collection with 87 requests covering all API functionality.
+Complete Postman collection with 64 requests and 108 test assertions covering all API functionality.
 
 **Organized into folders:**
-- 🔐 **Authentication** (8 requests → 8 endpoints)
-- 📊 **Breaches** (40+ requests → 32 endpoints)
-- 📈 **Analytics** (10 requests → 10 endpoints)
-- 👤 **Users** (7 requests → 4 endpoints)
-- 🛡️ **Admin** (9 requests → 6 endpoints)
-- ❤️ **Health** (3 requests → 3 endpoints)
+- 🔐 **1 - Auth** (5 requests)
+- 📊 **2 - Breaches CRUD** (17 requests)
+- 📋 **3 - Affected Accounts** (6 requests)
+- 📅 **4 - Timeline** (4 requests)
+- 🔧 **5 - Remediation** (4 requests)
+- 🔔 **6 - Monitoring Alerts** (4 requests)
+- 🌍 **7 - Geospatial** (4 requests)
+- 📈 **8 - Analytics** (6 requests)
+- 🔍 **9 - Exposure Check** (4 requests)
+- 👤 **10 - Users** (5 requests)
+- 🛡️ **11 - Admin** (5 requests)
 
 ### **BreachLens.postman_environment.json**
 Environment variables for local testing.
@@ -154,7 +159,7 @@ The **Collection Runner** window has these options:
 The **Collection Runner** window has these options:
 
 #### **Run Order Tab:**
-- ✅ **All 87 requests** checked by default
+- ✅ **All 64 requests** checked by default
 - ✅ All 11 folders enabled
 
 #### **Configuration Options:**
@@ -174,12 +179,12 @@ The **Collection Runner** window has these options:
 ### **Step 4: Run the Collection**
 
 1. Click the large **"Run BreachLens API v1"** button (bottom-right)
-2. ⏳ Wait for tests to complete (~30-60 seconds for 87 requests)
+2. ⏳ Wait for tests to complete (~20-30 seconds for 64 requests)
 3. Watch the progress bar and request count increment
 
 **What you'll see:**
 ```
-Running... 12/87 requests
+Running... 12/64 requests
 ✓ Login Admin
 ✓ Login Analyst
 ✓ Get All Breaches
@@ -193,8 +198,8 @@ Running... 12/87 requests
 After completion, you'll see:
 
 #### **Summary Tab:**
-- ✅ **Total Requests**: 87
-- ✅ **Tests Passed**: ~410-420 assertions
+- ✅ **Total Requests**: 64
+- ✅ **Tests Passed**: ~108 assertions
 - ✅ **Tests Failed**: 0 ❌ (if any fail, see troubleshooting)
 - ✅ **Average Response Time**: < 500ms (typical)
 
@@ -247,7 +252,7 @@ There are TWO pieces of evidence needed:
 8. Save as: **`BreachLens_API_Documentation.pdf`**
 
 **What this PDF includes:**
-- ✅ All 87 requests with descriptions
+- ✅ All 64 requests with descriptions
 - ✅ Request/response schemas
 - ✅ Authentication requirements
 - ✅ Example requests (if you add saved examples)
@@ -274,10 +279,10 @@ To make your API documentation PDF more comprehensive:
 
 | Metric | Expected Value |
 |--------|---------------|
-| **Total Requests** | 87 |
-| **Requests Passed** | 87 (100%) |
-| **Total Assertions** | ~410-420 |
-| **Assertions Passed** | ~410-420 (100%) |
+| **Total Requests** | 64 |
+| **Requests Passed** | 64 (100%) |
+| **Total Assertions** | ~108 |
+| **Assertions Passed** | ~108 (100%) |
 | **Average Response Time** | < 500ms |
 | **Failed Tests** | 0 |
 
@@ -285,19 +290,24 @@ To make your API documentation PDF more comprehensive:
 
 | Folder | Requests Run | Key Coverage |
 |--------|----------|--------------|
-| **Authentication** | 6 | Login (admin/analyst), logout, error cases |
-| **Breaches** | 22 | Full CRUD, sub-documents, search, geospatial |
-| **Analytics** | 10 | Aggregations, trends, severity breakdown |
-| **Users** | 7 | User CRUD, profile, role changes |
-| **Admin** | 6 | Stats, user management, system health |
-| **Health** | 3 | Liveness, readiness probes |
-| **TOTAL** | **87** | **63 unique endpoints covered** |
+| **1 - Auth** | 5 | Login, token validation, error cases |
+| **2 - Breaches CRUD** | 17 | Full CRUD, search, pagination, RBAC |
+| **3 - Affected Accounts** | 6 | Sub-document CRUD |
+| **4 - Timeline** | 4 | Event tracking CRUD |
+| **5 - Remediation** | 4 | Action tracking CRUD |
+| **6 - Monitoring Alerts** | 4 | Alert management CRUD |
+| **7 - Geospatial** | 4 | Location queries, GeoJSON |
+| **8 - Analytics** | 6 | Aggregations, trends, KPIs |
+| **9 - Exposure Check** | 4 | Email/domain lookup |
+| **10 - Users** | 5 | User management, profile, roles |
+| **11 - Admin** | 5 | System stats, user admin |
+| **TOTAL** | **64** | **108 test assertions** |
 
 ---
 
 ## 📋 Collection Structure
 
-### **Folder: Authentication** (6 requests)
+### **Folder: Authentication** (5 requests)
 
 **1. Login**
 ```
@@ -329,27 +339,26 @@ Tests:
 
 ---
 
-### **Folder: Breaches** (22 requests)
+### **Folder: Breaches** (16 requests)
 
 **Core CRUD:**
-- List Breaches (with pagination, filters, sorting)
+- List Breaches (with pagination, filters, search)
 - Get Single Breach
 - Create Breach
 - Update Breach (full + partial)
 - Delete Breach
-- Search Breaches
-- Exposure Check
 
-**Sub-documents (20 requests):**
+**Sub-documents (14 requests):**
 - Affected Accounts: List, Add, Update, Delete, Get
-- Timeline: List, Add, Update, Delete, Get
-- Remediation: List, Add, Update, Delete, Get
-- Monitoring Alerts: List, Add, Update, Delete, Get, Acknowledge
+- Timeline: List, Add, Update, Delete
+- Remediation: List, Add, Update, Delete
+- Monitoring Alerts: List, Add, Acknowledge, Delete
 
-**Geospatial (3 requests):**
+**Geospatial (4 requests):**
 - Find Breaches Near Coordinates
 - Find Breaches Within Bounds
 - Get GeoJSON FeatureCollection
+- Missing Parameters validation
 
 **Example Request:**
 ```
@@ -377,17 +386,15 @@ Tests:
 
 ---
 
-### **Folder: Analytics** (10 requests)
+### **Folder: Analytics** (6 requests)
 
 **Aggregation Endpoints:**
 - Risk by Industry
 - Severity Breakdown
 - Monthly Trend
 - Top Organisations
-- Data Types Frequency
 - Remediation Rate
-- Alert Acknowledgement
-- Summary Stats
+- Summary KPIs
 
 **Example Request:**
 ```
@@ -400,15 +407,13 @@ Tests:
 
 ---
 
-### **Folder: Users** (7 requests)
+### **Folder: Users** (5 requests)
 
 **User Management:**
 - List All Users (Admin)
 - Get My Profile
 - Update My Profile
 - Change User Role (Admin)
-- Activate User (Admin)
-- Deactivate User (Admin)
 - Delete User (Admin)
 
 **Example Request:**
@@ -423,15 +428,14 @@ Tests:
 
 ---
 
-### **Folder: Admin** (6 requests)
+### **Folder: Admin** (5 requests)
 
 **Admin Operations:**
 - System Statistics
 - User Management Dashboard
-- Audit Logs
-- Clear Cache
-- Rebuild Indexes
-- Detailed Health Check
+- Change User Role
+- Deactivate User
+- Bulk Delete Validation
 
 **Example Request:**
 ```
@@ -730,7 +734,7 @@ python seed/seed_data.py --reset
 - [ ] Database is seeded (`python seed/seed_data.py --reset`)
 - [ ] Flask server is running (`http://localhost:5001/health` returns 200)
 - [ ] "BreachLens Local" environment is active (top-right dropdown)
-- [ ] All 87 requests are checked in Collection Runner
+- [ ] All 64 requests are checked in Collection Runner
 - [ ] Delay is set to 100ms minimum
 
 ---
@@ -751,7 +755,7 @@ python seed/seed_data.py --reset
 ### **Step-by-Step: Generating Collection Runner PDF**
 
 1. **Run Collection** (as described above in "Running Tests" section)
-2. Wait for all 87 requests to complete
+2. Wait for all 64 requests to complete
 3. Click **"View Summary"** button (top-right of results window)
 4. A new browser tab opens with comprehensive summary
 5. Press **`Cmd + P`** (Mac) or **`Ctrl + P`** (Windows)
@@ -766,8 +770,8 @@ python seed/seed_data.py --reset
 
 **What this PDF includes:**
 - ✅ Execution timestamp
-- ✅ Total requests: 87
-- ✅ Total tests passed: ~410-420
+- ✅ Total requests: 64
+- ✅ Total tests passed: ~108
 - ✅ Average response time
 - ✅ Individual request results with assertions
 - ✅ Failed tests (if any) with error details
@@ -794,7 +798,7 @@ python seed/seed_data.py --reset
 8. Save as: **`BreachLens_API_Documentation.pdf`**
 
 **What this PDF includes:**
-- ✅ All 87 endpoints with full descriptions
+- ✅ All 63 endpoints with full descriptions
 - ✅ Request/response schemas
 - ✅ Authentication requirements per endpoint
 - ✅ Example requests (if you saved examples)
@@ -830,7 +834,7 @@ To make your API Documentation PDF more impressive:
 
 ```
 postman/
-├── BreachLens.postman_collection.json       ✅ 87 requests with test scripts
+├── BreachLens.postman_collection.json       ✅ 64 requests with 108 test assertions
 ├── BreachLens.postman_environment.json      ✅ Environment variables configured
 └── README.md                                ✅ This documentation
 
@@ -841,10 +845,10 @@ evidence/ (or submission folder)
 
 **Verification before submission:**
 
-- [ ] Collection Runner PDF shows **87 requests executed**
-- [ ] Collection Runner PDF shows **~410-420 tests passed, 0 failed**
+- [ ] Collection Runner PDF shows **64 requests executed**
+- [ ] Collection Runner PDF shows **~108 tests passed, 0 failed**
 - [ ] Collection Runner PDF has **timestamp visible**
-- [ ] API Documentation PDF shows **all 87 requests**
+- [ ] API Documentation PDF shows **all 64 requests**
 - [ ] API Documentation PDF includes **authentication section**
 - [ ] Collection JSON file is included
 - [ ] Environment JSON file is included
@@ -857,9 +861,9 @@ evidence/ (or submission folder)
 
 | Metric | Value |
 |--------|-------|
-| **Total API Endpoints** | 64 |
-| **Postman Collection Requests** | 87 |
-| **Test Assertions** | ~410-420 |
+| **Total API Endpoints** | 63 |
+| **Postman Collection Requests** | 64 |
+| **Test Assertions** | ~108 |
 | **Success Rate** | 100% (all executed tests passing) |
 | **Average Response Time** | < 500ms |
 | **Authentication** | JWT-based with 3-tier RBAC (seeded users) |
@@ -884,7 +888,7 @@ evidence/ (or submission folder)
 **Common Questions:**
 
 **Q: How long does the full collection take to run?**
-A: 30-60 seconds for all 87 requests (depends on your machine).
+A: 20-30 seconds for all 64 requests (depends on your machine).
 
 **Q: Can I run specific folders only?**
 A: Yes! Right-click any folder (e.g., "Authentication") → Run folder.
@@ -903,5 +907,5 @@ A: Click any request → **Tests** tab → Add JavaScript test scripts using `pm
 **Documentation Version**: 1.0
 **Last Updated**: March 2026
 **Collection Status**: ✅ Production-ready
-**Total Requests**: 87
-**Test Coverage**: ~410-420 assertions
+**Total Requests**: 64
+**Test Coverage**: ~108 assertions

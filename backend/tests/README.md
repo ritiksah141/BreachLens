@@ -374,7 +374,7 @@ markers =
 - ⏭️ Optional for academic submission
 
 ### **3. API Contract Tests (Postman)**
-- ✅ 87 requests in Postman collection
+- ✅ 64 requests in Postman collection (108 assertions)
 - ✅ Test HTTP semantics and status codes
 - ✅ Validate response schemas
 - ✅ Test authentication flow
@@ -496,7 +496,7 @@ pytest tests/ -v --tb=long
 - ✅ All unit tests passing (586/586)
 - ✅ 88% code coverage
 - ✅ Coverage report generated (`htmlcov/`)
-- ✅ Postman collection with 87 test scripts (run via Postman Collection Runner)
+- ✅ Postman collection with 64 requests / 108 assertions (run via Postman Collection Runner)
 
 ### **What's Optional**
 - ⏭️ Integration tests (marked, not required)
