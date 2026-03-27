@@ -210,7 +210,7 @@ BreachLens API Tests (Collection)
   "id": "breachlens-env",
   "name": "BreachLens Local",
   "values": [
-    { "key": "baseUrl",          "value": "http://localhost:5000/api/v1", "enabled": true },
+    { "key": "baseUrl",          "value": "http://localhost:5001/api/v1", "enabled": true },
     { "key": "adminEmail",       "value": "admin@breachlens.test",        "enabled": true },
     { "key": "adminPassword",    "value": "Admin@Secure99",               "enabled": true },
     { "key": "analystEmail",     "value": "analyst@breachlens.test",      "enabled": true },

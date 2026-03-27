@@ -1,7 +1,7 @@
 # BreachLens – RESTful API Specification
 ## API_SPEC.md
 **Version:** 1.0.0
-**Base URL:** `http://localhost:5000/api/v1`
+**Base URL:** `http://localhost:5001/api/v1`
 **Module:** COM661 – Full Stack Strategies and Development
 
 ---

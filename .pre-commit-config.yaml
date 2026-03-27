@@ -1,3 +1,5 @@
+exclude: |
+  (^node_modules/|^.angular/|^venv/|^\.venv/|^env/|^ENV/|^__pycache__/|^dist/|^build/|^logs/|^\.vscode/|^\.idea/|^submission/|^htmlcov/|^\.pytest_cache/|^pytest_cache/|^\.tox/|^\.nox/|^\.DS_Store|^Thumbs.db)
 repos:
   # ── Standard safety checks ──────────────────────────────────────────────────
   - repo: https://github.com/pre-commit/pre-commit-hooks

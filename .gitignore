@@ -60,3 +60,9 @@ Thumbs.db
 
 # Submission folder (coursework)
 submission/
+
+# Node.js dependencies
+node_modules/
+
+# Angular build/cache
+.angular/
