@@ -66,7 +66,7 @@ def _try_optional_jwt() -> None:
 # Core breach routes
 # ---------------------------------------------------------------------------
 
-@breaches_bp.get("/")
+@breaches_bp.get("")
 def list_breaches():
     """List all breaches with optional filtering and pagination."""
     _try_optional_jwt()
@@ -115,7 +115,7 @@ def list_breaches():
     )
 
 
-@breaches_bp.post("/")
+@breaches_bp.post("")
 @require_role("analyst", "admin")
 def create_breach():
     """Create a new breach record."""

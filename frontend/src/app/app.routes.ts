@@ -24,6 +24,13 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'map',
+    loadComponent: () =>
+      import('./features/breaches/breach-map/breach-map.component').then(
+        (m) => m.BreachMapComponent
+      ),
+  },
+  {
     path: 'admin',
     canActivate: [analystGuard],
     loadComponent: () =>

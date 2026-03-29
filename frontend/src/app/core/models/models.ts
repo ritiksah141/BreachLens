@@ -145,12 +145,42 @@ export interface DataTypeFrequency {
 
 export interface AnalyticsSummary {
   total_breaches: number;
-  total_records_exposed: number;  // actual field name from backend
+  total_records_exposed: number;
   avg_risk_score: number;
-  active_breaches: number;        // actual field name (not open_breaches)
+  active_breaches: number;
   resolved_breaches: number;
   open_alerts: number;
   industries_affected: number;
+}
+
+export interface SystemStats {
+  users: {
+    total: number;
+    by_role: { admin: number; analyst: number; guest: number };
+    active: number;
+    inactive: number;
+  };
+  breaches: {
+    total: number;
+    by_status: Record<string, number>;
+    by_severity: Record<string, number>;
+  };
+  alerts: {
+    total: number;
+    unacknowledged: number;
+  };
+}
+
+export interface AuditLog {
+  timestamp: string;
+  user_id: string;
+  action: string;
+  resource: string;
+  method: string;
+  ip_address: string;
+  user_agent: string;
+  result: string;
+  details: any;
 }
 
 // -----------------------------------------------------------------------

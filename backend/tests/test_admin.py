@@ -311,3 +311,77 @@ class TestBulkDeleteBreaches:
         data = resp.get_json()["data"]
         assert data["deleted"] == 1
         assert data["partial_failure"] is True
+
+
+# ===================================================================
+# GET /api/v1/admin/audit-logs
+# ===================================================================
+
+class TestAuditLogs:
+
+    def test_audit_logs_requires_admin(self, client, analyst_headers):
+        """Analyst cannot access audit logs."""
+        resp = client.get("/api/v1/admin/audit-logs", headers=analyst_headers)
+        assert resp.status_code == 403
+
+    def test_audit_logs_success(self, client, admin_headers, tmp_path):
+        """Admin can fetch audit logs from file."""
+        log_dir = tmp_path / "logs"
+        log_dir.mkdir()
+        log_file = log_dir / "audit.log"
+
+        # Write some dummy logs
+        log_entries = [
+            '{"timestamp": "2026-03-27T10:00:00Z", "user_id": "admin", "action": "login", "result": "success"}',
+            '{"timestamp": "2026-03-27T10:05:00Z", "user_id": "admin", "action": "user_role_changed", "result": "success"}'
+        ]
+        log_file.write_text("\n".join(log_entries))
+
+        with patch.dict("os.environ", {
+            "AUDIT_LOG_DIR": str(log_dir),
+            "AUDIT_LOG_FILE": "audit.log"
+        }):
+            resp = client.get("/api/v1/admin/audit-logs", headers=admin_headers)
+
+        assert resp.status_code == 200
+        data = resp.get_json()["data"]
+        meta = resp.get_json()["meta"]
+
+        # Reversed order
+        assert len(data) == 2
+        assert data[0]["action"] == "user_role_changed"
+        assert data[1]["action"] == "login"
+        assert meta["total"] == 2
+
+    def test_audit_logs_pagination(self, client, admin_headers, tmp_path):
+        """Audit logs support pagination."""
+        log_dir = tmp_path / "logs"
+        log_dir.mkdir()
+        log_file = log_dir / "audit.log"
+
+        log_entries = [f'{{"id": {i}}}' for i in range(15)]
+        log_file.write_text("\n".join(log_entries))
+
+        with patch.dict("os.environ", {
+            "AUDIT_LOG_DIR": str(log_dir),
+            "AUDIT_LOG_FILE": "audit.log"
+        }):
+            resp = client.get("/api/v1/admin/audit-logs?page=1&limit=10", headers=admin_headers)
+
+        assert resp.status_code == 200
+        data = resp.get_json()["data"]
+        meta = resp.get_json()["meta"]
+        assert len(data) == 10
+        assert meta["total"] == 15
+        assert meta["total_pages"] == 2
+
+    def test_audit_logs_file_missing(self, client, admin_headers):
+        """If log file missing, return empty list (not 500)."""
+        with patch.dict("os.environ", {
+            "AUDIT_LOG_DIR": "/tmp/nonexistent_logs_dir_123",
+            "AUDIT_LOG_FILE": "audit.log"
+        }):
+            resp = client.get("/api/v1/admin/audit-logs", headers=admin_headers)
+
+        assert resp.status_code == 200
+        assert resp.get_json()["data"] == []

@@ -3,16 +3,16 @@ import {
   ElementRef, ViewChild, AfterViewInit
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { NgClass, DecimalPipe } from '@angular/common';
+import { NgClass, DecimalPipe, PercentPipe } from '@angular/common';
 import { AnalyticsService } from '../../core/services/analytics.service';
+import { BreachService } from '../../core/services/breach.service';
 import { AuthService } from '../../core/services/auth.service';
 import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } from '../../core/models/models';
-import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, NgClass, DecimalPipe],
+  imports: [RouterLink, NgClass, DecimalPipe, PercentPipe],
   template: `
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
@@ -21,7 +21,12 @@ import { environment } from '../../../environments/environment';
         </h2>
         <p class="text-muted mb-0 small">Dark web breach intelligence overview</p>
       </div>
-      <a routerLink="/breaches" class="btn btn-danger btn-sm">View all breaches →</a>
+      <div class="d-flex gap-2">
+        @if (auth.isAdmin()) {
+          <a routerLink="/admin" class="btn btn-outline-warning btn-sm">Admin Panel</a>
+        }
+        <a routerLink="/breaches" class="btn btn-danger btn-sm">View all breaches →</a>
+      </div>
     </div>
 
     <!-- KPI cards -->
@@ -30,78 +35,102 @@ import { environment } from '../../../environments/environment';
         <div class="col-6 col-md-3">
           <div class="card bg-dark border-secondary text-center p-3">
             <div class="fs-3 fw-bold text-danger">{{ summary.total_breaches | number }}</div>
-            <small class="text-muted">Total breaches</small>
+            <small class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">Total breaches</small>
           </div>
         </div>
         <div class="col-6 col-md-3">
           <div class="card bg-dark border-secondary text-center p-3">
             <div class="fs-3 fw-bold text-warning">{{ summary.active_breaches }}</div>
-            <small class="text-muted">Active</small>
+            <small class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">Active</small>
           </div>
         </div>
         <div class="col-6 col-md-3">
           <div class="card bg-dark border-secondary text-center p-3">
             <div class="fs-3 fw-bold text-success">{{ summary.resolved_breaches }}</div>
-            <small class="text-muted">Resolved</small>
+            <small class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">Resolved</small>
           </div>
         </div>
         <div class="col-6 col-md-3">
           <div class="card bg-dark border-secondary text-center p-3">
             <div class="fs-3 fw-bold text-info">{{ summary.avg_risk_score | number:'1.1-1' }}</div>
-            <small class="text-muted">Avg risk score</small>
+            <small class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">Avg risk score</small>
           </div>
         </div>
-      </div>
-    } @else {
-      <div class="row g-3 mb-4">
-        @for (i of [1,2,3,4]; track i) {
-          <div class="col-6 col-md-3">
-            <div class="card bg-dark border-secondary text-center p-3">
-              <div class="placeholder-glow"><span class="placeholder col-6"></span></div>
-              <small class="text-muted">Loading...</small>
-            </div>
-          </div>
-        }
       </div>
     }
 
-    <!-- Charts row -->
+    <!-- Main Charts row -->
     <div class="row g-4 mb-4">
-      <div class="col-lg-6">
+      <div class="col-lg-8">
         <div class="card bg-dark border-secondary h-100">
           <div class="card-header border-secondary d-flex justify-content-between align-items-center">
-            <strong class="text-light">Breaches by severity</strong>
-            @if (severityLoading) {
-              <span class="spinner-border spinner-border-sm text-secondary"></span>
-            }
-          </div>
-          <div class="card-body d-flex align-items-center justify-content-center">
-            @if (!severityLoading && severityData.length === 0) {
-              <p class="text-muted small">No data available</p>
-            }
-            <canvas #severityChart style="max-height:260px;"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-lg-6">
-        <div class="card bg-dark border-secondary h-100">
-          <div class="card-header border-secondary d-flex justify-content-between align-items-center">
-            <strong class="text-light">
-              Monthly breach trend
-              @if (trendYear) {
-                <span class="text-muted fw-normal fs-6"> ({{ trendYear }})</span>
-              }
-            </strong>
+            <strong class="text-light">Monthly breach trend</strong>
             @if (trendLoading) {
               <span class="spinner-border spinner-border-sm text-secondary"></span>
             }
           </div>
           <div class="card-body">
-            @if (!trendLoading && trendData.length === 0) {
-              <p class="text-muted small text-center pt-4">No trend data found</p>
-            }
-            <canvas #trendChart style="max-height:260px;"></canvas>
+            <canvas #trendChart style="max-height:300px;"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="card bg-dark border-secondary h-100">
+          <div class="card-header border-secondary">
+            <strong class="text-light">Breaches by severity</strong>
+          </div>
+          <div class="card-body d-flex align-items-center justify-content-center">
+            <canvas #severityChart style="max-height:240px;"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Advanced Industry Trend Chart (NEW) -->
+    @if (auth.isAuthenticated()) {
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="card bg-dark border-secondary">
+            <div class="card-header border-secondary">
+              <strong class="text-light">Industry Risk Year-over-Year Trend</strong>
+            </div>
+            <div class="card-body">
+              <canvas #industryTrendChart style="max-height:350px;"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Secondary Charts row -->
+    <div class="row g-4 mb-4">
+      <div class="col-lg-4">
+        <div class="card bg-dark border-secondary h-100">
+          <div class="card-header border-secondary">
+            <strong class="text-light">Risk Score Distribution</strong>
+          </div>
+          <div class="card-body">
+            <canvas #riskChart style="max-height:220px;"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="card bg-dark border-secondary h-100">
+          <div class="card-header border-secondary">
+            <strong class="text-light">Top Target Organisations</strong>
+          </div>
+          <div class="card-body">
+            <canvas #orgChart style="max-height:220px;"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="card bg-dark border-secondary h-100">
+          <div class="card-header border-secondary">
+            <strong class="text-light">Top Exposed Data Types</strong>
+          </div>
+          <div class="card-body">
+            <canvas #dataTypesChart style="max-height:220px;"></canvas>
           </div>
         </div>
       </div>
@@ -110,25 +139,8 @@ import { environment } from '../../../environments/environment';
     <div class="row g-4">
       <div class="col-lg-6">
         <div class="card bg-dark border-secondary">
-          <div class="card-header border-secondary d-flex justify-content-between align-items-center">
-            <strong class="text-light">Top exposed data types</strong>
-            @if (dataTypesLoading) {
-              <span class="spinner-border spinner-border-sm text-secondary"></span>
-            }
-          </div>
-          <div class="card-body">
-            @if (!dataTypesLoading && dataTypesData.length === 0) {
-              <p class="text-muted small text-center pt-2">No data available</p>
-            }
-            <canvas #dataTypesChart style="max-height:240px;"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-lg-6">
-        <div class="card bg-dark border-secondary">
           <div class="card-header border-secondary">
-            <strong class="text-light">Exposure checker</strong>
+            <strong class="text-light">Exposure Checker</strong>
           </div>
           <div class="card-body">
             <p class="text-muted small mb-3">
@@ -140,6 +152,7 @@ import { environment } from '../../../environments/environment';
                 class="form-control bg-dark text-light border-secondary"
                 type="text"
                 placeholder="email@example.com or example.com"
+                (keyup.enter)="checkExposure(exposureInput.value)"
               />
               <button
                 class="btn btn-danger"
@@ -155,7 +168,7 @@ import { environment } from '../../../environments/environment';
             </div>
             @if (exposureResult !== null) {
               <div
-                class="alert mt-2 mb-0 py-2"
+                class="alert mt-2 mb-0 py-2 animate__animated animate__fadeIn"
                 [ngClass]="exposureResult.exposed ? 'alert-danger' : 'alert-success'"
               >
                 @if (exposureResult.exposed) {
@@ -165,245 +178,274 @@ import { environment } from '../../../environments/environment';
                 }
               </div>
             }
-            @if (exposureError) {
-              <div class="alert alert-warning mt-2 mb-0 py-2 small">{{ exposureError }}</div>
-            }
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card bg-dark border-secondary h-100">
+          <div class="card-header border-secondary">
+            <strong class="text-light">Remediation Status</strong>
+          </div>
+          <div class="card-body d-flex flex-column justify-content-center">
+             <div class="text-center mb-3">
+               <div class="fs-1 fw-bold text-success">{{ remediationRate | percent }}</div>
+               <small class="text-muted">Actions Completed</small>
+             </div>
+             <div class="progress bg-black" style="height: 10px;">
+               <div class="progress-bar bg-success" role="progressbar" [style.width.%]="remediationRate * 100"></div>
+             </div>
           </div>
         </div>
       </div>
     </div>
-
-    @if (!auth.isAuthenticated()) {
-      <div class="alert alert-dark border-secondary mt-4">
-        <strong class="text-light">Sign in</strong>
-        <span class="text-muted"> to access industry risk and alert analytics.</span>
-        <a routerLink="/auth/login" class="btn btn-sm btn-danger ms-2">Login</a>
-      </div>
-    }
   `,
+  styles: [`
+    .progress-bar { transition: width 1s ease-in-out; }
+  `]
 })
 export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('severityChart')  severityChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('trendChart')     trendChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('dataTypesChart') dataTypesChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('riskChart')      riskChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('orgChart')       orgChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('industryTrendChart') industryTrendChartRef!: ElementRef<HTMLCanvasElement>;
 
   private analytics = inject(AnalyticsService);
+  private breachService = inject(BreachService);
   auth = inject(AuthService);
 
   summary: AnalyticsSummary | null = null;
   severityData: SeverityBreakdown[] = [];
   trendData: MonthlyTrend[] = [];
   dataTypesData: DataTypeFrequency[] = [];
-  trendYear: number | null = null;
+  riskData: any[] = [];
+  orgData: any[] = [];
+  industryTrendData: any[] = [];
+  remediationRate = 0;
 
-  severityLoading  = true;
-  trendLoading     = true;
-  dataTypesLoading = true;
-
+  trendLoading = true;
   checkingExposure = false;
   exposureResult: any = null;
-  exposureError = '';
 
   private charts: any[] = [];
   private viewReady = false;
 
   ngOnInit(): void {
-    this.loadSummary();
-    this.loadSeverity();
-    this.loadTrend();
-    this.loadDataTypes();
+    this.loadData();
   }
 
   ngAfterViewInit(): void {
     this.viewReady = true;
-    this.tryRenderSeverity();
-    this.tryRenderTrend();
-    this.tryRenderDataTypes();
+    this.renderAllCharts();
   }
 
   ngOnDestroy(): void {
     this.charts.forEach((c) => c?.destroy());
   }
 
-  // ------------------------------------------------------------------
-  private loadSummary(): void {
-    this.analytics.getSummary().subscribe({
-      next: (res) => (this.summary = res.data),
-      error: () => {},
+  private loadData(): void {
+    this.analytics.getSummary().subscribe(res => this.summary = res.data);
+    this.analytics.getSeverityBreakdown().subscribe(res => {
+      this.severityData = res.data;
+      if (this.viewReady) this.renderSeverity();
     });
+    this.analytics.getMonthlyTrend(new Date().getFullYear()).subscribe(res => {
+      this.trendData = res.data;
+      this.trendLoading = false;
+      if (this.viewReady) this.renderTrend();
+    });
+    this.analytics.getDataTypesFrequency().subscribe(res => {
+      this.dataTypesData = res.data.slice(0, 5);
+      if (this.viewReady) this.renderDataTypes();
+    });
+    this.analytics.getRiskScores().subscribe(res => {
+      this.riskData = res.data;
+      if (this.viewReady) this.renderRisk();
+    });
+
+    if (this.auth.isAnalyst()) {
+      this.analytics.getTopOrganisations(5).subscribe(res => {
+        this.orgData = res.data;
+        if (this.viewReady) this.renderOrg();
+      });
+      this.analytics.getRemediationRate().subscribe(res => {
+        this.remediationRate = res.data?.rate || 0;
+      });
+      this.analytics.getIndustryYearTrend().subscribe(res => {
+        this.industryTrendData = res.data;
+        if (this.viewReady) this.renderIndustryTrend();
+      });
+    }
   }
 
-  private loadSeverity(): void {
-    this.analytics.getSeverityBreakdown().subscribe({
-      next: (res) => {
-        // API returns: { severity: string, breach_count: number, total_records: number }
-        this.severityData = (res.data ?? []).filter((d: any) => d.severity);
-        this.severityLoading = false;
-        this.tryRenderSeverity();
+  private renderAllCharts(): void {
+    if (this.severityData.length) this.renderSeverity();
+    if (this.trendData.length) this.renderTrend();
+    if (this.dataTypesData.length) this.renderDataTypes();
+    if (this.riskData.length) this.renderRisk();
+    if (this.orgData.length) this.renderOrg();
+    if (this.industryTrendData.length) this.renderIndustryTrend();
+  }
+
+  private async getChart() {
+    const mod = await import('chart.js/auto');
+    return mod.default;
+  }
+
+  private async renderSeverity() {
+    if (!this.severityChartRef) return;
+    const Chart = await this.getChart();
+    this.charts[0]?.destroy();
+    this.charts[0] = new Chart(this.severityChartRef.nativeElement, {
+      type: 'doughnut',
+      data: {
+        labels: this.severityData.map(d => d.severity),
+        datasets: [{
+          data: this.severityData.map(d => d.breach_count),
+          backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#0dcaf0', '#6c757d'],
+          borderWidth: 0
+        }]
       },
-      error: () => { this.severityLoading = false; },
+      options: { plugins: { legend: { position: 'bottom', labels: { color: '#adb5bd', font: { size: 10 } } } } }
     });
   }
 
-  private loadTrend(): void {
-    const currentYear = new Date().getFullYear();
-    this.analytics.getMonthlyTrend(currentYear).subscribe({
-      next: (res) => {
-        if ((res.data ?? []).length > 0) {
-          this.trendData = res.data;
-          this.trendYear = currentYear;
-          this.trendLoading = false;
-          this.tryRenderTrend();
-        } else {
-          // No data this year — try previous year
-          this.analytics.getMonthlyTrend(currentYear - 1).subscribe({
-            next: (res2) => {
-              this.trendData = res2.data ?? [];
-              this.trendYear = this.trendData.length > 0 ? currentYear - 1 : null;
-              this.trendLoading = false;
-              this.tryRenderTrend();
-            },
-            error: () => { this.trendLoading = false; },
-          });
+  private async renderTrend() {
+    if (!this.trendChartRef) return;
+    const Chart = await this.getChart();
+    this.charts[1]?.destroy();
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    this.charts[1] = new Chart(this.trendChartRef.nativeElement, {
+      type: 'line',
+      data: {
+        labels: this.trendData.map(d => months[d.month - 1]),
+        datasets: [{
+          label: 'Breaches',
+          data: this.trendData.map(d => d.count),
+          borderColor: '#dc3545',
+          tension: 0.4,
+          fill: true,
+          backgroundColor: 'rgba(220, 53, 69, 0.1)'
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#6c757d' } },
+          x: { grid: { display: false }, ticks: { color: '#6c757d' } }
         }
-      },
-      error: () => { this.trendLoading = false; },
+      }
     });
   }
 
-  private loadDataTypes(): void {
-    this.analytics.getDataTypesFrequency().subscribe({
-      next: (res) => {
-        // API returns: { data_type: string, count: number }
-        this.dataTypesData = (res.data ?? [])
-          .filter((d: any) => d.data_type)
-          .slice(0, 8);
-        this.dataTypesLoading = false;
-        this.tryRenderDataTypes();
+  private async renderDataTypes() {
+    if (!this.dataTypesChartRef) return;
+    const Chart = await this.getChart();
+    this.charts[2]?.destroy();
+    this.charts[2] = new Chart(this.dataTypesChartRef.nativeElement, {
+      type: 'bar',
+      data: {
+        labels: this.dataTypesData.map(d => d.data_type),
+        datasets: [{ data: this.dataTypesData.map(d => d.count), backgroundColor: '#0dcaf0' }]
       },
-      error: () => { this.dataTypesLoading = false; },
+      options: {
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: '#6c757d' } },
+          y: { grid: { display: false }, ticks: { color: '#adb5bd' } }
+        }
+      }
     });
   }
 
-  // ------------------------------------------------------------------
-  private tryRenderSeverity(): void {
-    if (!this.viewReady || !this.severityChartRef?.nativeElement || !this.severityData.length) return;
+  private async renderRisk() {
+    if (!this.riskChartRef) return;
+    const Chart = await this.getChart();
+    this.charts[3]?.destroy();
+    this.charts[3] = new Chart(this.riskChartRef.nativeElement, {
+      type: 'bar',
+      data: {
+        labels: this.riskData.map(d => d.bin),
+        datasets: [{ data: this.riskData.map(d => d.count), backgroundColor: '#ffc107' }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: '#6c757d' } },
+          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#6c757d' } }
+        }
+      }
+    });
+  }
 
-    import('chart.js/auto').then((mod) => {
-      const Chart = mod.default;
-      this.charts[0]?.destroy();
-      const colorMap: Record<string, string> = {
-        critical:      '#dc3545',
-        high:          '#ffc107',
-        medium:        '#0d6efd',
-        low:           '#198754',
-        informational: '#6c757d',
+  private async renderOrg() {
+    if (!this.orgChartRef) return;
+    const Chart = await this.getChart();
+    this.charts[4]?.destroy();
+    this.charts[4] = new Chart(this.orgChartRef.nativeElement, {
+      type: 'polarArea',
+      data: {
+        labels: this.orgData.map(d => d.organisation),
+        datasets: [{ data: this.orgData.map(d => d.count), backgroundColor: ['rgba(220, 53, 69, 0.7)', 'rgba(253, 126, 20, 0.7)', 'rgba(255, 193, 7, 0.7)', 'rgba(13, 202, 240, 0.7)', 'rgba(108, 117, 125, 0.7)'] }]
+      },
+      options: {
+        scales: { r: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { display: false } } },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+
+  private async renderIndustryTrend() {
+    if (!this.industryTrendChartRef) return;
+    const Chart = await this.getChart();
+
+    // Process data: backend returns list of {industry, year, avg_risk}
+    const industries = Array.from(new Set(this.industryTrendData.map(d => d.industry))).slice(0, 5);
+    const years = Array.from(new Set(this.industryTrendData.map(d => d.year))).sort();
+
+    const datasets = industries.map((ind, i) => {
+      const colors = ['#dc3545', '#fd7e14', '#ffc107', '#0dcaf0', '#198754'];
+      return {
+        label: ind,
+        data: years.map(y => {
+          const found = this.industryTrendData.find(d => d.industry === ind && d.year === y);
+          return found ? found.avg_risk_score : 0;
+        }),
+        borderColor: colors[i % colors.length],
+        backgroundColor: colors[i % colors.length] + '33',
+        fill: false,
+        tension: 0.3
       };
-      this.charts[0] = new Chart(this.severityChartRef.nativeElement, {
-        type: 'doughnut',
-        data: {
-          labels: this.severityData.map((d) => d.severity),
-          datasets: [{
-            data: this.severityData.map((d) => d.breach_count),
-            backgroundColor: this.severityData.map(
-              (d) => colorMap[d.severity?.toLowerCase()] ?? '#6c757d'
-            ),
-            borderWidth: 0,
-          }],
-        },
-        options: {
-          plugins: { legend: { labels: { color: '#adb5bd' } } },
-          cutout: '65%',
-        },
-      });
+    });
+
+    this.charts[5]?.destroy();
+    this.charts[5] = new Chart(this.industryTrendChartRef.nativeElement, {
+      type: 'line',
+      data: { labels: years.map(String), datasets },
+      options: {
+        plugins: { legend: { position: 'bottom', labels: { color: '#adb5bd' } } },
+        scales: {
+          y: { title: { display: true, text: 'Avg Risk Score', color: '#6c757d' }, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#6c757d' } },
+          x: { grid: { display: false }, ticks: { color: '#6c757d' } }
+        }
+      }
     });
   }
 
-  private tryRenderTrend(): void {
-    if (!this.viewReady || !this.trendChartRef?.nativeElement || !this.trendData.length) return;
-
-    import('chart.js/auto').then((mod) => {
-      const Chart = mod.default;
-      this.charts[1]?.destroy();
-      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      this.charts[1] = new Chart(this.trendChartRef.nativeElement, {
-        type: 'line',
-        data: {
-          labels: this.trendData.map((d) => months[(d.month ?? 1) - 1]),
-          datasets: [{
-            label: 'Breaches',
-            data: this.trendData.map((d) => d.count),
-            borderColor: '#dc3545',
-            backgroundColor: 'rgba(220,53,69,0.1)',
-            fill: true,
-            tension: 0.3,
-            pointBackgroundColor: '#dc3545',
-            pointRadius: 4,
-          }],
-        },
-        options: {
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { ticks: { color: '#6c757d' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-            y: { beginAtZero: true, ticks: { color: '#6c757d', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
-          },
-        },
-      });
-    });
-  }
-
-  private tryRenderDataTypes(): void {
-    if (!this.viewReady || !this.dataTypesChartRef?.nativeElement || !this.dataTypesData.length) return;
-
-    import('chart.js/auto').then((mod) => {
-      const Chart = mod.default;
-      this.charts[2]?.destroy();
-      this.charts[2] = new Chart(this.dataTypesChartRef.nativeElement, {
-        type: 'bar',
-        data: {
-          labels: this.dataTypesData.map((d) => d.data_type),
-          datasets: [{
-            label: 'Occurrences',
-            data: this.dataTypesData.map((d) => d.count),
-            backgroundColor: 'rgba(220,53,69,0.75)',
-            borderRadius: 4,
-          }],
-        },
-        options: {
-          indexAxis: 'y',
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { beginAtZero: true, ticks: { color: '#6c757d', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
-            y: { ticks: { color: '#adb5bd' }, grid: { display: false } },
-          },
-        },
-      });
-    });
-  }
-
-  // ------------------------------------------------------------------
   checkExposure(value: string): void {
-    this.exposureResult = null;
-    this.exposureError = '';
     if (!value.trim()) return;
-
     this.checkingExposure = true;
+    this.exposureResult = null;
     const isEmail = value.includes('@');
-    const token = localStorage.getItem('bl_token');
-    const param = isEmail
-      ? `email=${encodeURIComponent(value)}`
-      : `domain=${encodeURIComponent(value)}`;
-    const url = `${environment.apiUrl}/breaches/exposure-check?${param}`;
-
-    fetch(url, token ? { headers: { 'x-access-token': token } } : {})
-      .then((r) => r.json())
-      .then((data) => {
-        this.exposureResult = data.data;
+    const req$ = isEmail ? this.breachService.checkExposure(value) : this.breachService.checkExposure(undefined, value);
+    req$.subscribe({
+      next: (res) => {
+        this.exposureResult = res.data;
         this.checkingExposure = false;
-      })
-      .catch(() => {
-        this.exposureError = 'Could not reach the API. Is Flask running on port 5001?';
-        this.checkingExposure = false;
-      });
+      },
+      error: () => this.checkingExposure = false
+    });
   }
 }

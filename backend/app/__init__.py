@@ -32,9 +32,12 @@ def create_app(config_name: str = "development") -> Flask:
     app = Flask(__name__)
     app.config.from_object(config[config_name])
 
+    # Disable strict slashes globally to prevent redirects for preflight requests
+    app.url_map.strict_slashes = False
+
     # Initialise extensions
     mongo.init_app(app)
-    cors.init_app(app, resources={r"/api/*": {"origins": app.config.get("CORS_ORIGINS", ["*"])}})
+    cors.init_app(app, resources={r"/api/.*": {"origins": app.config.get("CORS_ORIGINS", ["*"])}})
     limiter.init_app(app)
     cache.init_app(app)
 

@@ -42,4 +42,22 @@ export class AnalyticsService {
   getRemediationRate(): Observable<ApiResponse<any>> {
     return this.http.get<ApiResponse<any>>(`${this.base}/remediation-rate`);
   }
+
+  getTopOrganisations(limit = 10): Observable<ApiResponse<any>> {
+    const params = new HttpParams().set('limit', limit.toString());
+    return this.http.get<ApiResponse<any>>(`${this.base}/top-organisations`, { params });
+  }
+
+  getAlertAcknowledgement(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(`${this.base}/alert-acknowledgement`);
+  }
+
+  getIndustryYearTrend(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(`${this.base}/industry-year-trend`);
+  }
+
+  getRiskScores(bins = 10): Observable<ApiResponse<any>> {
+    const params = new HttpParams().set('bins', bins.toString());
+    return this.http.get<ApiResponse<any>>(`${this.base}/risk-scores`, { params });
+  }
 }

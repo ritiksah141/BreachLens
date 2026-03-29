@@ -20,7 +20,7 @@ _PASSWORD_RE = re.compile(r"^(?=.*[A-Z])(?=.*\d).{8,}$")
 # --------------------------------------------------------------------------- #
 # GET /api/v1/users  (admin only)                                              #
 # --------------------------------------------------------------------------- #
-@users_bp.route("/", methods=["GET"])
+@users_bp.route("", methods=["GET"])
 @require_role("admin")
 def list_users():
     try:

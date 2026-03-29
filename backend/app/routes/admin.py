@@ -210,3 +210,53 @@ def bulk_delete_breaches():
         "partial_failure": deleted_count < len(breach_ids),
         "invalid_ids": invalid_ids,
     })
+
+
+# --------------------------------------------------------------------------- #
+# GET /api/v1/admin/audit-logs                                                 #
+# --------------------------------------------------------------------------- #
+@admin_bp.route("/audit-logs", methods=["GET"])
+@require_role("admin")
+def list_audit_logs():
+    """Read audit logs from file and return with pagination."""
+    import os
+    import json
+
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+        limit = min(100, max(1, int(request.args.get("limit", 20))))
+    except ValueError:
+        return error_response("'page' and 'limit' must be integers.", 400)
+
+    log_dir = os.getenv("AUDIT_LOG_DIR", "logs")
+    log_file = os.getenv("AUDIT_LOG_FILE", "audit.log")
+    log_path = os.path.join(log_dir, log_file)
+
+    if not os.path.exists(log_path):
+        return success_response([], 200, meta={"page": page, "limit": limit, "total": 0, "total_pages": 0})
+
+    logs = []
+    try:
+        with open(log_path, "r") as f:
+            # Read all lines and reverse to show newest first
+            lines = f.readlines()
+            lines.reverse()
+
+            total = len(lines)
+            start = (page - 1) * limit
+            end = start + limit
+
+            for line in lines[start:end]:
+                if line.strip():
+                    try:
+                        logs.append(json.loads(line))
+                    except json.JSONDecodeError:
+                        continue
+
+            total_pages = (total + limit - 1) // limit
+
+            return success_response(logs, 200, meta={
+                "page": page, "limit": limit, "total": total, "total_pages": total_pages
+            })
+    except Exception as e:
+        return error_response(f"Failed to read audit logs: {str(e)}", 500)

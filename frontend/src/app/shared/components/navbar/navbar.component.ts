@@ -33,6 +33,11 @@ import { AuthService } from '../../../core/services/auth.service';
                 Breaches
               </a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/map" routerLinkActive="active">
+                Global Map
+              </a>
+            </li>
             @if (auth.isAnalyst()) {
               <li class="nav-item">
                 <a class="nav-link" routerLink="/admin" routerLinkActive="active">
