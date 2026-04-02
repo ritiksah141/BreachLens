@@ -20,227 +20,207 @@ import { UserManagementComponent } from './user-management/user-management.compo
     SeverityBadgeComponent, PaginationComponent, UserManagementComponent, CommonModule,
   ],
   template: `
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2 class="fw-bold mb-0">
-        <span class="text-warning">⚙</span> Admin Panel
-      </h2>
-      <div class="d-flex gap-2">
-        <button class="btn btn-sm btn-outline-secondary" (click)="refreshStats()">Refresh Stats</button>
-        <span class="badge bg-warning text-dark">{{ auth.currentUser()?.role | uppercase }}</span>
+    <div class="d-flex justify-content-between align-items-end mb-4">
+      <div>
+        <h2 class="font-headline fw-extrabold text-white tracking-tight mb-1">Command Center</h2>
+        <p class="text-on-surface-variant mb-0 small text-uppercase tracking-widest" style="font-size: 9px;">Administrative Terminal v2.0</p>
+      </div>
+      <div class="d-flex gap-3 align-items-center">
+        <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-3" (click)="refreshStats()">
+          <span class="material-symbols-outlined fs-6 me-1">refresh</span> Refresh
+        </button>
+        <span class="badge py-2 px-3 glass-panel border border-primary border-opacity-25 text-primary text-xs-caps">{{ auth.currentUser()?.role }}</span>
       </div>
     </div>
 
     @if (!auth.isAnalyst()) {
-      <div class="alert alert-danger">
-        You need analyst or admin privileges to access this page.
-        <a routerLink="/auth/login" class="alert-link">Login</a>
+      <div class="alert bg-error-container bg-opacity-10 border-error text-error p-4 rounded-3 shadow-lg">
+        <div class="d-flex align-items-center gap-3">
+          <span class="material-symbols-outlined fs-2">security</span>
+          <div>
+            <div class="fw-bold text-xs-caps mb-1">Access_Denied</div>
+            <div class="small">Elevated privileges required for terminal access. Please <a routerLink="/auth/login" class="text-error fw-bold">Authenticate</a>.</div>
+          </div>
+        </div>
       </div>
     }
 
     @if (auth.isAnalyst()) {
-      <!-- System Stats Section -->
+      <!-- System Stats Row -->
       @if (stats) {
-        <div class="row g-3 mb-4">
+        <div class="row g-4 mb-4">
           <div class="col-md-4">
-            <div class="card bg-dark border-secondary h-100">
-              <div class="card-body py-2">
-                <small class="text-muted d-block mb-1">Users</small>
-                <div class="d-flex justify-content-between align-items-end">
-                  <h4 class="mb-0 text-light">{{ stats.users.total }}</h4>
-                  <div class="small">
-                    <span class="text-success">{{ stats.users.active }} active</span> ·
-                    <span class="text-danger">{{ stats.users.inactive }} inactive</span>
-                  </div>
+            <div class="card p-3 border-0 border-start border-primary border-3 glow-primary">
+              <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">Operator_Network</div>
+              <div class="d-flex justify-content-between align-items-end">
+                <h3 class="mb-0 fw-bold font-headline text-white">{{ stats.users.total }}</h3>
+                <div class="text-xs-caps" style="font-size: 8px;">
+                  <span class="text-success">{{ stats.users.active }} ACTIVE</span> •
+                  <span class="text-error">{{ stats.users.inactive }} OFFLINE</span>
                 </div>
               </div>
             </div>
           </div>
           <div class="col-md-4">
-            <div class="card bg-dark border-secondary h-100">
-              <div class="card-body py-2">
-                <small class="text-muted d-block mb-1">Breaches</small>
-                <div class="d-flex justify-content-between align-items-end">
-                  <h4 class="mb-0 text-light">{{ stats.breaches.total }}</h4>
-                  <div class="small text-muted">
-                    {{ stats.breaches.by_status['open'] || 0 }} open ·
-                    {{ stats.breaches.by_status['resolved'] || 0 }} resolved
-                  </div>
+            <div class="card p-3 border-0 border-start border-secondary border-3">
+              <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">Intelligence_Repository</div>
+              <div class="d-flex justify-content-between align-items-end">
+                <h3 class="mb-0 fw-bold font-headline text-white">{{ stats.breaches.total }}</h3>
+                <div class="text-xs-caps text-on-surface-variant" style="font-size: 8px;">
+                  {{ stats.breaches.by_status['open'] || 0 }} OPEN •
+                  {{ stats.breaches.by_status['resolved'] || 0 }} RESOLVED
                 </div>
               </div>
             </div>
           </div>
           <div class="col-md-4">
-            <div class="card bg-dark border-secondary h-100">
-              <div class="card-body py-2">
-                <small class="text-muted d-block mb-1">Monitoring</small>
-                <div class="d-flex justify-content-between align-items-end">
-                  <h4 class="mb-0 text-warning">{{ stats.alerts.unacknowledged }}</h4>
-                  <div class="small text-muted">Unacked alerts</div>
-                </div>
+            <div class="card p-3 border-0 border-start border-tertiary border-3 glow-error">
+              <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">Alert_Monitoring</div>
+              <div class="d-flex justify-content-between align-items-end">
+                <h3 class="mb-0 fw-bold font-headline text-tertiary">{{ stats.alerts.unacknowledged }}</h3>
+                <div class="text-xs-caps text-tertiary" style="font-size: 8px;">UNACKNOWLEDGED_EVENTS</div>
               </div>
             </div>
           </div>
         </div>
       }
 
-      <!-- Tabs Navigation -->
-      <ul class="nav nav-tabs border-secondary mb-4">
-        <li class="nav-item">
-          <button class="nav-link" [ngClass]="{ 'active bg-dark text-danger border-secondary': activeTab === 'manage' }" (click)="activeTab = 'manage'">Manage Breaches</button>
-        </li>
-        <li class="nav-item">
-          <button class="nav-link" [ngClass]="{ 'active bg-dark text-danger border-secondary': activeTab === 'bulk' }" (click)="activeTab = 'bulk'">Bulk Import</button>
-        </li>
+      <!-- Tab Navigation -->
+      <div class="glass-panel p-1 rounded-3 mb-4 d-inline-flex border border-outline-variant border-opacity-10">
+        <button class="btn text-xs-caps py-2 px-4 transition-all"
+                [ngClass]="activeTab === 'manage' ? 'btn-primary shadow-sm' : 'btn-link text-on-surface-variant text-decoration-none'"
+                (click)="activeTab = 'manage'">Manage_Logs</button>
+        <button class="btn text-xs-caps py-2 px-4 transition-all"
+                [ngClass]="activeTab === 'bulk' ? 'btn-primary shadow-sm' : 'btn-link text-on-surface-variant text-decoration-none'"
+                (click)="activeTab = 'bulk'">Bulk_Import</button>
         @if (auth.isAdmin()) {
-          <li class="nav-item">
-            <button class="nav-link" [ngClass]="{ 'active bg-dark text-danger border-secondary': activeTab === 'audit' }" (click)="loadAuditLogs(); activeTab = 'audit'">Audit Logs</button>
-          </li>
-          <li class="nav-item">
-            <button class="nav-link" [ngClass]="{ 'active bg-dark text-danger border-secondary': activeTab === 'users' }" (click)="activeTab = 'users'">User Management</button>
-          </li>
+          <button class="btn text-xs-caps py-2 px-4 transition-all"
+                  [ngClass]="activeTab === 'audit' ? 'btn-primary shadow-sm' : 'btn-link text-on-surface-variant text-decoration-none'"
+                  (click)="loadAuditLogs(); activeTab = 'audit'">Audit_Trail</button>
+          <button class="btn text-xs-caps py-2 px-4 transition-all"
+                  [ngClass]="activeTab === 'users' ? 'btn-primary shadow-sm' : 'btn-link text-on-surface-variant text-decoration-none'"
+                  (click)="activeTab = 'users'">Operators</button>
         }
-      </ul>
+      </div>
 
       @switch (activeTab) {
-
-        <!-- TAB: Manage Breaches -->
         @case ('manage') {
           <div class="row g-4 animate__animated animate__fadeIn">
             <div class="col-lg-5">
-              <div class="card bg-dark border-secondary">
-                <div class="card-header border-secondary d-flex justify-content-between align-items-center">
-                  <strong class="text-light">All Breaches</strong>
+              <div class="card border-0 bg-surface-container-low h-100 shadow-lg">
+                <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center">
+                  <span class="text-xs-caps text-white">Active_Investigation_Log</span>
                   <div class="d-flex gap-2">
                     @if (selectedIds.size > 0 && auth.isAdmin()) {
-                      <button class="btn btn-sm btn-outline-danger" (click)="bulkDelete()">
-                        Delete ({{ selectedIds.size }})
+                      <button class="btn btn-dark bg-error-container bg-opacity-10 text-error border-0 text-xs-caps py-1 px-2" (click)="bulkDelete()" style="font-size: 8px;">
+                        DELETE ({{ selectedIds.size }})
                       </button>
                     }
-                    <button class="btn btn-sm btn-danger" (click)="startCreate()">+ New</button>
+                    <button class="btn btn-primary text-xs-caps py-1 px-2" (click)="startCreate()" style="font-size: 8px;">+ NEW_ENTRY</button>
                   </div>
                 </div>
-                <div class="card-body p-0">
+                <div class="p-0 overflow-auto custom-scrollbar" style="max-height: 600px;">
                   @if (listLoading) {
-                    <div class="text-center py-4">
-                      <div class="spinner-border spinner-border-sm text-danger"></div>
+                    <div class="text-center py-5">
+                      <div class="spinner-border spinner-border-sm text-primary"></div>
                     </div>
                   }
-                  <ul class="list-group list-group-flush">
+                  <div class="list-group list-group-flush">
                     @for (b of breaches; track b._id) {
-                      <li
-                        class="list-group-item bg-dark border-secondary d-flex justify-content-between align-items-start"
-                        [ngClass]="{ 'active-item': selectedId === b._id }"
-                        style="cursor:pointer"
-                        (click)="selectBreach(b)"
-                      >
-                        <div class="d-flex gap-2 align-items-start">
+                      <div class="list-group-item bg-transparent border-outline-variant border-opacity-10 p-3 d-flex justify-content-between align-items-start transition-all"
+                           [ngClass]="{ 'active-log-item': selectedId === b._id }"
+                           (click)="selectBreach(b)" style="cursor: pointer;">
+                        <div class="d-flex gap-3 align-items-start">
                           @if (auth.isAdmin()) {
-                            <input
-                              type="checkbox"
-                              class="form-check-input mt-1"
-                              [checked]="selectedIds.has(b._id)"
-                              (click)="$event.stopPropagation()"
-                              (change)="toggleSelection(b._id)"
-                            />
+                            <input type="checkbox" class="form-check-input mt-1 bg-surface-container border-outline-variant"
+                                   [checked]="selectedIds.has(b._id)" (click)="$event.stopPropagation()" (change)="toggleSelection(b._id)" />
                           }
                           <div>
-                            <div class="text-light small fw-semibold">{{ b.title }}</div>
-                            <div class="d-flex gap-1 mt-1">
-                              <app-severity-badge [severity]="b.severity" />
-                              <span class="badge bg-secondary">{{ b.status }}</span>
+                            <div class="fw-bold text-white small mb-1">{{ b.title }}</div>
+                            <div class="d-flex gap-2 align-items-center">
+                              <span class="text-xs-caps" [ngClass]="'text-' + severityColor(b.severity)" style="font-size: 8px;">{{ b.severity }}</span>
+                              <span class="text-on-surface-variant opacity-25">•</span>
+                              <span class="text-xs-caps text-on-surface-variant" style="font-size: 8px;">{{ b.status }}</span>
                             </div>
                           </div>
                         </div>
                         @if (auth.isAdmin()) {
-                          <button
-                            class="btn btn-sm btn-outline-danger"
-                            (click)="deleteBreach(b._id, $event)"
-                          >✕</button>
+                          <button class="btn btn-link p-0 text-on-surface-variant hover-text-error border-0" (click)="deleteBreach(b._id, $event)">
+                            <span class="material-symbols-outlined fs-6">close</span>
+                          </button>
                         }
-                      </li>
+                      </div>
                     }
-                  </ul>
+                  </div>
                 </div>
-                <div class="card-footer border-secondary">
-                  <app-pagination
-                    [currentPage]="page"
-                    [totalPages]="totalPages"
-                    (pageChange)="onPageChange($event)"
-                  />
+                <div class="p-3 border-top border-outline-variant border-opacity-10">
+                  <app-pagination [currentPage]="page" [totalPages]="totalPages" (pageChange)="onPageChange($event)" />
                 </div>
               </div>
             </div>
 
             <div class="col-lg-7">
-              <div class="card bg-dark border-secondary">
-                <div class="card-header border-secondary">
-                  <strong class="text-light">{{ editingId ? 'Edit breach' : 'New breach' }}</strong>
+              <div class="card border-0 bg-surface-container-low shadow-lg">
+                <div class="p-3 border-bottom border-outline-variant border-opacity-10">
+                  <span class="text-xs-caps text-white">{{ editingId ? 'Edit_Log_Entry' : 'Initialize_New_Entry' }}</span>
                 </div>
-                <div class="card-body">
-                  @if (formSuccess) { <div class="alert alert-success py-2 small animate__animated animate__fadeIn">{{ formSuccess }}</div> }
-                  @if (formError) { <div class="alert alert-danger py-2 small animate__animated animate__fadeIn">{{ formError }}</div> }
+                <div class="p-4 p-md-5">
+                  @if (formSuccess) { <div class="alert bg-success-container bg-opacity-10 border-success text-success py-2 small mb-4 text-xs-caps">{{ formSuccess }}</div> }
+                  @if (formError) { <div class="alert bg-error-container bg-opacity-10 border-error text-error py-2 small mb-4 text-xs-caps">{{ formError }}</div> }
 
-                  <form [formGroup]="breachForm" (ngSubmit)="onSubmit()">
-                    <div class="row g-3">
+                  <form [formGroup]="breachForm" (ngSubmit)="onSubmit()" class="d-flex flex-column gap-4">
+                    <div class="row g-4">
                       <div class="col-12">
-                        <label class="form-label text-muted small">Title *</label>
-                        <input formControlName="title" class="form-control form-control-sm bg-dark text-light border-secondary" [ngClass]="fc('title')" placeholder="e.g. Acme Corp Leak" />
-                        @if (invalid('title')) { <div class="invalid-feedback">Required.</div> }
+                        <label class="text-xs-caps text-on-surface-variant mb-2">Event_Title</label>
+                        <input formControlName="title" class="form-control bg-surface-container-high border-0" [ngClass]="fc('title')" placeholder="ENTER_IDENTIFIER..." />
                       </div>
                       <div class="col-12">
-                        <label class="form-label text-muted small">Description *</label>
-                        <textarea formControlName="description" class="form-control form-control-sm bg-dark text-light border-secondary" rows="3" [ngClass]="fc('description')" placeholder="Details..."></textarea>
-                        @if (invalid('description')) { <div class="invalid-feedback">Required.</div> }
+                        <label class="text-xs-caps text-on-surface-variant mb-2">Detailed_Description</label>
+                        <textarea formControlName="description" class="form-control bg-surface-container-high border-0" rows="4" [ngClass]="fc('description')" placeholder="TELEMETRY_DATA_AND_CONTEXT..."></textarea>
                       </div>
                       <div class="col-md-6">
-                        <label class="form-label text-muted small">Severity *</label>
-                        <select formControlName="severity" class="form-select form-select-sm bg-dark text-light border-secondary" [ngClass]="fc('severity')">
-                          <option value="">Select...</option>
-                          @for (s of severities; track s) { <option [value]="s">{{ s | titlecase }}</option> }
+                        <label class="text-xs-caps text-on-surface-variant mb-2">Threat_Level</label>
+                        <select formControlName="severity" class="form-select bg-surface-container-high border-0" [ngClass]="fc('severity')">
+                          <option value="">SELECT_LEVEL...</option>
+                          @for (s of severities; track s) { <option [value]="s">{{ s | uppercase }}</option> }
                         </select>
                       </div>
                       <div class="col-md-6">
-                        <label class="form-label text-muted small">Status *</label>
-                        <select formControlName="status" class="form-select form-select-sm bg-dark text-light border-secondary" [ngClass]="fc('status')">
-                          <option value="">Select...</option>
-                          @for (s of statuses; track s) { <option [value]="s">{{ s | titlecase }}</option> }
+                        <label class="text-xs-caps text-on-surface-variant mb-2">Containment_Status</label>
+                        <select formControlName="status" class="form-select bg-surface-container-high border-0" [ngClass]="fc('status')">
+                          <option value="">SELECT_STATUS...</option>
+                          @for (s of statuses; track s) { <option [value]="s">{{ s | uppercase }}</option> }
                         </select>
                       </div>
                       <div class="col-md-6">
-                        <label class="form-label text-muted small">Industry *</label>
-                        <select formControlName="industry" class="form-select form-select-sm bg-dark text-light border-secondary" [ngClass]="fc('industry')">
-                          <option value="">Select...</option>
-                          @for (i of industries; track i) { <option [value]="i">{{ i }}</option> }
+                        <label class="text-xs-caps text-on-surface-variant mb-2">Industry_Sector</label>
+                        <select formControlName="industry" class="form-select bg-surface-container-high border-0" [ngClass]="fc('industry')">
+                          <option value="">SELECT_SECTOR...</option>
+                          @for (i of industries; track i) { <option [value]="i">{{ i | uppercase }}</option> }
                         </select>
                       </div>
                       <div class="col-md-6">
-                        <label class="form-label text-muted small">Affected records *</label>
-                        <input formControlName="affected_records_count" type="number" class="form-control form-control-sm bg-dark text-light border-secondary" [ngClass]="fc('affected_records_count')" />
+                        <label class="text-xs-caps text-on-surface-variant mb-2">Impacted_Records</label>
+                        <input formControlName="affected_records_count" type="number" class="form-control bg-surface-container-high border-0" [ngClass]="fc('affected_records_count')" />
                       </div>
                       <div class="col-md-6">
-                        <label class="form-label text-muted small">Breach date *</label>
-                        <input formControlName="breach_date" type="date" class="form-control form-control-sm bg-dark text-light border-secondary" [ngClass]="fc('breach_date')" />
+                        <label class="text-xs-caps text-on-surface-variant mb-2">Incident_Date</label>
+                        <input formControlName="breach_date" type="date" class="form-control bg-surface-container-high border-0" [ngClass]="fc('breach_date')" />
                       </div>
                       <div class="col-md-6">
-                        <label class="form-label text-muted small">Discovered date *</label>
-                        <input formControlName="discovered_date" type="date" class="form-control form-control-sm bg-dark text-light border-secondary" [ngClass]="fc('discovered_date')" />
-                      </div>
-                      <div class="col-md-6">
-                        <label class="form-label text-muted small">Organisation</label>
-                        <input formControlName="organisation" class="form-control form-control-sm bg-dark text-light border-secondary" />
-                      </div>
-                      <div class="col-md-6">
-                        <label class="form-label text-muted small">Risk score (0-10)</label>
-                        <input formControlName="risk_score" type="number" step="0.1" class="form-control form-control-sm bg-dark text-light border-secondary" [ngClass]="fc('risk_score')" />
+                        <label class="text-xs-caps text-on-surface-variant mb-2">Risk_Index (0-10)</label>
+                        <input formControlName="risk_score" type="number" step="0.1" class="form-control bg-surface-container-high border-0" [ngClass]="fc('risk_score')" />
                       </div>
                     </div>
 
-                    <div class="d-flex gap-2 mt-4">
-                      <button type="submit" class="btn btn-danger btn-sm" [disabled]="formLoading">
-                        @if (formLoading) { <span class="spinner-border spinner-border-sm me-1"></span> }
-                        {{ editingId ? 'Save changes' : 'Create breach' }}
+                    <div class="d-flex gap-3 mt-2">
+                      <button type="submit" class="btn btn-primary px-4 py-3 text-xs-caps flex-grow-1" [disabled]="formLoading">
+                        @if (formLoading) { <span class="spinner-border spinner-border-sm me-2"></span> }
+                        {{ editingId ? 'UPDATE_TELEMETRY' : 'COMMIT_NEW_ENTRY' }}
                       </button>
-                      @if (editingId) { <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelEdit()">Cancel</button> }
+                      @if (editingId) {
+                        <button type="button" class="btn btn-outline-secondary px-4 py-3 text-xs-caps border-outline-variant border-opacity-25" (click)="cancelEdit()">CANCEL</button>
+                      }
                     </div>
                   </form>
                 </div>
@@ -249,100 +229,104 @@ import { UserManagementComponent } from './user-management/user-management.compo
           </div>
         }
 
-        <!-- TAB: Bulk Import -->
         @case ('bulk') {
           <div class="animate__animated animate__fadeIn">
-            <div class="card bg-dark border-secondary">
-              <div class="card-header border-secondary d-flex justify-content-between">
-                <strong class="text-light">Bulk Breach Import</strong>
-                <small class="text-muted">JSON format required</small>
+            <div class="card border-0 bg-surface-container-low shadow-lg overflow-hidden">
+              <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between">
+                <span class="text-xs-caps text-white">Bulk_Import_Processor</span>
+                <span class="text-xs-caps text-on-surface-variant" style="font-size: 8px;">JSON_SCHEMA_REQUIRED</span>
               </div>
-              <div class="card-body">
-                <p class="text-muted small mb-3">Upload a JSON file or paste a JSON array of breach objects to import multiple records at once.</p>
+              <div class="card-body p-4 p-md-5">
+                <p class="text-on-surface-variant small mb-4">Initialize large-scale telemetry imports via encrypted data packets.</p>
 
-                <div class="mb-4 p-3 bg-black border border-secondary rounded">
-                  <label class="form-label text-light small mb-2">Upload JSON File</label>
-                  <input type="file" (change)="onFileSelected($event)" accept=".json" class="form-control form-control-sm bg-dark text-light border-secondary" />
+                <div class="mb-5 p-4 bg-surface-container-high border border-outline-variant border-opacity-10 rounded-3">
+                  <label class="text-xs-caps text-on-surface-variant mb-3">Upload_Log_Packet</label>
+                  <input type="file" (change)="onFileSelected($event)" accept=".json" class="form-control bg-surface-container border-0" />
                 </div>
 
-                <div class="mb-3">
-                  <label class="form-label text-light small mb-2">Manual JSON Entry</label>
-                  <textarea #jsonInput class="form-control bg-black text-info border-secondary font-monospace small" rows="12" placeholder='[ { "title": "Breach 1", "description": "...", "severity": "high", ... }, ... ]'></textarea>
+                <div class="mb-4">
+                  <label class="text-xs-caps text-on-surface-variant mb-3">Manual_Buffer_Entry</label>
+                  <textarea #jsonInput class="form-control bg-surface-container-high border-0 font-monospace text-primary"
+                            style="font-size: 11px; height: 300px;"
+                            placeholder='[ { "title": "Breach_01", ... } ]'></textarea>
                 </div>
 
-                @if (bulkSuccess) { <div class="alert alert-success py-2 small animate__animated animate__fadeIn">{{ bulkSuccess }}</div> }
-                @if (bulkError) { <div class="alert alert-danger py-2 small animate__animated animate__fadeIn">{{ bulkError }}</div> }
+                @if (bulkSuccess) { <div class="alert bg-success-container bg-opacity-10 border-success text-success py-2 small mb-4 text-xs-caps">{{ bulkSuccess }}</div> }
+                @if (bulkError) { <div class="alert bg-error-container bg-opacity-10 border-error text-error py-2 small mb-4 text-xs-caps">{{ bulkError }}</div> }
 
-                <button class="btn btn-danger" (click)="onBulkImport(jsonInput.value)" [disabled]="bulkLoading">
+                <button class="btn btn-primary py-3 px-5 text-xs-caps" (click)="onBulkImport(jsonInput.value)" [disabled]="bulkLoading">
                   @if (bulkLoading) { <span class="spinner-border spinner-border-sm me-2"></span> }
-                  Import Breaches
+                  PROCESS_IMPORT
                 </button>
               </div>
             </div>
           </div>
         }
 
-        <!-- TAB: Audit Logs -->
         @case ('audit') {
           <div class="animate__animated animate__fadeIn">
-            <div class="card bg-dark border-secondary">
-              <div class="card-header border-secondary d-flex justify-content-between align-items-center">
-                <strong class="text-light">System Audit Trail</strong>
-                <button class="btn btn-xs btn-outline-secondary" (click)="loadAuditLogs()">Refresh</button>
+            <div class="card border-0 bg-surface-container-low shadow-lg overflow-hidden">
+              <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center">
+                <span class="text-xs-caps text-white">System_Audit_Trail</span>
+                <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-1 px-2" style="font-size: 8px;" (click)="loadAuditLogs()">REFRESH_TRAIL</button>
               </div>
-              <div class="card-body p-0 table-responsive">
-                <table class="table table-dark table-hover mb-0 small">
-                  <thead>
-                    <tr class="text-muted border-secondary">
-                      <th>Timestamp</th>
-                      <th>User</th>
-                      <th>Action</th>
-                      <th>Resource</th>
-                      <th>Result</th>
-                      <th>IP Address</th>
+              <div class="p-0 table-responsive">
+                <table class="table table-dark table-hover mb-0 align-middle custom-terminal-table">
+                  <thead class="bg-surface-container-low">
+                    <tr>
+                      <th class="ps-4 text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Timestamp</th>
+                      <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Operator</th>
+                      <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Action</th>
+                      <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Resource</th>
+                      <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Result</th>
+                      <th class="pe-4 text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Origin_IP</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody class="border-top-0">
                     @for (log of auditLogs; track log.timestamp) {
-                      <tr class="border-secondary">
-                        <td class="text-muted">{{ log.timestamp | date:'short' }}</td>
-                        <td class="text-info fw-semibold">{{ log.user_id }}</td>
-                        <td><span class="badge bg-secondary">{{ log.action }}</span></td>
-                        <td class="text-muted small">{{ log.resource }}</td>
+                      <tr class="bg-transparent">
+                        <td class="ps-4 text-on-surface-variant small font-mono">{{ log.timestamp | date:'short' }}</td>
+                        <td><span class="text-primary fw-bold font-mono small">{{ log.user_id }}</span></td>
+                        <td><span class="text-xs-caps text-on-surface-variant border border-outline-variant border-opacity-25 px-2 py-1 rounded" style="font-size: 8px;">{{ log.action }}</span></td>
+                        <td class="text-on-surface-variant small italic">{{ log.resource }}</td>
                         <td>
-                          <span [ngClass]="log.result.startsWith('success') ? 'text-success' : 'text-danger'">
+                          <span class="text-xs-caps fw-bold" [ngClass]="log.result.startsWith('success') ? 'text-success' : 'text-error'" style="font-size: 8px;">
                             {{ log.result }}
                           </span>
                         </td>
-                        <td class="text-muted font-monospace small">{{ log.ip_address }}</td>
+                        <td class="pe-4 text-on-surface-variant font-mono small">{{ log.ip_address }}</td>
                       </tr>
-                    }
-                    @if (auditLogs.length === 0 && !auditLoading) {
-                      <tr><td colspan="6" class="text-center py-4 text-muted">No audit logs found in system.</td></tr>
                     }
                   </tbody>
                 </table>
               </div>
-              <div class="card-footer border-secondary">
+              <div class="p-3 border-top border-outline-variant border-opacity-10">
                 <app-pagination [currentPage]="auditPage" [totalPages]="auditTotalPages" (pageChange)="onAuditPageChange($event)" />
               </div>
             </div>
           </div>
         }
 
-        <!-- TAB: User Management -->
         @case ('users') {
-          <div class="animate__animated animate__fadeIn">
+          <div class="animate__animated animate__fadeIn pb-5">
             <app-user-management />
           </div>
         }
-
       }
     }
   `,
   styles: [`
-    .active-item { background-color: rgba(220,53,69,0.1) !important; border-left: 3px solid #dc3545 !important; }
-    .btn-xs { padding: 0.1rem 0.4rem; font-size: 0.75rem; }
+    .text-xs-caps { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; }
+    .active-log-item { background-color: rgba(123, 208, 255, 0.05) !important; border-left: 4px solid var(--primary) !important; padding-left: 12px !important; }
+    .custom-terminal-table tr { border-bottom: 1px solid rgba(62, 72, 80, 0.1); }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .glow-primary { box-shadow: 0 0 15px rgba(0, 167, 224, 0.1); }
+    .glow-error { box-shadow: 0 0 15px rgba(248, 113, 113, 0.1); }
+    .text-error { color: var(--error) !important; }
+    .border-error { border-color: var(--error) !important; }
+    .bg-success-container { background-color: #0a1a10; }
+    .border-success { border-color: #4ade80 !important; }
+    .text-success { color: #4ade80 !important; }
   `],
 })
 export class AdminComponent implements OnInit {
@@ -409,7 +393,7 @@ export class AdminComponent implements OnInit {
   }
 
   refreshStats(): void {
-    if (this.auth.isAdmin()) {
+    if (this.auth.isAnalyst()) {
       this.adminService.getSystemStats().subscribe({
         next: (res) => (this.stats = res.data),
         error: () => {}
@@ -462,7 +446,6 @@ export class AdminComponent implements OnInit {
           const textarea = document.querySelector('textarea[#jsonInput]') as HTMLTextAreaElement;
           if (textarea) textarea.value = content;
           else {
-            // Fallback if view child or selector fails in this specific tool context
             this.onBulkImport(content);
           }
         } catch (err) {
@@ -600,5 +583,10 @@ export class AdminComponent implements OnInit {
   invalid(field: string): boolean {
     const ctrl = this.breachForm.get(field);
     return !!(ctrl?.invalid && ctrl?.touched);
+  }
+
+  severityColor(s: string): string {
+    const colors: any = { critical: 'error', high: 'high', medium: 'medium', low: 'primary', informational: 'on-surface-variant' };
+    return colors[s?.toLowerCase()] || 'on-surface-variant';
   }
 }

@@ -6,6 +6,7 @@ import { NgClass, DatePipe, DecimalPipe, TitleCasePipe, CommonModule, PercentPip
 import { FormsModule } from '@angular/forms';
 import { BreachService } from '../../../core/services/breach.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ThemeService } from '../../../core/services/theme.service';
 import { Breach, TimelineEvent, RemediationAction, MonitoringAlert, AffectedAccount } from '../../../core/models/models';
 import { SeverityBadgeComponent } from '../../../shared/components/severity-badge/severity-badge.component';
 
@@ -14,324 +15,282 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
   standalone: true,
   imports: [RouterLink, NgClass, DatePipe, DecimalPipe, TitleCasePipe, SeverityBadgeComponent, CommonModule, FormsModule, PercentPipe],
   template: `
-    <div class="mb-3 d-flex justify-content-between align-items-center">
-      <a routerLink="/breaches" class="btn btn-sm btn-outline-secondary">← Back to list</a>
+    <div class="mb-4 d-flex justify-content-between align-items-center mt-2">
+      <a routerLink="/breaches" class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-3 shadow-sm d-flex align-items-center gap-2">
+        <span class="material-symbols-outlined fs-6">arrow_back</span> Return_to_Log
+      </a>
       @if (auth.isAnalyst()) {
-        <div class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-2">
-          <span class="spinner-grow spinner-grow-sm me-1"></span> ANALYST ACCESS
+        <div class="badge py-2 px-3 glass-panel border border-tertiary border-opacity-25 text-tertiary text-xs-caps glow-error">
+          <span class="p-1 bg-tertiary rounded-circle animate-pulse me-2"></span> ANALYST_ACCESS_ENABLED
         </div>
       }
     </div>
 
     @if (loading) {
-      <div class="text-center py-5">
-        <div class="spinner-border text-danger"></div>
+      <div class="text-center py-5 glass-panel rounded-3 border border-outline-variant border-opacity-10">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="text-on-surface-variant text-xs-caps mt-3">Fetching intelligence packet...</p>
       </div>
     }
 
     @if (error) {
-      <div class="alert alert-danger">{{ error }}</div>
+      <div class="alert bg-error-container bg-opacity-10 border-error text-error p-4 rounded-3 text-xs-caps shadow-lg">
+        <span class="material-symbols-outlined fs-4 me-2">warning</span> {{ error }}
+      </div>
     }
 
     @if (breach && !loading) {
-      <!-- Header -->
-      <div class="card bg-dark border-secondary mb-4 shadow-sm">
-        <div class="card-body">
-          <div class="d-flex justify-content-between flex-wrap gap-2 mb-2">
-            <div class="d-flex gap-2 align-items-center">
-              <app-severity-badge [severity]="breach.severity" />
-              <span class="badge bg-secondary">{{ breach.status | titlecase }}</span>
-              <span class="badge bg-secondary">{{ breach.industry }}</span>
+      <!-- Bento Header -->
+      <div class="row g-4 mb-4">
+        <!-- Event Identity Card -->
+        <div class="col-lg-8">
+          <div class="card border-0 bg-surface-container shadow-lg h-100 position-relative overflow-hidden">
+            <div class="position-absolute top-0 end-0 p-3 opacity-10">
+              <span class="material-symbols-outlined fs-1">security</span>
             </div>
-            @if (auth.isAnalyst()) {
-              <a [routerLink]="['/admin']" [queryParams]="{edit: breach._id}" class="btn btn-sm btn-outline-warning">
-                Edit breach
-              </a>
-            }
-          </div>
-          <h2 class="fw-bold text-light">{{ breach.title }}</h2>
-          <p class="text-muted mb-3">{{ breach.description }}</p>
-
-          <div class="row g-3">
-            <div class="col-6 col-md-3">
-              <div class="stat-box text-center p-3 rounded border border-secondary">
-                <div class="fs-4 fw-bold text-danger">{{ breach.affected_records_count | number }}</div>
-                <small class="text-muted">Records affected</small>
-              </div>
-            </div>
-            <div class="col-6 col-md-3">
-              <div class="stat-box text-center p-3 rounded border border-secondary">
-                <div class="fs-4 fw-bold" [ngClass]="riskClass(breach.risk_score)">
-                  {{ breach.risk_score ?? 'N/A' }}
+            <div class="card-body p-4 p-md-5">
+              <div class="d-flex justify-content-between flex-wrap gap-3 mb-4">
+                <div class="d-flex gap-2 align-items-center">
+                  <app-severity-badge [severity]="breach.severity" />
+                  <span class="badge py-2 px-3 glass-panel border border-outline-variant border-opacity-25 text-on-surface-variant text-xs-caps">{{ breach.status | uppercase }}</span>
+                  <span class="badge py-2 px-3 glass-panel border border-outline-variant border-opacity-25 text-on-surface-variant text-xs-caps">{{ breach.industry | uppercase }}</span>
                 </div>
-                <small class="text-muted">Risk score</small>
+                @if (auth.isAnalyst()) {
+                  <a [routerLink]="['/admin']" [queryParams]="{edit: breach._id}" class="btn btn-primary text-xs-caps py-2 px-4 shadow-sm">
+                    MODIFY_RECORD
+                  </a>
+                }
+              </div>
+              <h2 class="font-headline fw-extrabold text-on-surface tracking-tight mb-2 fs-1">{{ breach.title }}</h2>
+              <p class="text-on-surface-variant lead mb-5" style="max-width: 800px;">{{ breach.description }}</p>
+
+              <div class="row g-4 mt-auto">
+                <div class="col-6 col-md-3">
+                  <div class="p-3 glass-panel rounded-3 border border-outline-variant border-opacity-10 text-center h-100">
+                    <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">RECORDS_COMPROMISED</div>
+                    <div class="fs-4 fw-bold text-on-surface font-headline">{{ breach.affected_records_count | number }}</div>
+                  </div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="p-3 glass-panel rounded-3 border border-outline-variant border-opacity-10 text-center h-100">
+                    <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">RISK_INDEX_V2</div>
+                    <div class="fs-4 fw-bold font-headline" [ngClass]="riskColor(breach.risk_score)">
+                      {{ (breach.risk_score ?? 0) | number:'1.1-1' }}
+                    </div>
+                  </div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="p-3 glass-panel rounded-3 border border-outline-variant border-opacity-10 text-center h-100">
+                    <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">EVENT_TIMESTAMP</div>
+                    <div class="fs-6 fw-bold text-on-surface">{{ breach.breach_date | date:'MMM dd, yyyy' }}</div>
+                  </div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="p-3 glass-panel rounded-3 border border-outline-variant border-opacity-10 text-center h-100">
+                    <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">DETECTION_LAG</div>
+                    <div class="fs-6 fw-bold text-on-surface">{{ detectionLag }} DAYS</div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="col-6 col-md-3">
-              <div class="stat-box text-center p-3 rounded border border-secondary">
-                <div class="fs-6 fw-bold text-light">{{ breach.breach_date | date:'mediumDate' }}</div>
-                <small class="text-muted">Breach date</small>
-              </div>
+          </div>
+        </div>
+
+        <!-- Geospatial Context Card -->
+        <div class="col-lg-4">
+          <div class="card border-0 bg-surface-container shadow-lg h-100 overflow-hidden">
+            <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center bg-surface-container-high">
+              <span class="text-xs-caps text-on-surface">Geospatial_Origin</span>
+              <span class="material-symbols-outlined fs-6 text-on-surface-variant">location_on</span>
             </div>
-            <div class="col-6 col-md-3">
-              <div class="stat-box text-center p-3 rounded border border-secondary">
-                <div class="fs-6 fw-bold text-light">{{ breach.discovered_date | date:'mediumDate' }}</div>
-                <small class="text-muted">Discovered</small>
-              </div>
+            <div class="card-body p-0 position-relative">
+              @if (breach.location?.coordinates) {
+                <div #mapContainer id="breach-map" style="height: 100%; min-height: 350px;"></div>
+              } @else {
+                <div class="d-flex flex-column align-items-center justify-content-center h-100 p-5 text-center opacity-25">
+                  <span class="material-symbols-outlined fs-1 mb-2">map_off</span>
+                  <div class="text-xs-caps">Coordinates_Unavailable</div>
+                </div>
+              }
             </div>
           </div>
         </div>
       </div>
 
       <div class="row g-4">
-        <!-- Left column -->
-        <div class="col-lg-6">
-
-          <!-- Map -->
-          @if (breach.location?.coordinates) {
-            <div class="card bg-dark border-secondary mb-4">
-              <div class="card-header border-secondary">
-                <strong class="text-light">📍 Location</strong>
-              </div>
-              <div class="card-body p-0">
-                <div #mapContainer id="breach-map" style="height: 280px; border-radius: 0 0 0.375rem 0.375rem;"></div>
-              </div>
+        <!-- Metadata & Affected Assets -->
+        <div class="col-lg-5">
+          <!-- Intelligence Parameters -->
+          <div class="card border-0 bg-surface-container-low shadow-lg mb-4 overflow-hidden">
+            <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center bg-surface-container">
+              <span class="text-xs-caps text-on-surface">Intelligence_Parameters</span>
+              <span class="text-xs-caps text-on-surface-variant" style="font-size: 8px;">ID: {{ (breach._id).slice(-12) | uppercase }}</span>
             </div>
-          }
-
-          <!-- Details -->
-          <div class="card bg-dark border-secondary mb-4">
-            <div class="card-header border-secondary">
-              <strong class="text-light">Details</strong>
-            </div>
-            <div class="card-body">
-              <dl class="row mb-0 small">
-                @if (breach.organisation) {
-                  <dt class="col-sm-5 text-muted">Organisation</dt>
-                  <dd class="col-sm-7 text-light">{{ breach.organisation }}</dd>
-                }
-                @if (breach.organisation_size) {
-                  <dt class="col-sm-5 text-muted">Org size</dt>
-                  <dd class="col-sm-7 text-light">{{ breach.organisation_size }}</dd>
-                }
-                @if (breach.attack_vector) {
-                  <dt class="col-sm-5 text-muted">Attack vector</dt>
-                  <dd class="col-sm-7 text-light">{{ breach.attack_vector }}</dd>
-                }
-                @if (breach.source_url) {
-                  <dt class="col-sm-5 text-muted">Source</dt>
-                  <dd class="col-sm-7">
-                    <a [href]="breach.source_url" target="_blank" class="text-danger">
-                      External link ↗
-                    </a>
-                  </dd>
-                }
-                @if (breach.data_types_exposed?.length) {
-                  <dt class="col-sm-5 text-muted">Data exposed</dt>
-                  <dd class="col-sm-7">
+            <div class="card-body p-4">
+              <div class="d-flex flex-column gap-3">
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-outline-variant border-opacity-10">
+                  <span class="text-xs-caps text-on-surface-variant" style="font-size: 9px;">Target_Organisation</span>
+                  <span class="fw-bold text-on-surface small">{{ breach.organisation || 'UNSPECIFIED' }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-outline-variant border-opacity-10">
+                  <span class="text-xs-caps text-on-surface-variant" style="font-size: 9px;">Org_Complexity</span>
+                  <span class="fw-bold text-on-surface small">{{ breach.organisation_size || 'UNKNOWN' }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-outline-variant border-opacity-10">
+                  <span class="text-xs-caps text-on-surface-variant" style="font-size: 9px;">Incursion_Vector</span>
+                  <span class="fw-bold text-on-surface small">{{ breach.attack_vector || 'UNKNOWN' | uppercase }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-outline-variant border-opacity-10" *ngIf="breach.source_url">
+                  <span class="text-xs-caps text-on-surface-variant" style="font-size: 9px;">Source_Intel_Link</span>
+                  <a [href]="breach.source_url" target="_blank" class="text-primary text-decoration-none fw-bold small">EXTERNAL_INTEL ↗</a>
+                </div>
+                <div class="mt-2">
+                  <span class="text-xs-caps text-on-surface-variant mb-2 d-block" style="font-size: 9px;">Exposed_Data_Clusters</span>
+                  <div class="d-flex flex-wrap gap-2">
                     @for (dt of breach.data_types_exposed; track dt) {
-                      <span class="badge bg-secondary me-1 mb-1">{{ dt }}</span>
+                      <span class="badge py-1 px-2 glass-panel border border-outline-variant border-opacity-25 text-on-surface text-xs-caps" style="font-size: 7px;">{{ dt }}</span>
                     }
-                  </dd>
-                }
-              </dl>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- Monitoring alerts (auth only) -->
+          <!-- Monitoring Alerts (auth only) -->
           @if (auth.isAuthenticated()) {
-            <div class="card bg-dark border-secondary mb-4 shadow-sm">
-              <div class="card-header border-secondary d-flex justify-content-between align-items-center">
-                <strong class="text-light">Monitoring Alerts</strong>
+            <div class="card border-0 bg-surface-container-low shadow-lg mb-4 overflow-hidden">
+              <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center bg-surface-container">
+                <span class="text-xs-caps text-on-surface">Surveillance_Alerts</span>
                 @if (auth.isAnalyst()) {
-                  <button class="btn btn-xs btn-outline-danger" (click)="showAddAlert = !showAddAlert">
-                    {{ showAddAlert ? 'Cancel' : '+ Add' }}
+                  <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-1 px-2" style="font-size: 8px;" (click)="showAddAlert = !showAddAlert">
+                    {{ showAddAlert ? 'CANCEL' : '+ ADD_ALERT' }}
                   </button>
                 }
               </div>
 
               @if (showAddAlert) {
-                <div class="card-body border-bottom border-secondary bg-black bg-opacity-25">
-                  <div class="row g-2">
+                <div class="card-body border-bottom border-outline-variant border-opacity-10 bg-surface-container-high">
+                  <div class="row g-3">
                     <div class="col-12">
-                      <input [(ngModel)]="newAlert.message" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Alert message" />
+                      <input [(ngModel)]="newAlert.message" class="form-control bg-surface-container-low border-0 text-xs-caps" placeholder="ALERT_MESSAGE..." style="font-size: 10px;" />
                     </div>
                     <div class="col-md-6">
-                      <select [(ngModel)]="newAlert.alert_type" class="form-select form-select-sm bg-dark text-light border-secondary">
-                        <option value="data_exposure">Data Exposure</option>
-                        <option value="credential_leak">Credential Leak</option>
-                        <option value="domain_spoofing">Domain Spoofing</option>
-                        <option value="other">Other</option>
+                      <select [(ngModel)]="newAlert.alert_type" class="form-select bg-surface-container-low border-0 text-xs-caps" style="font-size: 10px;">
+                        <option value="data_exposure">DATA_EXPOSURE</option>
+                        <option value="credential_leak">CREDENTIAL_LEAK</option>
+                        <option value="domain_spoofing">DOMAIN_SPOOFING</option>
+                        <option value="other">OTHER</option>
                       </select>
                     </div>
                     <div class="col-md-6">
-                      <select [(ngModel)]="newAlert.severity" class="form-select form-select-sm bg-dark text-light border-secondary">
-                        <option value="critical">Critical</option>
-                        <option value="high">High</option>
-                        <option value="medium">Medium</option>
-                        <option value="low">Low</option>
+                      <select [(ngModel)]="newAlert.severity" class="form-select bg-surface-container-low border-0 text-xs-caps" style="font-size: 10px;">
+                        <option value="critical">CRITICAL</option>
+                        <option value="high">HIGH</option>
+                        <option value="medium">MEDIUM</option>
+                        <option value="low">LOW</option>
                       </select>
                     </div>
                     <div class="col-12 text-end">
-                      <button class="btn btn-sm btn-danger" (click)="addAlert()" [disabled]="!newAlert.message">Save Alert</button>
+                      <button class="btn btn-primary text-xs-caps py-1 px-3" (click)="addAlert()" [disabled]="!newAlert.message" style="font-size: 9px;">COMMIT_ALERT</button>
                     </div>
                   </div>
                 </div>
               }
 
-              <ul class="list-group list-group-flush">
-                @if (alerts.length === 0) {
-                  <li class="list-group-item bg-dark text-muted small border-secondary">No alerts.</li>
-                }
-                @for (alert of alerts; track alert._id) {
-                  <li class="list-group-item bg-dark border-secondary">
-                    <div class="d-flex justify-content-between">
-                      <span class="text-light small">{{ alert.message }}</span>
-                      <div class="d-flex gap-2">
-                        @if (auth.isAnalyst()) {
-                          <input type="checkbox" [checked]="alert.acknowledged" (change)="toggleAlertAck(alert)" class="form-check-input" title="Acknowledge" />
-                        }
-                        <span class="badge" [ngClass]="alert.acknowledged ? 'bg-success' : 'bg-warning text-dark'">
-                          {{ alert.acknowledged ? 'Ack' : 'Open' }}
-                        </span>
-                        @if (auth.isAdmin()) {
-                          <button class="btn btn-xs btn-link text-danger p-0 ms-1" (click)="deleteAlert(alert._id!)">✕</button>
+              <div class="p-0 overflow-auto" style="max-height: 400px;">
+                <ul class="list-group list-group-flush">
+                  @if (alerts.length === 0) {
+                    <li class="list-group-item bg-transparent text-on-surface-variant small text-center py-4 opacity-50">NO_ACTIVE_ALERTS</li>
+                  }
+                  @for (alert of alerts; track alert._id) {
+                    <li class="list-group-item bg-transparent border-outline-variant border-opacity-10 p-3">
+                      <div class="d-flex justify-content-between mb-2">
+                        <span class="text-on-surface small fw-bold">{{ alert.message }}</span>
+                        <div class="d-flex gap-2 align-items-center">
+                          @if (auth.isAnalyst()) {
+                            <input type="checkbox" [checked]="alert.acknowledged" (change)="toggleAlertAck(alert)" class="form-check-input bg-surface-container border-outline-variant" />
+                          }
+                          <span class="badge text-xs-caps py-1 px-2" [ngClass]="alert.acknowledged ? 'bg-success text-success-container' : 'bg-tertiary-container text-on-tertiary-container'" style="font-size: 7px;">
+                            {{ alert.acknowledged ? 'ACK' : 'OPEN' }}
+                          </span>
+                          @if (auth.isAdmin()) {
+                            <button class="btn btn-link p-0 text-on-surface-variant hover-text-error border-0" (click)="deleteAlert(alert._id!)">
+                              <span class="material-symbols-outlined fs-6">close</span>
+                            </button>
+                          }
+                        </div>
+                      </div>
+                      <div class="d-flex justify-content-between align-items-center opacity-50">
+                        <span class="text-xs-caps" style="font-size: 8px;">{{ alert.alert_type | uppercase }} // {{ alert.severity | uppercase }}</span>
+                        @if (alert.created_at) {
+                          <span class="text-xs-caps font-mono" style="font-size: 8px;">{{ alert.created_at | date:'short' }}</span>
                         }
                       </div>
-                    </div>
-                    <div class="d-flex justify-content-between mt-1">
-                      <small class="text-muted">{{ alert.alert_type | titlecase }} · {{ alert.severity | titlecase }}</small>
-                      @if (alert.created_at) {
-                        <small class="text-muted" style="font-size: 0.7rem;">{{ alert.created_at | date:'short' }}</small>
-                      }
-                    </div>
-                  </li>
-                }
-              </ul>
-            </div>
-          }
-
-          <!-- Affected Accounts (auth only) -->
-          @if (auth.isAuthenticated()) {
-            <div class="card bg-dark border-secondary mb-4 shadow-sm">
-              <div class="card-header border-secondary d-flex justify-content-between align-items-center">
-                <strong class="text-light">Affected Accounts</strong>
-                @if (auth.isAnalyst()) {
-                  <button class="btn btn-xs btn-outline-danger" (click)="showAddAccount = !showAddAccount">
-                    {{ showAddAccount ? 'Cancel' : '+ Add' }}
-                  </button>
-                }
-              </div>
-
-              @if (showAddAccount) {
-                <div class="card-body border-bottom border-secondary bg-black bg-opacity-25">
-                  <div class="row g-2">
-                    <div class="col-md-6">
-                      <input [(ngModel)]="newAccount.email" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Email (optional)" />
-                    </div>
-                    <div class="col-md-6">
-                      <input [(ngModel)]="newAccount.username" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Username (optional)" />
-                    </div>
-                    <div class="col-12 text-end">
-                      <button class="btn btn-sm btn-danger" (click)="addAccount()" [disabled]="!newAccount.email && !newAccount.username">Save Account</button>
-                    </div>
-                  </div>
-                </div>
-              }
-
-              <div class="table-responsive">
-                <table class="table table-dark table-hover mb-0 small">
-                  <thead>
-                    <tr class="text-muted" style="font-size: 0.7rem;">
-                      <th>Email/User</th>
-                      <th class="text-center">Notified</th>
-                      @if (auth.isAdmin()) { <th class="text-end">Action</th> }
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @if (accounts.length === 0) {
-                      <tr><td colspan="3" class="text-center text-muted py-3">No account data.</td></tr>
-                    }
-                    @for (acc of accounts; track acc._id) {
-                      <tr>
-                        <td>
-                          <div class="text-light">{{ acc.email || acc.username }}</div>
-                          <div class="text-muted" style="font-size: 0.65rem;">{{ acc.data_types_exposed?.join(', ') }}</div>
-                        </td>
-                        <td class="text-center">
-                          <input type="checkbox" [checked]="acc.notified" (change)="toggleAccountNotified(acc)" [disabled]="!auth.isAnalyst()" class="form-check-input" />
-                        </td>
-                        @if (auth.isAdmin()) {
-                          <td class="text-end">
-                            <button class="btn btn-xs btn-link text-danger p-0" (click)="deleteAccount(acc._id!)">✕</button>
-                          </td>
-                        }
-                      </tr>
-                    }
-                  </tbody>
-                </table>
+                    </li>
+                  }
+                </ul>
               </div>
             </div>
           }
-
         </div>
 
-        <!-- Right column -->
-        <div class="col-lg-6">
-
+        <!-- Timeline & Mitigation -->
+        <div class="col-lg-7">
           <!-- Timeline -->
           @if (auth.isAuthenticated()) {
-            <div class="card bg-dark border-secondary mb-4 shadow-sm">
-              <div class="card-header border-secondary d-flex justify-content-between align-items-center">
-                <strong class="text-light">Timeline</strong>
+            <div class="card border-0 bg-surface-container-low shadow-lg mb-4 overflow-hidden">
+              <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center bg-surface-container">
+                <span class="text-xs-caps text-on-surface">Event_Incident_Timeline</span>
                 @if (auth.isAnalyst()) {
-                  <button class="btn btn-xs btn-outline-danger" (click)="showAddTimeline = !showAddTimeline">
-                    {{ showAddTimeline ? 'Cancel' : '+ Add' }}
+                  <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-1 px-2" style="font-size: 8px;" (click)="showAddTimeline = !showAddTimeline">
+                    {{ showAddTimeline ? 'CANCEL' : '+ ADD_EVENT' }}
                   </button>
                 }
               </div>
 
               @if (showAddTimeline) {
-                <div class="card-body border-bottom border-secondary bg-black bg-opacity-25">
-                  <div class="row g-2">
+                <div class="card-body border-bottom border-outline-variant border-opacity-10 bg-surface-container-high">
+                  <div class="row g-3">
                     <div class="col-md-6">
-                      <input [(ngModel)]="newEvent.event_type" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Event type (e.g. Discovery)" />
+                      <input [(ngModel)]="newEvent.event_type" class="form-control bg-surface-container-low border-0 text-xs-caps" placeholder="EVENT_TYPE..." style="font-size: 10px;" />
                     </div>
                     <div class="col-md-6">
-                      <input type="datetime-local" [(ngModel)]="newEvent.occurred_at" class="form-control form-control-sm bg-dark text-light border-secondary" />
+                      <input type="datetime-local" [(ngModel)]="newEvent.occurred_at" class="form-control bg-surface-container-low border-0 text-xs-caps text-on-surface" style="font-size: 10px;" />
                     </div>
                     <div class="col-12">
-                      <textarea [(ngModel)]="newEvent.description" class="form-control form-control-sm bg-dark text-light border-secondary" rows="2" placeholder="Description"></textarea>
+                      <textarea [(ngModel)]="newEvent.description" class="form-control bg-surface-container-low border-0 text-xs-caps" rows="2" placeholder="EVENT_DESCRIPTION..." style="font-size: 10px;"></textarea>
                     </div>
                     <div class="col-12 text-end">
-                      <button class="btn btn-sm btn-danger" (click)="addTimeline()" [disabled]="!newEvent.event_type || !newEvent.description">Save Event</button>
+                      <button class="btn btn-primary text-xs-caps py-1 px-3" (click)="addTimeline()" [disabled]="!newEvent.event_type || !newEvent.description" style="font-size: 9px;">COMMIT_EVENT</button>
                     </div>
                   </div>
                 </div>
               }
 
-              <div class="card-body">
+              <div class="card-body p-4">
                 @if (timeline.length === 0) {
-                  <p class="text-muted small mb-0">No timeline events.</p>
+                  <p class="text-on-surface-variant small text-center py-4 opacity-50 text-xs-caps">NO_TIMELINE_DATA</p>
                 }
-                <div class="timeline">
+                <div class="position-relative ps-4 ms-2 border-start border-outline-variant border-opacity-25 py-2">
                   @for (event of timeline; track event._id) {
-                    <div class="d-flex gap-3 mb-3 position-relative">
-                      <div class="flex-shrink-0">
-                        <span class="badge rounded-pill bg-danger" style="width:10px;height:10px;padding:0;margin-top:6px;">&nbsp;</span>
-                      </div>
-                      <div class="flex-grow-1">
-                        <div class="d-flex justify-content-between align-items-start">
-                          <div class="fw-semibold text-light small">{{ event.event_type | titlecase }}</div>
+                    <div class="mb-5 position-relative">
+                      <div class="position-absolute top-0 start-0 translate-middle p-1 bg-primary rounded-circle border border-4 border-dark" style="left: -17px; margin-top: 8px;"></div>
+                      <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="text-xs-caps text-primary fw-bold">{{ event.event_type | uppercase }}</div>
+                        <div class="d-flex gap-2 align-items-center">
+                          <span class="text-xs-caps font-mono opacity-50" style="font-size: 8px;">{{ event.occurred_at | date:'yyyy-MM-dd || HH:mm' }}</span>
                           @if (auth.isAdmin()) {
-                            <button class="btn btn-xs btn-link text-danger p-0" (click)="deleteTimeline(event._id!)">✕</button>
+                            <button class="btn btn-link p-0 text-on-surface-variant hover-text-error border-0" (click)="deleteTimeline(event._id!)">
+                              <span class="material-symbols-outlined fs-6">close</span>
+                            </button>
                           }
                         </div>
-                        <div class="text-muted small">{{ event.description }}</div>
-                        <div class="text-muted" style="font-size:0.75rem">
-                          {{ event.occurred_at | date:'medium' }}
-                          @if (event.actor) { · {{ event.actor }} }
-                        </div>
+                      </div>
+                      <div class="p-3 glass-panel rounded-3 border border-outline-variant border-opacity-10">
+                        <p class="text-on-surface-variant small mb-0">{{ event.description }}</p>
+                        @if (event.actor) {
+                          <div class="mt-2 text-xs-caps opacity-50" style="font-size: 7px;">OPERATOR: {{ event.actor | uppercase }}</div>
+                        }
                       </div>
                     </div>
                   }
@@ -342,110 +301,122 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
 
           <!-- Remediation -->
           @if (auth.isAuthenticated()) {
-            <div class="card bg-dark border-secondary mb-4 shadow-sm">
-              <div class="card-header border-secondary d-flex justify-content-between align-items-center">
-                <strong class="text-light">Remediation Actions</strong>
+            <div class="card border-0 bg-surface-container-low shadow-lg overflow-hidden">
+              <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center bg-surface-container">
+                <span class="text-xs-caps text-on-surface">Mitigation_Protocols</span>
                 @if (auth.isAnalyst()) {
-                  <button class="btn btn-xs btn-outline-danger" (click)="showAddRemediation = !showAddRemediation">
-                    {{ showAddRemediation ? 'Cancel' : '+ Add' }}
+                  <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-1 px-2" style="font-size: 8px;" (click)="showAddRemediation = !showAddRemediation">
+                    {{ showAddRemediation ? 'CANCEL' : '+ ADD_PROTOCOL' }}
                   </button>
                 }
               </div>
 
               @if (showAddRemediation) {
-                <div class="card-body border-bottom border-secondary bg-black bg-opacity-25">
-                  <div class="row g-2">
+                <div class="card-body border-bottom border-outline-variant border-opacity-10 bg-surface-container-high">
+                  <div class="row g-3">
                     <div class="col-12">
-                      <input [(ngModel)]="newAction.action" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Action description" />
+                      <input [(ngModel)]="newAction.action" class="form-control bg-surface-container-low border-0 text-xs-caps" placeholder="MITIGATION_ACTION..." style="font-size: 10px;" />
                     </div>
                     <div class="col-md-6">
-                      <select [(ngModel)]="newAction.status" class="form-select form-select-sm bg-dark text-light border-secondary">
-                        <option value="pending">Pending</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="completed">Completed</option>
+                      <select [(ngModel)]="newAction.status" class="form-select bg-surface-container-low border-0 text-xs-caps" style="font-size: 10px;">
+                        <option value="pending">PENDING</option>
+                        <option value="in_progress">IN_PROGRESS</option>
+                        <option value="completed">COMPLETED</option>
                       </select>
                     </div>
                     <div class="col-md-6">
-                      <input [(ngModel)]="newAction.assigned_to" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Assigned to" />
+                      <input [(ngModel)]="newAction.assigned_to" class="form-control bg-surface-container-low border-0 text-xs-caps" placeholder="ASSIGNED_OPERATOR..." style="font-size: 10px;" />
                     </div>
                     <div class="col-12 text-end">
-                      <button class="btn btn-sm btn-danger" (click)="addRemediation()" [disabled]="!newAction.action">Save Action</button>
+                      <button class="btn btn-primary text-xs-caps py-1 px-3" (click)="addRemediation()" [disabled]="!newAction.action" style="font-size: 9px;">COMMIT_PROTOCOL</button>
                     </div>
                   </div>
                 </div>
               }
 
-              <ul class="list-group list-group-flush">
-                @if (remediation.length === 0) {
-                  <li class="list-group-item bg-dark text-muted small border-secondary">No actions recorded.</li>
-                }
-                @for (action of remediation; track action._id) {
-                  <li class="list-group-item bg-dark border-secondary">
-                    <div class="d-flex justify-content-between align-items-start">
-                      <div class="flex-grow-1">
-                        <div class="d-flex justify-content-between">
-                          <span class="text-light small">{{ action.action }}</span>
-                          <div class="d-flex gap-2 align-items-center">
-                            @if (auth.isAnalyst()) {
-                              <select
-                                [ngModel]="action.status"
-                                (change)="updateRemediationStatus(action, $event)"
-                                class="form-select form-select-xs bg-dark text-light border-secondary p-0 px-1"
-                                style="font-size: 0.7rem; height: auto;"
-                              >
-                                <option value="pending">Pending</option>
-                                <option value="in_progress">In Progress</option>
-                                <option value="completed">Completed</option>
-                              </select>
-                            }
-                            <span
-                              class="badge"
-                              [ngClass]="{
-                                'bg-success': action.status === 'completed',
-                                'bg-warning text-dark': action.status === 'in_progress',
-                                'bg-secondary': action.status === 'pending'
-                              }"
-                            >{{ action.status }}</span>
-                            @if (auth.isAdmin()) {
-                              <button class="btn btn-xs btn-link text-danger p-0" (click)="deleteRemediation(action._id!)">✕</button>
-                            }
+              <div class="p-0">
+                <ul class="list-group list-group-flush">
+                  @if (remediation.length === 0) {
+                    <li class="list-group-item bg-transparent text-on-surface-variant small text-center py-4 opacity-50 text-xs-caps">NO_ACTIVE_PROTOCOLS</li>
+                  }
+                  @for (action of remediation; track action._id) {
+                    <li class="list-group-item bg-transparent border-outline-variant border-opacity-10 p-3">
+                      <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                          <div class="d-flex justify-content-between mb-2">
+                            <span class="text-on-surface small fw-bold">{{ action.action }}</span>
+                            <div class="d-flex gap-2 align-items-center">
+                              @if (auth.isAnalyst()) {
+                                <select
+                                  [ngModel]="action.status"
+                                  (change)="updateRemediationStatus(action, $event)"
+                                  class="form-select bg-surface-container border-0 text-xs-caps py-0 px-2"
+                                  style="font-size: 8px; height: 24px; width: auto;"
+                                >
+                                  <option value="pending">PENDING</option>
+                                  <option value="in_progress">IN_PROGRESS</option>
+                                  <option value="completed">COMPLETED</option>
+                                </select>
+                              }
+                              <span
+                                class="badge text-xs-caps py-1 px-2"
+                                [ngClass]="{
+                                  'bg-success text-success-container': action.status === 'completed',
+                                  'bg-warning text-dark': action.status === 'in_progress',
+                                  'bg-surface-container-highest text-on-surface-variant': action.status === 'pending'
+                                }"
+                                style="font-size: 7px;"
+                              >{{ action.status | uppercase }}</span>
+                              @if (auth.isAdmin()) {
+                                <button class="btn btn-link p-0 text-on-surface-variant hover-text-error border-0" (click)="deleteRemediation(action._id!)">
+                                  <span class="material-symbols-outlined fs-6">close</span>
+                                </button>
+                              }
+                            </div>
                           </div>
+                          @if (action.assigned_to) {
+                            <div class="text-xs-caps text-on-surface-variant opacity-50" style="font-size: 8px;">OPERATOR_ASSIGNED: {{ action.assigned_to | uppercase }}</div>
+                          }
                         </div>
-                        @if (action.assigned_to) {
-                          <small class="text-muted">Assigned: {{ action.assigned_to }}</small>
-                        }
                       </div>
-                    </div>
-                  </li>
-                }
-              </ul>
+                    </li>
+                  }
+                </ul>
+              </div>
             </div>
           }
 
           @if (!auth.isAuthenticated()) {
-            <div class="alert alert-secondary border-secondary">
-              <strong class="text-light">Login</strong> to view timeline, remediation actions, monitoring alerts
-              and affected accounts.
-              <a routerLink="/auth/login" class="btn btn-sm btn-danger ms-2">Login</a>
+            <div class="card border-0 bg-surface-container-low shadow-lg p-4 mt-4 text-center">
+              <div class="p-3 glass-panel rounded-3 border border-outline-variant border-opacity-10 mb-3">
+                <span class="material-symbols-outlined fs-1 text-primary mb-2">lock</span>
+                <h4 class="text-xs-caps text-on-surface">Secure_Access_Required</h4>
+                <p class="text-on-surface-variant small mb-0">Full intelligence timeline and mitigation protocols require authorization.</p>
+              </div>
+              <a routerLink="/auth/login" class="btn btn-primary text-xs-caps py-2 w-100 mt-2">AUTHORIZE_SESSION</a>
             </div>
           }
-
         </div>
       </div>
     }
+    <div class="pb-5"></div>
   `,
   styles: [`
-    .stat-box { background: rgba(255,255,255,0.03); }
-    .btn-xs { padding: 0.125rem 0.25rem; font-size: 0.75rem; }
-    .form-select-xs { height: 1.5rem; padding-top: 0; padding-bottom: 0; }
-    .table-dark { --bs-table-bg: transparent; }
+    .text-xs-caps { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; }
+    .glow-primary { box-shadow: 0 0 20px rgba(0, 167, 224, 0.15); }
+    .glow-error { box-shadow: 0 0 20px rgba(248, 113, 113, 0.15); }
+    .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+    .bg-success-container { background-color: #0a1a10; }
+    .text-success-container { color: #4ade80; }
   `],
 })
-export class BreachDetailComponent implements OnInit, AfterViewInit, OnDestroy {
+export class BreachDetailComponent implements OnInit, OnDestroy {
   @Input() id = '';
   @ViewChild('mapContainer') mapContainer!: ElementRef;
 
   private breachService = inject(BreachService);
+  private themeService = inject(ThemeService);
   auth = inject(AuthService);
 
   breach: Breach | null = null;
@@ -471,11 +442,15 @@ export class BreachDetailComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private map: any;
 
-  ngOnInit(): void {
-    this.loadBreach();
+  get detectionLag(): number {
+    if (!this.breach?.breach_date || !this.breach?.discovered_date) return 0;
+    const start = new Date(this.breach.breach_date);
+    const end = new Date(this.breach.discovered_date);
+    return Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
   }
 
-  ngAfterViewInit(): void {
+  ngOnInit(): void {
+    this.loadBreach();
   }
 
   ngOnDestroy(): void {
@@ -616,28 +591,45 @@ export class BreachDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.map) this.map.remove();
 
     this.map = L.map(this.mapContainer.nativeElement).setView([lat, lng], 10);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+
+    const isDark = this.themeService.theme() === 'dark';
+    const tileUrl = isDark
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+
+    L.tileLayer(tileUrl, {
       attribution: '© OpenStreetMap contributors',
     }).addTo(this.map);
 
+    const color = this.severityMapColor(this.breach.severity);
     const icon = L.divIcon({
-      html: `<div style="background:#dc3545;width:14px;height:14px;border-radius:50%;border:2px solid white;"></div>`,
+      html: `<div style="background:${color}; width:16px; height:16px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 10px ${color}80;"></div>`,
       className: '',
-      iconSize: [14, 14],
-      iconAnchor: [7, 7],
+      iconSize: [16, 16],
+      iconAnchor: [8, 8],
     });
 
     L.marker([lat, lng], { icon })
       .addTo(this.map)
-      .bindPopup(`<strong>${this.breach.title}</strong><br/>${this.breach.organisation ?? ''}`)
+      .bindPopup(`
+        <div class="text-on-surface">
+          <div class="text-xs-caps fw-bold mb-1" style="font-size: 10px;">${this.breach.title}</div>
+          <div class="text-xs-caps text-on-surface-variant mb-0" style="font-size: 8px;">${this.breach.organisation || 'UNSPECIFIED'}</div>
+        </div>
+      `, { className: 'bl-popup' })
       .openPopup();
   }
 
-  riskClass(score?: number): string {
-    if (!score) return 'text-muted';
-    if (score >= 8) return 'text-danger';
+  riskColor(score?: number): string {
+    if (!score) return 'text-on-surface-variant opacity-50';
+    if (score >= 8) return 'text-error';
     if (score >= 6) return 'text-warning';
     if (score >= 4) return 'text-primary';
     return 'text-success';
+  }
+
+  severityMapColor(s?: string): string {
+    const map: any = { critical: '#ffb3b0', high: '#fb923c', medium: '#fbbf24', low: '#7bd0ff' };
+    return map[s?.toLowerCase() || ''] || '#88929b';
   }
 }

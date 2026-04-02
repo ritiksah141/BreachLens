@@ -10,62 +10,82 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
   standalone: true,
   imports: [CommonModule, PaginationComponent],
   template: `
-    <div class="card bg-dark border-secondary">
-      <div class="card-header border-secondary d-flex justify-content-between align-items-center">
-        <strong class="text-light">User Management</strong>
+    <div class="card border-0 bg-surface-container-low shadow-lg overflow-hidden">
+      <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center">
+        <span class="text-xs-caps text-white">Operator_Management_Console</span>
         @if (loading) {
-          <div class="spinner-border spinner-border-sm text-danger"></div>
+          <div class="spinner-border spinner-border-sm text-primary"></div>
         }
       </div>
       <div class="card-body p-0">
         @if (error) {
-          <div class="alert alert-danger m-3 small">{{ error }}</div>
+          <div class="alert bg-error-container bg-opacity-10 border-error text-error m-3 small text-xs-caps">
+            <span class="material-symbols-outlined fs-6 me-2">error</span> {{ error }}
+          </div>
         }
         @if (success) {
-          <div class="alert alert-success m-3 small">{{ success }}</div>
+          <div class="alert bg-success-container bg-opacity-10 border-success text-success m-3 small text-xs-caps">
+            <span class="material-symbols-outlined fs-6 me-2">check_circle</span> {{ success }}
+          </div>
         }
 
         <div class="table-responsive">
-          <table class="table table-dark table-hover mb-0 small">
+          <table class="table table-dark table-hover mb-0 align-middle custom-terminal-table">
             <thead>
-              <tr class="text-muted">
-                <th>Username</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th class="text-end">Actions</th>
+              <tr class="bg-surface-container-low">
+                <th class="ps-4 text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Identifier</th>
+                <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Access_Level</th>
+                <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Connectivity</th>
+                <th class="pe-4 text-end text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Operations</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody class="border-top-0">
               @for (user of users; track user._id) {
-                <tr>
-                  <td class="text-light">{{ user.username }}</td>
-                  <td class="text-muted">{{ user.email }}</td>
+                <tr class="bg-transparent border-bottom border-outline-variant border-opacity-10">
+                  <td class="ps-4">
+                    <div class="d-flex align-items-center gap-3 py-1">
+                      <div class="p-2 bg-surface-container-highest rounded-circle position-relative">
+                        <span class="material-symbols-outlined text-on-surface-variant fs-5">person</span>
+                        @if (user.is_active) {
+                          <span class="position-absolute bottom-0 end-0 p-1 bg-success rounded-circle border border-dark"></span>
+                        }
+                      </div>
+                      <div>
+                        <div class="fw-bold text-white small">{{ user.username }}</div>
+                        <div class="text-on-surface-variant font-mono" style="font-size: 9px;">{{ user.email }}</div>
+                      </div>
+                    </div>
+                  </td>
                   <td>
                     <select
-                      class="form-select form-select-sm bg-dark text-light border-secondary"
+                      class="form-select bg-surface-container border-0 text-xs-caps py-1 px-2"
                       [value]="user.role"
                       (change)="onRoleChange(user._id, $event)"
                       [disabled]="user._id === auth.currentUser()?._id"
+                      style="font-size: 9px; width: auto;"
                     >
-                      <option value="guest">Guest</option>
-                      <option value="analyst">Analyst</option>
-                      <option value="admin">Admin</option>
+                      <option value="guest">GUEST_ACCESS</option>
+                      <option value="analyst">ANALYST_LEVEL</option>
+                      <option value="admin">ROOT_ADMIN</option>
                     </select>
                   </td>
                   <td>
-                    <span class="badge" [ngClass]="user.is_active ? 'bg-success' : 'bg-danger'">
-                      {{ user.is_active ? 'Active' : 'Inactive' }}
-                    </span>
+                    <div class="d-flex align-items-center gap-2">
+                      <span class="p-1 rounded-circle" [ngClass]="user.is_active ? 'bg-success animate-pulse' : 'bg-on-surface-variant opacity-25'"></span>
+                      <span class="text-xs-caps fw-bold" [ngClass]="user.is_active ? 'text-success' : 'text-on-surface-variant'">
+                        {{ user.is_active ? 'ONLINE' : 'OFFLINE' }}
+                      </span>
+                    </div>
                   </td>
-                  <td class="text-end">
+                  <td class="pe-4 text-end">
                     <button
-                      class="btn btn-sm"
-                      [ngClass]="user.is_active ? 'btn-outline-danger' : 'btn-outline-success'"
+                      class="btn btn-dark bg-opacity-10 text-xs-caps py-1 px-3 border-0 transition-all"
+                      [ngClass]="user.is_active ? 'text-error hover-bg-error' : 'text-success hover-bg-success'"
                       (click)="toggleStatus(user)"
                       [disabled]="user._id === auth.currentUser()?._id"
+                      style="font-size: 8px;"
                     >
-                      {{ user.is_active ? 'Deactivate' : 'Activate' }}
+                      {{ user.is_active ? 'TERMINATE_ACCESS' : 'RESTORE_ACCESS' }}
                     </button>
                   </td>
                 </tr>
@@ -74,7 +94,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
           </table>
         </div>
       </div>
-      <div class="card-footer border-secondary">
+      <div class="p-3 border-top border-outline-variant border-opacity-10">
         <app-pagination
           [currentPage]="page"
           [totalPages]="totalPages"
@@ -84,9 +104,19 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
     </div>
   `,
   styles: [`
-    table th { font-weight: 600; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; border-bottom-width: 2px; }
-    table td { vertical-align: middle; border-color: rgba(255,255,255,0.05); }
-    .form-select-sm { width: auto; min-width: 100px; display: inline-block; }
+    .text-xs-caps { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; }
+    .custom-terminal-table tr:hover { background-color: rgba(123, 208, 255, 0.03) !important; }
+    .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+    .text-error { color: var(--error) !important; }
+    .text-success { color: #4ade80 !important; }
+    .bg-success { background-color: #4ade80 !important; }
+    .bg-error-container { background-color: #93000a; }
+    .bg-success-container { background-color: #0a1a10; }
+    .border-error { border-color: var(--error) !important; }
+    .border-success { border-color: #4ade80 !important; }
+    .hover-bg-error:hover { background-color: rgba(248, 113, 113, 0.1) !important; }
+    .hover-bg-success:hover { background-color: rgba(74, 222, 128, 0.1) !important; }
   `]
 })
 export class UserManagementComponent implements OnInit {

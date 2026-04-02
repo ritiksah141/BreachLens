@@ -3,7 +3,7 @@ import {
   ElementRef, ViewChild, AfterViewInit
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { NgClass, DecimalPipe, PercentPipe } from '@angular/common';
+import { NgClass, DecimalPipe, PercentPipe, CommonModule } from '@angular/common';
 import { AnalyticsService } from '../../core/services/analytics.service';
 import { BreachService } from '../../core/services/breach.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -12,188 +12,207 @@ import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, NgClass, DecimalPipe, PercentPipe],
+  imports: [RouterLink, NgClass, DecimalPipe, PercentPipe, CommonModule],
   template: `
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <div>
-        <h2 class="fw-bold mb-0">
-          <span class="text-danger">⬡</span> BreachLens Dashboard
-        </h2>
-        <p class="text-muted mb-0 small">Dark web breach intelligence overview</p>
-      </div>
-      <div class="d-flex gap-2">
-        @if (auth.isAdmin()) {
-          <a routerLink="/admin" class="btn btn-outline-warning btn-sm">Admin Panel</a>
-        }
-        <a routerLink="/breaches" class="btn btn-danger btn-sm">View all breaches →</a>
-      </div>
-    </div>
+    <div class="row g-4 mb-4 mt-2">
+      <!-- KPI Row -->
+      <div class="col-12">
+        <div class="row g-4">
+          <!-- KPI Card 1: Active Nodes (Total Breaches) -->
+          <div class="col-md-3">
+            <div class="card p-4 border-0 border-start border-primary border-3 glow-primary h-100 position-relative overflow-hidden">
+              <div class="position-absolute top-0 end-0 p-2 opacity-10">
+                <span class="material-symbols-outlined fs-1">hub</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="text-xs-caps text-on-surface-variant">Active Breaches</span>
+                <span class="p-1 bg-primary rounded-circle animate-pulse"></span>
+              </div>
+              <div class="fs-2 fw-bold text-on-surface font-headline">{{ summary?.total_breaches | number }}</div>
+              <div class="text-xs-caps text-primary fw-bold mt-2">
+                <span class="material-symbols-outlined fs-6">trending_up</span> +12% VS LAST_HR
+              </div>
+            </div>
+          </div>
 
-    <!-- KPI cards -->
-    @if (summary) {
-      <div class="row g-3 mb-4">
-        <div class="col-6 col-md-3">
-          <div class="card bg-dark border-secondary text-center p-3">
-            <div class="fs-3 fw-bold text-danger">{{ summary.total_breaches | number }}</div>
-            <small class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">Total breaches</small>
+          <!-- KPI Card 2: Threats Blocked -->
+          <div class="col-md-3">
+            <div class="card p-4 border-0 border-start border-tertiary border-3 glow-error h-100">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="text-xs-caps text-on-surface-variant">Critical Status</span>
+                <span class="material-symbols-outlined text-tertiary-container fs-6">warning</span>
+              </div>
+              <div class="fs-2 fw-bold text-on-surface font-headline">{{ summary?.active_breaches }}</div>
+              <div class="text-xs-caps text-tertiary-container fw-bold mt-2">
+                <span class="material-symbols-outlined fs-6">bolt</span> PEAK_ACTIVITY_DETECTED
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="col-6 col-md-3">
-          <div class="card bg-dark border-secondary text-center p-3">
-            <div class="fs-3 fw-bold text-warning">{{ summary.active_breaches }}</div>
-            <small class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">Active</small>
+
+          <!-- KPI Card 3: Avg Risk Score -->
+          <div class="col-md-3">
+            <div class="card p-4 border-0 border-start border-secondary border-3 h-100">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="text-xs-caps text-on-surface-variant">Avg Risk Index</span>
+                <span class="material-symbols-outlined text-secondary fs-6">speed</span>
+              </div>
+              <div class="fs-2 fw-bold text-on-surface font-headline">{{ summary?.avg_risk_score | number:'1.1-1' }}</div>
+              <div class="text-xs-caps text-on-surface-variant mt-2 d-flex align-items-center gap-2">
+                <span class="p-1 bg-secondary rounded-circle"></span> STABLE_NETWORK_STATE
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="col-6 col-md-3">
-          <div class="card bg-dark border-secondary text-center p-3">
-            <div class="fs-3 fw-bold text-success">{{ summary.resolved_breaches }}</div>
-            <small class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">Resolved</small>
-          </div>
-        </div>
-        <div class="col-6 col-md-3">
-          <div class="card bg-dark border-secondary text-center p-3">
-            <div class="fs-3 fw-bold text-info">{{ summary.avg_risk_score | number:'1.1-1' }}</div>
-            <small class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">Avg risk score</small>
+
+          <!-- KPI Card 4: System Health -->
+          <div class="col-md-3">
+            <div class="card p-4 border-0 border-start border-outline border-3 h-100">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="text-xs-caps text-on-surface-variant">System Health</span>
+                <span class="material-symbols-outlined text-outline fs-6">settings_heart</span>
+              </div>
+              <div class="fs-2 fw-bold text-on-surface font-headline">99.8%</div>
+              <div class="text-xs-caps text-on-surface-variant mt-2">UPTIME: 412:12:04</div>
+            </div>
           </div>
         </div>
       </div>
-    }
 
-    <!-- Main Charts row -->
-    <div class="row g-4 mb-4">
+      <!-- Main Visualization Panel -->
       <div class="col-lg-8">
-        <div class="card bg-dark border-secondary h-100">
-          <div class="card-header border-secondary d-flex justify-content-between align-items-center">
-            <strong class="text-light">Monthly breach trend</strong>
-            @if (trendLoading) {
-              <span class="spinner-border spinner-border-sm text-secondary"></span>
-            }
-          </div>
-          <div class="card-body">
-            <canvas #trendChart style="max-height:300px;"></canvas>
-          </div>
-        </div>
-      </div>
-      <div class="col-lg-4">
-        <div class="card bg-dark border-secondary h-100">
-          <div class="card-header border-secondary">
-            <strong class="text-light">Breaches by severity</strong>
-          </div>
-          <div class="card-body d-flex align-items-center justify-content-center">
-            <canvas #severityChart style="max-height:240px;"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
+        <div class="card border-0 bg-surface-container-low position-relative overflow-hidden h-100" style="min-height: 550px;">
+          <div class="position-absolute inset-0 opacity-5 pointer-events-none"
+               style="background-image: linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px); background-size: 40px 40px;"></div>
 
-    <!-- Advanced Industry Trend Chart (NEW) -->
-    @if (auth.isAuthenticated()) {
-      <div class="row mb-4">
-        <div class="col-12">
-          <div class="card bg-dark border-secondary">
-            <div class="card-header border-secondary">
-              <strong class="text-light">Industry Risk Year-over-Year Trend</strong>
+          <div class="card-body p-4 position-relative z-1 d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-start mb-4">
+              <div>
+                <h4 class="text-xs-caps text-on-surface d-flex align-items-center gap-2 mb-1">
+                  <span class="p-1 bg-primary rounded-circle"></span>
+                  Monthly Threat Propagation
+                </h4>
+                <div class="text-xs-caps text-on-surface-variant opacity-50" style="font-size: 8px;">LIVE_ANALYTICS_KERNEL V4.2</div>
+              </div>
+              <div class="d-flex gap-2">
+                <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-1 px-3">7D VIEW</button>
+                <button class="btn btn-primary text-xs-caps py-1 px-3">HISTORICAL</button>
+              </div>
             </div>
-            <div class="card-body">
-              <canvas #industryTrendChart style="max-height:350px;"></canvas>
+
+            <div class="flex-grow-1 position-relative" style="min-height: 300px;">
+              <canvas #trendChart></canvas>
+            </div>
+
+            <div class="glass-panel p-3 rounded-3 mt-4 d-flex justify-content-between align-items-center border border-outline-variant border-opacity-10">
+              <div class="d-flex gap-4">
+                <div>
+                  <div class="text-xs-caps text-on-surface-variant mb-1" style="font-size: 8px;">Encryption_Layer</div>
+                  <div class="fw-bold text-on-surface small">AES-256-GCM</div>
+                </div>
+                <div>
+                  <div class="text-xs-caps text-on-surface-variant mb-1" style="font-size: 8px;">System_Node</div>
+                  <div class="fw-bold text-on-surface small">{{ auth.currentUser()?.role || 'CORE' }}_ACCESS</div>
+                </div>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <div class="text-xs-caps text-on-surface-variant me-2" style="font-size: 8px;">Active Ops</div>
+                <div class="d-flex -space-x-2">
+                  <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzEFCKDIl0258Ml40E82sW-VXspTRPs8zyjUIJ0yKY1s5x6zhuj_OdoR7A_0CGgeRz9tc2kvSM433442JVsu-_7ywejK5ZLzyne-mUEU4Pc_BSqBNdaTe1wHMHLuBEKq4-k2eMIg20jgDuDVF4VPKL1QBASv0llG75tX6j6acFR8NTK-wnoqZ90O_HllImDpnLb8zHZSpN-a2O1uCzAIx2jK0ibrH1Own8RlpfqD0qVpzeQWYNP5n6wWelsQ9qtVcMpAwgk4azqTkU" class="rounded-circle border border-dark border-2" style="width: 28px; height: 28px; margin-right: -8px;">
+                  <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBscjmgA06x0kt_yWmzrCok7zkuuSdbvPu5U8yn2OcYgrW5o6_RM-SRPLg8wr_RxbxWmDHizj0GIFSOJmZHMA9ZKUkXK6vbmYJmtvpe4UFKL8urbXOtMnZmswjgtDo1wvdQAh9BIYpJHdA_XiRx2tafjK29aLDxZFx9XnOOtUKQaTZ7PMFMbM6kgVmekhAZucMN_Fh2gu6Dk6HZJYhTs8XKQDsk9rQYTtzhvHzT5xQCZP7slU_FgdJqSdJofCxCUMMLFhyaVyuVu1Mt" class="rounded-circle border border-dark border-2" style="width: 28px; height: 28px; margin-right: -8px;">
+                  <div class="rounded-circle bg-surface-container-high border border-dark border-2 d-flex align-items-center justify-content-center text-on-surface" style="width: 28px; height: 28px; font-size: 8px;">+4</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    }
 
-    <!-- Secondary Charts row -->
-    <div class="row g-4 mb-4">
-      <div class="col-lg-4">
-        <div class="card bg-dark border-secondary h-100">
-          <div class="card-header border-secondary">
-            <strong class="text-light">Risk Score Distribution</strong>
-          </div>
-          <div class="card-body">
-            <canvas #riskChart style="max-height:220px;"></canvas>
+      <!-- Right Panel: Distribution & Exposure -->
+      <div class="col-lg-4 d-flex flex-column gap-4">
+        <div class="card border-0 p-4" style="height: 260px;">
+          <h4 class="text-xs-caps text-on-surface mb-3">Severity Breakdown</h4>
+          <div class="position-relative flex-grow-1" style="min-height: 0;">
+            <canvas #severityChart></canvas>
           </div>
         </div>
-      </div>
-      <div class="col-lg-4">
-        <div class="card bg-dark border-secondary h-100">
-          <div class="card-header border-secondary">
-            <strong class="text-light">Top Target Organisations</strong>
-          </div>
-          <div class="card-body">
-            <canvas #orgChart style="max-height:220px;"></canvas>
-          </div>
-        </div>
-      </div>
-      <div class="col-lg-4">
-        <div class="card bg-dark border-secondary h-100">
-          <div class="card-header border-secondary">
-            <strong class="text-light">Top Exposed Data Types</strong>
-          </div>
-          <div class="card-body">
-            <canvas #dataTypesChart style="max-height:220px;"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <div class="row g-4">
-      <div class="col-lg-6">
-        <div class="card bg-dark border-secondary">
-          <div class="card-header border-secondary">
-            <strong class="text-light">Exposure Checker</strong>
-          </div>
-          <div class="card-body">
-            <p class="text-muted small mb-3">
-              Check if an email or domain appears in any known breach.
-            </p>
-            <div class="input-group mb-2">
+        <div class="card border-0 p-4" style="height: 260px;">
+          <div class="d-flex flex-column h-100">
+            <h4 class="text-xs-caps text-on-surface mb-2">Exposure Checker</h4>
+            <p class="text-on-surface-variant mb-3" style="font-size: 11px;">VERIFY DOMAIN OR IDENTITY INTRUSIONS</p>
+
+            <div class="input-group mb-3">
+              <span class="input-group-text bg-surface-container-low border-0 text-on-surface-variant">
+                <span class="material-symbols-outlined fs-6">alternate_email</span>
+              </span>
               <input
                 #exposureInput
-                class="form-control bg-dark text-light border-secondary"
+                class="form-control bg-surface-container-low border-0 ps-0 text-on-surface"
                 type="text"
-                placeholder="email@example.com or example.com"
+                placeholder="IDENTITY_QUERY..."
                 (keyup.enter)="checkExposure(exposureInput.value)"
+                style="font-size: 11px;"
               />
               <button
-                class="btn btn-danger"
+                class="btn btn-primary px-3"
                 (click)="checkExposure(exposureInput.value)"
                 [disabled]="checkingExposure"
               >
                 @if (checkingExposure) {
                   <span class="spinner-border spinner-border-sm"></span>
                 } @else {
-                  Check
+                  GO
                 }
               </button>
             </div>
+
             @if (exposureResult !== null) {
               <div
-                class="alert mt-2 mb-0 py-2 animate__animated animate__fadeIn"
-                [ngClass]="exposureResult.exposed ? 'alert-danger' : 'alert-success'"
+                class="p-2 rounded-2 border-start border-3 transition-all animate__animated animate__fadeIn mb-3"
+                [ngClass]="exposureResult.exposed ? 'bg-error-container bg-opacity-10 border-error' : 'bg-success-container bg-opacity-10 border-success'"
               >
                 @if (exposureResult.exposed) {
-                  <strong>⚠ Found in {{ exposureResult.breach_count }} breach(es)</strong>
+                  <div class="text-xs-caps text-error mb-1" style="font-size: 8px;">Critical_Alert</div>
+                  <div class="text-on-surface fw-bold" style="font-size: 10px;">Found in {{ exposureResult.breach_count }} breach(es)</div>
                 } @else {
-                  <strong>✓ No breaches found</strong>
+                  <div class="text-xs-caps text-success mb-1" style="font-size: 8px;">Clear_Signal</div>
+                  <div class="text-on-surface fw-bold" style="font-size: 10px;">No active intrusions detected</div>
                 }
               </div>
             }
+
+            <div class="mt-auto d-flex flex-column gap-2">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="text-xs-caps text-on-surface-variant" style="font-size: 8px;">Remediation Rate</span>
+                <span class="fw-bold text-primary small">{{ remediationRate | percent }}</span>
+              </div>
+              <div class="progress bg-surface-container-highest" style="height: 4px;">
+                <div class="progress-bar bg-primary" role="progressbar" [style.width.%]="remediationRate * 100"></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      <div class="col-lg-6">
-        <div class="card bg-dark border-secondary h-100">
-          <div class="card-header border-secondary">
-            <strong class="text-light">Remediation Status</strong>
+
+      <!-- Secondary Data Row -->
+      <div class="col-12 mt-2">
+        <div class="row g-4">
+          <div class="col-lg-4">
+            <div class="card border-0 p-4">
+              <h4 class="text-xs-caps text-on-surface mb-4">Risk Distribution</h4>
+              <div style="height: 200px;"><canvas #riskChart></canvas></div>
+            </div>
           </div>
-          <div class="card-body d-flex flex-column justify-content-center">
-             <div class="text-center mb-3">
-               <div class="fs-1 fw-bold text-success">{{ remediationRate | percent }}</div>
-               <small class="text-muted">Actions Completed</small>
-             </div>
-             <div class="progress bg-black" style="height: 10px;">
-               <div class="progress-bar bg-success" role="progressbar" [style.width.%]="remediationRate * 100"></div>
-             </div>
+          <div class="col-lg-4">
+            <div class="card border-0 p-4">
+              <h4 class="text-xs-caps text-on-surface mb-4">Exposed Data Types</h4>
+              <div style="height: 200px;"><canvas #dataTypesChart></canvas></div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="card border-0 p-4">
+              <h4 class="text-xs-caps text-on-surface mb-4">Target Organisations</h4>
+              <div style="height: 200px;"><canvas #orgChart></canvas></div>
+            </div>
           </div>
         </div>
       </div>
@@ -201,6 +220,12 @@ import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } 
   `,
   styles: [`
     .progress-bar { transition: width 1s ease-in-out; }
+    .text-xs-caps { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; }
+    .glow-primary { box-shadow: 0 0 15px rgba(0, 167, 224, 0.15); }
+    .glow-error { box-shadow: 0 0 15px rgba(248, 113, 113, 0.15); }
+    .bg-success-container { background-color: #0a1a10; }
+    .border-success { border-color: #4ade80 !important; }
+    .text-success { color: #4ade80 !important; }
   `]
 })
 export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -303,11 +328,26 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         labels: this.severityData.map(d => d.severity),
         datasets: [{
           data: this.severityData.map(d => d.breach_count),
-          backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#0dcaf0', '#6c757d'],
-          borderWidth: 0
+          backgroundColor: ['#f87171', '#fb923c', '#fbbf24', '#0ea5e9', '#64748b'],
+          borderWidth: 0,
+          hoverOffset: 10
         }]
       },
-      options: { plugins: { legend: { position: 'bottom', labels: { color: '#adb5bd', font: { size: 10 } } } } }
+      options: {
+        cutout: '70%',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(15, 19, 30, 0.9)',
+            titleFont: { family: 'Manrope', size: 12 },
+            bodyFont: { family: 'Inter', size: 11 },
+            padding: 10,
+            cornerRadius: 4
+          }
+        }
+      }
     });
   }
 
@@ -315,7 +355,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.trendChartRef) return;
     const Chart = await this.getChart();
     this.charts[1]?.destroy();
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
     this.charts[1] = new Chart(this.trendChartRef.nativeElement, {
       type: 'line',
       data: {
@@ -323,17 +363,36 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         datasets: [{
           label: 'Breaches',
           data: this.trendData.map(d => d.count),
-          borderColor: '#dc3545',
+          borderColor: '#0ea5e9',
+          borderWidth: 3,
           tension: 0.4,
           fill: true,
-          backgroundColor: 'rgba(220, 53, 69, 0.1)'
+          backgroundColor: (context: any) => {
+            const canvas = context.chart.canvas;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(14, 165, 233, 0.2)');
+            gradient.addColorStop(1, 'rgba(14, 165, 233, 0)');
+            return gradient;
+          },
+          pointBackgroundColor: '#0ea5e9',
+          pointBorderColor: '#fff',
+          pointRadius: 0,
+          pointHoverRadius: 5
         }]
       },
       options: {
+        maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#6c757d' } },
-          x: { grid: { display: false }, ticks: { color: '#6c757d' } }
+          y: {
+            grid: { color: 'rgba(255,255,255,0.03)' },
+            ticks: { color: '#64748b', font: { size: 9, family: 'Inter' } }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { color: '#64748b', font: { size: 9, family: 'Inter' } }
+          }
         }
       }
     });
@@ -347,14 +406,19 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       type: 'bar',
       data: {
         labels: this.dataTypesData.map(d => d.data_type),
-        datasets: [{ data: this.dataTypesData.map(d => d.count), backgroundColor: '#0dcaf0' }]
+        datasets: [{
+          data: this.dataTypesData.map(d => d.count),
+          backgroundColor: '#bdc2ff',
+          borderRadius: 4
+        }]
       },
       options: {
+        maintainAspectRatio: false,
         indexAxis: 'y',
         plugins: { legend: { display: false } },
         scales: {
-          x: { grid: { display: false }, ticks: { color: '#6c757d' } },
-          y: { grid: { display: false }, ticks: { color: '#adb5bd' } }
+          x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 8 } } },
+          y: { grid: { display: false }, ticks: { color: '#bec8d2', font: { size: 9, family: 'Manrope' } } }
         }
       }
     });
@@ -368,13 +432,18 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       type: 'bar',
       data: {
         labels: this.riskData.map(d => d.bin),
-        datasets: [{ data: this.riskData.map(d => d.count), backgroundColor: '#ffc107' }]
+        datasets: [{
+          data: this.riskData.map(d => d.count),
+          backgroundColor: '#7bd0ff',
+          borderRadius: 2
+        }]
       },
       options: {
+        maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-          x: { grid: { display: false }, ticks: { color: '#6c757d' } },
-          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#6c757d' } }
+          x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 8 } } },
+          y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b', font: { size: 8 } } }
         }
       }
     });
@@ -388,10 +457,21 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       type: 'polarArea',
       data: {
         labels: this.orgData.map(d => d.organisation),
-        datasets: [{ data: this.orgData.map(d => d.count), backgroundColor: ['rgba(220, 53, 69, 0.7)', 'rgba(253, 126, 20, 0.7)', 'rgba(255, 193, 7, 0.7)', 'rgba(13, 202, 240, 0.7)', 'rgba(108, 117, 125, 0.7)'] }]
+        datasets: [{
+          data: this.orgData.map(d => d.count),
+          backgroundColor: [
+            'rgba(248, 113, 113, 0.7)',
+            'rgba(14, 165, 233, 0.7)',
+            'rgba(189, 194, 255, 0.7)',
+            'rgba(251, 191, 36, 0.7)',
+            'rgba(100, 116, 139, 0.7)'
+          ],
+          borderWidth: 0
+        }]
       },
       options: {
-        scales: { r: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { display: false } } },
+        maintainAspectRatio: false,
+        scales: { r: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { display: false } } },
         plugins: { legend: { display: false } }
       }
     });
@@ -401,12 +481,11 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.industryTrendChartRef) return;
     const Chart = await this.getChart();
 
-    // Process data: backend returns list of {industry, year, avg_risk}
     const industries = Array.from(new Set(this.industryTrendData.map(d => d.industry))).slice(0, 5);
     const years = Array.from(new Set(this.industryTrendData.map(d => d.year))).sort();
 
     const datasets = industries.map((ind, i) => {
-      const colors = ['#dc3545', '#fd7e14', '#ffc107', '#0dcaf0', '#198754'];
+      const colors = ['#f87171', '#0ea5e9', '#bdc2ff', '#fbbf24', '#4ade80'];
       return {
         label: ind,
         data: years.map(y => {
@@ -425,10 +504,11 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       type: 'line',
       data: { labels: years.map(String), datasets },
       options: {
-        plugins: { legend: { position: 'bottom', labels: { color: '#adb5bd' } } },
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { color: '#64748b', font: { size: 10 } } } },
         scales: {
-          y: { title: { display: true, text: 'Avg Risk Score', color: '#6c757d' }, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#6c757d' } },
-          x: { grid: { display: false }, ticks: { color: '#6c757d' } }
+          y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b' } },
+          x: { grid: { display: false }, ticks: { color: '#64748b' } }
         }
       }
     });

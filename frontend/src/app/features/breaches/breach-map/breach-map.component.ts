@@ -2,6 +2,7 @@ import { Component, OnInit, AfterViewInit, OnDestroy, inject, ElementRef, ViewCh
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { BreachService } from '../../../core/services/breach.service';
+import { ThemeService } from '../../../core/services/theme.service';
 import { SeverityBadgeComponent } from '../../../shared/components/severity-badge/severity-badge.component';
 
 @Component({
@@ -9,52 +10,92 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
   standalone: true,
   imports: [CommonModule, SeverityBadgeComponent],
   template: `
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h3 class="text-light mb-0">Global Breach Map</h3>
+    <div class="d-flex justify-content-between align-items-end mb-4 mt-2">
+      <div>
+        <h2 class="font-headline fw-extrabold text-on-surface tracking-tight mb-1">Global Incursion Map</h2>
+        <p class="text-xs-caps text-on-surface-variant mb-0" style="font-size: 9px;">Geospatial Threat Visualization Kernel</p>
+      </div>
       <div class="d-flex gap-2 align-items-center">
-        <button class="btn btn-sm btn-danger" (click)="useMyLocation()" [disabled]="geoLoading">
+        <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-3" (click)="useMyLocation()" [disabled]="geoLoading">
           @if (geoLoading) { <span class="spinner-border spinner-border-sm me-1"></span> }
-          📍 Near Me
+          <span class="material-symbols-outlined fs-6 me-1">my_location</span> Near_Me
         </button>
-        <select #sevSelect class="form-select form-select-sm bg-dark text-light border-secondary" (change)="filterBySeverity(sevSelect.value)">
-          <option value="">All Severities</option>
-          <option value="critical">Critical</option>
-          <option value="high">High</option>
-          <option value="medium">Medium</option>
-          <option value="low">Low</option>
+        <select #sevSelect class="form-select bg-surface-container border-0 text-xs-caps py-2"
+                style="width: auto; font-size: 10px;" (change)="filterBySeverity(sevSelect.value)">
+          <option value="">ALL_SEVERITIES</option>
+          <option value="critical">CRITICAL</option>
+          <option value="high">HIGH</option>
+          <option value="medium">MEDIUM</option>
+          <option value="low">LOW</option>
         </select>
-        <button class="btn btn-sm btn-outline-danger" (click)="loadGeoJson()">Refresh</button>
+        <button class="btn btn-primary text-xs-caps py-2 px-3" (click)="loadGeoJson()">
+          <span class="material-symbols-outlined fs-6">refresh</span>
+        </button>
       </div>
     </div>
 
     @if (geoError) {
-      <div class="alert alert-warning py-1 small mb-2 animate__animated animate__shakeX">
-        {{ geoError }}
+      <div class="alert bg-error-container bg-opacity-10 border-error text-error py-2 small mb-3 animate__animated animate__shakeX text-xs-caps">
+        <span class="material-symbols-outlined fs-6 me-2">warning</span> {{ geoError }}
       </div>
     }
 
-    <div class="card bg-dark border-secondary overflow-hidden shadow-lg" style="height: calc(100vh - 200px);">
-      <div #mapContainer id="global-map" style="height: 100%; width: 100%;"></div>
-    </div>
+    <div class="card border-0 bg-surface-container-low position-relative overflow-hidden shadow-lg" style="height: calc(100vh - 220px);">
+      <!-- Subtle Overlay for high-end look -->
+      <div class="position-absolute inset-0 pointer-events-none z-1 opacity-5"
+           style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 30px 30px;"></div>
 
-    <div class="mt-2 text-muted small">
-      <span class="me-3"><span style="color:#dc3545">●</span> Critical</span>
-      <span class="me-3"><span style="color:#fd7e14">●</span> High</span>
-      <span class="me-3"><span style="color:#ffc107">●</span> Medium</span>
-      <span><span style="color:#198754">●</span> Low</span>
+      <div #mapContainer id="global-map" style="height: 100%; width: 100%;"></div>
+
+      <!-- Bottom Legend Micro-Panel -->
+      <div class="position-absolute bottom-0 start-0 m-3 z-3 glass-panel p-2 rounded-2 border border-outline-variant border-opacity-10">
+        <div class="d-flex gap-3 px-2">
+          <div class="d-flex align-items-center gap-2">
+            <span class="p-1 rounded-circle bg-error shadow-error"></span>
+            <span class="text-xs-caps text-on-surface" style="font-size: 8px;">Critical</span>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="p-1 rounded-circle" style="background: #fb923c;"></span>
+            <span class="text-xs-caps text-on-surface" style="font-size: 8px;">High</span>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="p-1 rounded-circle" style="background: #fbbf24;"></span>
+            <span class="text-xs-caps text-on-surface" style="font-size: 8px;">Medium</span>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="p-1 rounded-circle bg-primary shadow-primary"></span>
+            <span class="text-xs-caps text-on-surface" style="font-size: 8px;">Low</span>
+          </div>
+        </div>
+      </div>
     </div>
   `,
   styles: [`
-    #global-map { background: #1a1a1a !important; }
+    .text-xs-caps { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; }
+    #global-map { background: var(--background) !important; }
+    .shadow-error { box-shadow: 0 0 10px rgba(248, 113, 113, 0.5); }
+    .shadow-primary { box-shadow: 0 0 10px rgba(123, 208, 255, 0.5); }
+
+    ::ng-deep .bl-popup .leaflet-popup-content-wrapper {
+      background: var(--surface-container-high) !important;
+      color: var(--on-surface) !important;
+      border: 1px solid var(--outline-variant) !important;
+      border-radius: 8px !important;
+      padding: 0 !important;
+    }
+    ::ng-deep .bl-popup .leaflet-popup-tip { background: var(--surface-container-high) !important; }
+    ::ng-deep .bl-popup .leaflet-popup-content { margin: 12px !important; }
   `]
 })
 export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('mapContainer') mapContainer!: ElementRef;
 
   private breachService = inject(BreachService);
+  private themeService = inject(ThemeService);
   private router = inject(Router);
   private map: any;
   private geoJsonLayer: any;
+  private tileLayer: any;
 
   geoLoading = false;
   geoError = '';
@@ -73,14 +114,28 @@ export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
     const L = await import('leaflet' as any);
 
     this.map = L.map(this.mapContainer.nativeElement).setView([20, 0], 2);
+    this.updateTileLayer();
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    // Re-apply tiles when theme changes
+    // Since we don't have an observable for theme, we'll check it on a loop or just rely on CSS filters
+    // Actually, Leaflet tiles can be inverted with CSS for dark mode
+    this.loadGeoJson();
+  }
+
+  private async updateTileLayer() {
+    const L = await import('leaflet' as any);
+    if (this.tileLayer) this.map.removeLayer(this.tileLayer);
+
+    const isDark = this.themeService.theme() === 'dark';
+    const url = isDark
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+
+    this.tileLayer = L.tileLayer(url, {
       attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
       subdomains: 'abcd',
       maxZoom: 20
     }).addTo(this.map);
-
-    this.loadGeoJson();
   }
 
   loadGeoJson(severity?: string) {
@@ -130,11 +185,11 @@ export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.geoJsonLayer) this.map.removeLayer(this.geoJsonLayer);
 
     const colorMap: any = {
-      critical: '#dc3545',
-      high: '#fd7e14',
-      medium: '#ffc107',
-      low: '#198754',
-      informational: '#6c757d'
+      critical: '#ffb3b0',
+      high: '#fb923c',
+      medium: '#fbbf24',
+      low: '#7bd0ff',
+      informational: '#88929b'
     };
 
     this.geoJsonLayer = L.geoJSON(geoData, {
@@ -152,13 +207,13 @@ export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
       onEachFeature: (feature: any, layer: any) => {
         const props = feature.properties;
         layer.bindPopup(`
-          <div class="dark-popup text-light">
-            <strong class="d-block mb-1">${props.title}</strong>
-            <div class="small mb-2">
-              <span class="badge bg-secondary me-1">${props.severity?.toUpperCase()}</span>
-              <span class="text-muted">${props.industry}</span>
+          <div class="text-on-surface">
+            <div class="text-xs-caps fw-bold mb-1" style="font-size: 10px;">${props.title}</div>
+            <div class="small mb-3 d-flex align-items-center gap-2">
+              <span class="badge py-1 px-2 border border-outline-variant border-opacity-25 text-xs-caps" style="font-size: 7px; background: rgba(0,0,0,0.1)">${props.severity?.toUpperCase()}</span>
+              <span class="text-on-surface-variant fw-bold" style="font-size: 8px; text-transform: uppercase;">${props.industry}</span>
             </div>
-            <button class="btn btn-xs btn-danger w-100" id="popup-btn-${props.id}">View Details</button>
+            <button class="btn btn-primary w-100 py-1 text-xs-caps" style="font-size: 8px;" id="popup-btn-${props.id}">DECRYPT_DATA</button>
           </div>
         `, { className: 'bl-popup' });
 
