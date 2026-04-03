@@ -59,9 +59,9 @@ import { AuthService } from '../../../core/services/auth.service';
 
           <div class="card-body p-4 p-xl-5 text-center position-relative z-1">
             <div class="mb-4 d-inline-block position-relative">
-              <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center text-primary fw-bold glow-primary border border-primary border-opacity-25 mx-auto"
-                   style="width:120px; height:120px; font-size:3rem; font-family: var(--font-headline);">
-                {{ initials }}
+              <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center text-primary glow-primary border border-primary border-opacity-25 mx-auto"
+                   style="width:120px; height:120px;">
+                <span class="material-symbols-outlined" style="font-size: 5rem;">person</span>
               </div>
               <div class="position-absolute bottom-0 end-0 p-2 bg-success rounded-circle border border-4 border-dark animate-pulse"></div>
             </div>

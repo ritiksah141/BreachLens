@@ -12,7 +12,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
   template: `
     <div class="card border-0 bg-surface-container-low shadow-lg overflow-hidden">
       <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center">
-        <span class="text-xs-caps text-white">Operator_Management_Console</span>
+        <span class="text-xs-caps text-on-surface">Operator_Management_Console</span>
         @if (loading) {
           <div class="spinner-border spinner-border-sm text-primary"></div>
         }
@@ -30,7 +30,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
         }
 
         <div class="table-responsive">
-          <table class="table table-dark table-hover mb-0 align-middle custom-terminal-table">
+          <table class="table table-hover mb-0 align-middle custom-terminal-table">
             <thead>
               <tr class="bg-surface-container-low">
                 <th class="ps-4 text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Identifier</th>
@@ -51,7 +51,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
                         }
                       </div>
                       <div>
-                        <div class="fw-bold text-white small">{{ user.username }}</div>
+                        <div class="fw-bold text-on-surface small">{{ user.username }}</div>
                         <div class="text-on-surface-variant font-mono" style="font-size: 9px;">{{ user.email }}</div>
                       </div>
                     </div>

@@ -102,23 +102,11 @@ import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } 
               <canvas #trendChart></canvas>
             </div>
 
-            <div class="glass-panel p-3 rounded-3 mt-4 d-flex justify-content-between align-items-center border border-outline-variant border-opacity-10">
+            <div class="glass-panel p-3 rounded-3 mt-4 d-flex justify-content-center align-items-center border border-outline-variant border-opacity-10">
               <div class="d-flex gap-4">
                 <div>
                   <div class="text-xs-caps text-on-surface-variant mb-1" style="font-size: 8px;">Encryption_Layer</div>
                   <div class="fw-bold text-on-surface small">AES-256-GCM</div>
-                </div>
-                <div>
-                  <div class="text-xs-caps text-on-surface-variant mb-1" style="font-size: 8px;">System_Node</div>
-                  <div class="fw-bold text-on-surface small">{{ auth.currentUser()?.role || 'CORE' }}_ACCESS</div>
-                </div>
-              </div>
-              <div class="d-flex align-items-center gap-2">
-                <div class="text-xs-caps text-on-surface-variant me-2" style="font-size: 8px;">Active Ops</div>
-                <div class="d-flex -space-x-2">
-                  <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzEFCKDIl0258Ml40E82sW-VXspTRPs8zyjUIJ0yKY1s5x6zhuj_OdoR7A_0CGgeRz9tc2kvSM433442JVsu-_7ywejK5ZLzyne-mUEU4Pc_BSqBNdaTe1wHMHLuBEKq4-k2eMIg20jgDuDVF4VPKL1QBASv0llG75tX6j6acFR8NTK-wnoqZ90O_HllImDpnLb8zHZSpN-a2O1uCzAIx2jK0ibrH1Own8RlpfqD0qVpzeQWYNP5n6wWelsQ9qtVcMpAwgk4azqTkU" class="rounded-circle border border-dark border-2" style="width: 28px; height: 28px; margin-right: -8px;">
-                  <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBscjmgA06x0kt_yWmzrCok7zkuuSdbvPu5U8yn2OcYgrW5o6_RM-SRPLg8wr_RxbxWmDHizj0GIFSOJmZHMA9ZKUkXK6vbmYJmtvpe4UFKL8urbXOtMnZmswjgtDo1wvdQAh9BIYpJHdA_XiRx2tafjK29aLDxZFx9XnOOtUKQaTZ7PMFMbM6kgVmekhAZucMN_Fh2gu6Dk6HZJYhTs8XKQDsk9rQYTtzhvHzT5xQCZP7slU_FgdJqSdJofCxCUMMLFhyaVyuVu1Mt" class="rounded-circle border border-dark border-2" style="width: 28px; height: 28px; margin-right: -8px;">
-                  <div class="rounded-circle bg-surface-container-high border border-dark border-2 d-flex align-items-center justify-content-center text-on-surface" style="width: 28px; height: 28px; font-size: 8px;">+4</div>
                 </div>
               </div>
             </div>

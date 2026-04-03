@@ -22,7 +22,7 @@ import { UserManagementComponent } from './user-management/user-management.compo
   template: `
     <div class="d-flex justify-content-between align-items-end mb-4">
       <div>
-        <h2 class="font-headline fw-extrabold text-white tracking-tight mb-1">Command Center</h2>
+        <h2 class="font-headline fw-extrabold text-on-surface tracking-tight mb-1">Command Center</h2>
         <p class="text-on-surface-variant mb-0 small text-uppercase tracking-widest" style="font-size: 9px;">Administrative Terminal v2.0</p>
       </div>
       <div class="d-flex gap-3 align-items-center">
@@ -53,7 +53,7 @@ import { UserManagementComponent } from './user-management/user-management.compo
             <div class="card p-3 border-0 border-start border-primary border-3 glow-primary">
               <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">Operator_Network</div>
               <div class="d-flex justify-content-between align-items-end">
-                <h3 class="mb-0 fw-bold font-headline text-white">{{ stats.users.total }}</h3>
+                <h3 class="mb-0 fw-bold font-headline text-on-surface">{{ stats.users.total }}</h3>
                 <div class="text-xs-caps" style="font-size: 8px;">
                   <span class="text-success">{{ stats.users.active }} ACTIVE</span> •
                   <span class="text-error">{{ stats.users.inactive }} OFFLINE</span>
@@ -65,7 +65,7 @@ import { UserManagementComponent } from './user-management/user-management.compo
             <div class="card p-3 border-0 border-start border-secondary border-3">
               <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">Intelligence_Repository</div>
               <div class="d-flex justify-content-between align-items-end">
-                <h3 class="mb-0 fw-bold font-headline text-white">{{ stats.breaches.total }}</h3>
+                <h3 class="mb-0 fw-bold font-headline text-on-surface">{{ stats.breaches.total }}</h3>
                 <div class="text-xs-caps text-on-surface-variant" style="font-size: 8px;">
                   {{ stats.breaches.by_status['open'] || 0 }} OPEN •
                   {{ stats.breaches.by_status['resolved'] || 0 }} RESOLVED
@@ -109,7 +109,7 @@ import { UserManagementComponent } from './user-management/user-management.compo
             <div class="col-lg-5">
               <div class="card border-0 bg-surface-container-low h-100 shadow-lg">
                 <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center">
-                  <span class="text-xs-caps text-white">Active_Investigation_Log</span>
+                  <span class="text-xs-caps text-on-surface">Active_Investigation_Log</span>
                   <div class="d-flex gap-2">
                     @if (selectedIds.size > 0 && auth.isAdmin()) {
                       <button class="btn btn-dark bg-error-container bg-opacity-10 text-error border-0 text-xs-caps py-1 px-2" (click)="bulkDelete()" style="font-size: 8px;">
@@ -136,7 +136,7 @@ import { UserManagementComponent } from './user-management/user-management.compo
                                    [checked]="selectedIds.has(b._id)" (click)="$event.stopPropagation()" (change)="toggleSelection(b._id)" />
                           }
                           <div>
-                            <div class="fw-bold text-white small mb-1">{{ b.title }}</div>
+                            <div class="fw-bold text-on-surface small mb-1">{{ b.title }}</div>
                             <div class="d-flex gap-2 align-items-center">
                               <span class="text-xs-caps" [ngClass]="'text-' + severityColor(b.severity)" style="font-size: 8px;">{{ b.severity }}</span>
                               <span class="text-on-surface-variant opacity-25">•</span>
@@ -162,7 +162,7 @@ import { UserManagementComponent } from './user-management/user-management.compo
             <div class="col-lg-7">
               <div class="card border-0 bg-surface-container-low shadow-lg">
                 <div class="p-3 border-bottom border-outline-variant border-opacity-10">
-                  <span class="text-xs-caps text-white">{{ editingId ? 'Edit_Log_Entry' : 'Initialize_New_Entry' }}</span>
+                  <span class="text-xs-caps text-on-surface">{{ editingId ? 'Edit_Log_Entry' : 'Initialize_New_Entry' }}</span>
                 </div>
                 <div class="p-4 p-md-5">
                   @if (formSuccess) { <div class="alert bg-success-container bg-opacity-10 border-success text-success py-2 small mb-4 text-xs-caps">{{ formSuccess }}</div> }
@@ -172,44 +172,44 @@ import { UserManagementComponent } from './user-management/user-management.compo
                     <div class="row g-4">
                       <div class="col-12">
                         <label class="text-xs-caps text-on-surface-variant mb-2">Event_Title</label>
-                        <input formControlName="title" class="form-control bg-surface-container-high border-0" [ngClass]="fc('title')" placeholder="ENTER_IDENTIFIER..." />
+                        <input formControlName="title" class="form-control bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('title')" placeholder="ENTER_IDENTIFIER..." />
                       </div>
                       <div class="col-12">
                         <label class="text-xs-caps text-on-surface-variant mb-2">Detailed_Description</label>
-                        <textarea formControlName="description" class="form-control bg-surface-container-high border-0" rows="4" [ngClass]="fc('description')" placeholder="TELEMETRY_DATA_AND_CONTEXT..."></textarea>
+                        <textarea formControlName="description" class="form-control bg-surface-container-high border-0 text-on-surface" rows="4" [ngClass]="fc('description')" placeholder="TELEMETRY_DATA_AND_CONTEXT..."></textarea>
                       </div>
                       <div class="col-md-6">
                         <label class="text-xs-caps text-on-surface-variant mb-2">Threat_Level</label>
-                        <select formControlName="severity" class="form-select bg-surface-container-high border-0" [ngClass]="fc('severity')">
+                        <select formControlName="severity" class="form-select bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('severity')">
                           <option value="">SELECT_LEVEL...</option>
                           @for (s of severities; track s) { <option [value]="s">{{ s | uppercase }}</option> }
                         </select>
                       </div>
                       <div class="col-md-6">
                         <label class="text-xs-caps text-on-surface-variant mb-2">Containment_Status</label>
-                        <select formControlName="status" class="form-select bg-surface-container-high border-0" [ngClass]="fc('status')">
+                        <select formControlName="status" class="form-select bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('status')">
                           <option value="">SELECT_STATUS...</option>
                           @for (s of statuses; track s) { <option [value]="s">{{ s | uppercase }}</option> }
                         </select>
                       </div>
                       <div class="col-md-6">
                         <label class="text-xs-caps text-on-surface-variant mb-2">Industry_Sector</label>
-                        <select formControlName="industry" class="form-select bg-surface-container-high border-0" [ngClass]="fc('industry')">
+                        <select formControlName="industry" class="form-select bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('industry')">
                           <option value="">SELECT_SECTOR...</option>
                           @for (i of industries; track i) { <option [value]="i">{{ i | uppercase }}</option> }
                         </select>
                       </div>
                       <div class="col-md-6">
                         <label class="text-xs-caps text-on-surface-variant mb-2">Impacted_Records</label>
-                        <input formControlName="affected_records_count" type="number" class="form-control bg-surface-container-high border-0" [ngClass]="fc('affected_records_count')" />
+                        <input formControlName="affected_records_count" type="number" class="form-control bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('affected_records_count')" />
                       </div>
                       <div class="col-md-6">
                         <label class="text-xs-caps text-on-surface-variant mb-2">Incident_Date</label>
-                        <input formControlName="breach_date" type="date" class="form-control bg-surface-container-high border-0" [ngClass]="fc('breach_date')" />
+                        <input formControlName="breach_date" type="date" class="form-control bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('breach_date')" />
                       </div>
                       <div class="col-md-6">
                         <label class="text-xs-caps text-on-surface-variant mb-2">Risk_Index (0-10)</label>
-                        <input formControlName="risk_score" type="number" step="0.1" class="form-control bg-surface-container-high border-0" [ngClass]="fc('risk_score')" />
+                        <input formControlName="risk_score" type="number" step="0.1" class="form-control bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('risk_score')" />
                       </div>
                     </div>
 
@@ -233,7 +233,7 @@ import { UserManagementComponent } from './user-management/user-management.compo
           <div class="animate__animated animate__fadeIn">
             <div class="card border-0 bg-surface-container-low shadow-lg overflow-hidden">
               <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between">
-                <span class="text-xs-caps text-white">Bulk_Import_Processor</span>
+                <span class="text-xs-caps text-on-surface">Bulk_Import_Processor</span>
                 <span class="text-xs-caps text-on-surface-variant" style="font-size: 8px;">JSON_SCHEMA_REQUIRED</span>
               </div>
               <div class="card-body p-4 p-md-5">
@@ -241,7 +241,7 @@ import { UserManagementComponent } from './user-management/user-management.compo
 
                 <div class="mb-5 p-4 bg-surface-container-high border border-outline-variant border-opacity-10 rounded-3">
                   <label class="text-xs-caps text-on-surface-variant mb-3">Upload_Log_Packet</label>
-                  <input type="file" (change)="onFileSelected($event)" accept=".json" class="form-control bg-surface-container border-0" />
+                  <input type="file" (change)="onFileSelected($event)" accept=".json" class="form-control bg-surface-container border-0 text-on-surface" />
                 </div>
 
                 <div class="mb-4">
@@ -267,11 +267,11 @@ import { UserManagementComponent } from './user-management/user-management.compo
           <div class="animate__animated animate__fadeIn">
             <div class="card border-0 bg-surface-container-low shadow-lg overflow-hidden">
               <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center">
-                <span class="text-xs-caps text-white">System_Audit_Trail</span>
+                <span class="text-xs-caps text-on-surface">System_Audit_Trail</span>
                 <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-1 px-2" style="font-size: 8px;" (click)="loadAuditLogs()">REFRESH_TRAIL</button>
               </div>
               <div class="p-0 table-responsive">
-                <table class="table table-dark table-hover mb-0 align-middle custom-terminal-table">
+                <table class="table table-hover mb-0 align-middle custom-terminal-table">
                   <thead class="bg-surface-container-low">
                     <tr>
                       <th class="ps-4 text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Timestamp</th>

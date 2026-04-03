@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NgClass, SlicePipe, DecimalPipe, TitleCasePipe, CommonModule } from '@angular/common';
 import { BreachService } from '../../../core/services/breach.service';
@@ -104,7 +104,7 @@ const SESSION_KEY = 'bl_breach_filters';
     @if (!loading && !error) {
       <div class="glass-panel rounded-3 overflow-hidden border border-outline-variant border-opacity-10 shadow-lg">
         <div class="table-responsive">
-          <table class="table table-dark table-hover mb-0 align-middle custom-terminal-table">
+          <table class="table table-hover mb-0 align-middle custom-terminal-table">
             <thead>
               <tr class="bg-surface-container-low">
                 <th class="ps-4 text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 9px;">Severity</th>
@@ -132,7 +132,7 @@ const SESSION_KEY = 'bl_breach_filters';
                         </span>
                       </div>
                       <div>
-                        <div class="fw-bold text-white small">{{ breach.title }}</div>
+                        <div class="fw-bold text-on-surface small">{{ breach.title }}</div>
                         <div class="text-on-surface-variant" style="font-size: 9px;">ORG: {{ breach.organisation || 'UNKNOWN' }}</div>
                       </div>
                     </div>
@@ -196,6 +196,7 @@ const SESSION_KEY = 'bl_breach_filters';
 })
 export class BreachListComponent implements OnInit {
   private breachService = inject(BreachService);
+  private route = inject(ActivatedRoute);
 
   breaches: Breach[] = [];
   total = 0;
@@ -225,7 +226,13 @@ export class BreachListComponent implements OnInit {
 
   ngOnInit(): void {
     this.restoreFilters();
-    this.loadBreaches();
+    this.route.queryParams.subscribe(params => {
+      if (params['q']) {
+        this.filters.search = params['q'];
+        this.filters.page = 1;
+      }
+      this.loadBreaches();
+    });
   }
 
   loadBreaches(): void {
