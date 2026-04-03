@@ -67,7 +67,7 @@ import { UserManagementComponent } from './user-management/user-management.compo
               <div class="d-flex justify-content-between align-items-end">
                 <h3 class="mb-0 fw-bold font-headline text-on-surface">{{ stats.breaches.total }}</h3>
                 <div class="text-xs-caps text-on-surface-variant" style="font-size: 8px;">
-                  {{ stats.breaches.by_status['open'] || 0 }} OPEN •
+                  {{ stats.breaches.by_status['active'] || 0 }} ACTIVE •
                   {{ stats.breaches.by_status['resolved'] || 0 }} RESOLVED
                 </div>
               </div>
@@ -206,6 +206,10 @@ import { UserManagementComponent } from './user-management/user-management.compo
                       <div class="col-md-6">
                         <label class="text-xs-caps text-on-surface-variant mb-2">Incident_Date</label>
                         <input formControlName="breach_date" type="date" class="form-control bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('breach_date')" />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="text-xs-caps text-on-surface-variant mb-2">Discovery_Date</label>
+                        <input formControlName="discovered_date" type="date" class="form-control bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('discovered_date')" />
                       </div>
                       <div class="col-md-6">
                         <label class="text-xs-caps text-on-surface-variant mb-2">Risk_Index (0-10)</label>
@@ -365,8 +369,8 @@ export class AdminComponent implements OnInit {
   formError = '';
 
   severities = ['critical', 'high', 'medium', 'low', 'informational'];
-  statuses = ['open', 'investigating', 'contained', 'resolved', 'closed'];
-  industries = ['Finance', 'Healthcare', 'Technology', 'Retail', 'Education', 'Government', 'Energy', 'Telecommunications', 'Legal', 'Other'];
+  statuses = ['active', 'investigating', 'contained', 'resolved'];
+  industries = ['finance', 'healthcare', 'technology', 'retail', 'education', 'government', 'energy', 'other'];
 
   breachForm: FormGroup = this.fb.group({
     title:                  ['', Validators.required],
@@ -494,8 +498,10 @@ export class AdminComponent implements OnInit {
     this.breachService.getBreach(id).subscribe({
       next: (res: any) => {
         const b: Breach = res.data;
+        const org: any = b.organisation;
         this.breachForm.patchValue({
           ...b,
+          organisation: typeof org === 'string' ? org : (org?.name ?? ''),
           breach_date: b.breach_date?.slice(0, 10),
           discovered_date: b.discovered_date?.slice(0, 10),
         });
@@ -524,7 +530,16 @@ export class AdminComponent implements OnInit {
     this.formSuccess = '';
     this.formError = '';
 
-    const payload = this.breachForm.value;
+    const payload: any = { ...this.breachForm.value };
+    const orgName = typeof payload.organisation === 'string' ? payload.organisation.trim() : '';
+    if (orgName) payload.organisation = { name: orgName };
+    else delete payload.organisation;
+
+    // Keep backend required date pair valid when creating/editing from admin UI.
+    if (!payload.discovered_date && payload.breach_date) {
+      payload.discovered_date = payload.breach_date;
+    }
+
     const request$ = this.editingId
       ? this.breachService.updateBreach(this.editingId, payload)
       : this.breachService.createBreach(payload);

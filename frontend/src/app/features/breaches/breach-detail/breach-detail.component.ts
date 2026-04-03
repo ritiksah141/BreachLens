@@ -130,15 +130,15 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
               <div class="d-flex flex-column gap-3">
                 <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-outline-variant border-opacity-10">
                   <span class="text-xs-caps text-on-surface-variant" style="font-size: 9px;">Target_Organisation</span>
-                  <span class="fw-bold text-on-surface small">{{ breach.organisation || 'UNSPECIFIED' }}</span>
+                  <span class="fw-bold text-on-surface small">{{ getOrganisationName(breach) }}</span>
                 </div>
                 <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-outline-variant border-opacity-10">
                   <span class="text-xs-caps text-on-surface-variant" style="font-size: 9px;">Org_Complexity</span>
-                  <span class="fw-bold text-on-surface small">{{ breach.organisation_size || 'UNKNOWN' }}</span>
+                  <span class="fw-bold text-on-surface small">{{ getOrganisationSize(breach) }}</span>
                 </div>
                 <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-outline-variant border-opacity-10">
                   <span class="text-xs-caps text-on-surface-variant" style="font-size: 9px;">Incursion_Vector</span>
-                  <span class="fw-bold text-on-surface small">{{ breach.attack_vector || 'UNKNOWN' | uppercase }}</span>
+                  <span class="fw-bold text-on-surface small">{{ getAttackVectorLabel(breach) }}</span>
                 </div>
                 <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-outline-variant border-opacity-10" *ngIf="breach.source_url">
                   <span class="text-xs-caps text-on-surface-variant" style="font-size: 9px;">Source_Intel_Link</span>
@@ -176,10 +176,10 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
                     </div>
                     <div class="col-md-6">
                       <select [(ngModel)]="newAlert.alert_type" class="form-select bg-surface-container-low border-0 text-xs-caps" style="font-size: 10px;">
-                        <option value="data_exposure">DATA_EXPOSURE</option>
-                        <option value="credential_leak">CREDENTIAL_LEAK</option>
-                        <option value="domain_spoofing">DOMAIN_SPOOFING</option>
-                        <option value="other">OTHER</option>
+                        <option value="new_exposure">NEW_EXPOSURE</option>
+                        <option value="credential_stuffing">CREDENTIAL_STUFFING</option>
+                        <option value="dark_web_mention">DARK_WEB_MENTION</option>
+                        <option value="domain_squatting">DOMAIN_SQUATTING</option>
                       </select>
                     </div>
                     <div class="col-md-6">
@@ -205,7 +205,7 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
                   @for (alert of alerts; track alert._id) {
                     <li class="list-group-item bg-transparent border-outline-variant border-opacity-10 p-3">
                       <div class="d-flex justify-content-between mb-2">
-                        <span class="text-on-surface small fw-bold">{{ alert.message }}</span>
+                        <span class="text-on-surface small fw-bold">{{ getAlertMessage(alert) }}</span>
                         <div class="d-flex gap-2 align-items-center">
                           @if (auth.isAnalyst()) {
                             <input type="checkbox" [checked]="alert.acknowledged" (change)="toggleAlertAck(alert)" class="form-check-input bg-surface-container border-outline-variant" />
@@ -222,8 +222,8 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
                       </div>
                       <div class="d-flex justify-content-between align-items-center opacity-50">
                         <span class="text-xs-caps" style="font-size: 8px;">{{ alert.alert_type | uppercase }} // {{ alert.severity | uppercase }}</span>
-                        @if (alert.created_at) {
-                          <span class="text-xs-caps font-mono" style="font-size: 8px;">{{ alert.created_at | date:'short' }}</span>
+                        @if (getAlertTimestamp(alert)) {
+                          <span class="text-xs-caps font-mono" style="font-size: 8px;">{{ getAlertTimestamp(alert) | date:'short' }}</span>
                         }
                       </div>
                     </li>
@@ -273,8 +273,8 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
                 }
                 <div class="position-relative ps-4 ms-2 border-start border-outline-variant border-opacity-25 py-2">
                   @for (event of timeline; track event._id) {
-                    <div class="mb-5 position-relative">
-                      <div class="position-absolute top-0 start-0 translate-middle p-1 bg-primary rounded-circle border border-4 border-dark" style="left: -17px; margin-top: 8px;"></div>
+                    <div class="mb-5 position-relative ps-3">
+                      <div class="timeline-node"></div>
                       <div class="d-flex justify-content-between align-items-start mb-2">
                         <div class="text-xs-caps text-primary fw-bold">{{ event.event_type | uppercase }}</div>
                         <div class="d-flex gap-2 align-items-center">
@@ -406,6 +406,17 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
     .glow-primary { box-shadow: 0 0 20px rgba(0, 167, 224, 0.15); }
     .glow-error { box-shadow: 0 0 20px rgba(248, 113, 113, 0.15); }
     .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    .timeline-node {
+      position: absolute;
+      left: -22px;
+      top: 8px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: 3px solid var(--surface-container-low);
+      box-shadow: 0 0 0 1px rgba(123, 208, 255, 0.35);
+    }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
     .bg-success-container { background-color: #0a1a10; }
     .text-success-container { color: #4ade80; }
@@ -435,7 +446,7 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
   newAction: Partial<RemediationAction> = { action: '', status: 'pending', assigned_to: '' };
 
   showAddAlert = false;
-  newAlert: Partial<MonitoringAlert> = { message: '', alert_type: 'data_exposure', severity: 'medium', acknowledged: false };
+  newAlert: Partial<MonitoringAlert> = { message: '', alert_type: 'new_exposure', severity: 'medium', acknowledged: false };
 
   showAddAccount = false;
   newAccount: Partial<AffectedAccount> = { email: '', username: '', notified: false };
@@ -464,6 +475,9 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
     this.breachService.getBreach(this.id).subscribe({
       next: (res: any) => {
         this.breach = res.data;
+        this.timeline = this.normalizeTimeline(this.breach?.timeline);
+        this.remediation = Array.isArray(this.breach?.remediation) ? this.breach!.remediation! : [];
+        this.alerts = this.normalizeAlerts((this.breach as any)?.monitoring_alerts);
         this.loading = false;
         if (this.auth.isAuthenticated()) {
           this.loadSubDocuments();
@@ -479,13 +493,22 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
 
   loadSubDocuments(): void {
     this.breachService.getTimeline(this.id).subscribe({
-      next: (res: any) => (this.timeline = res.data ?? []),
+      next: (res: any) => {
+        const normalized = this.normalizeTimeline(res.data);
+        this.timeline = normalized.length ? normalized : this.timeline;
+      },
     });
     this.breachService.getRemediation(this.id).subscribe({
-      next: (res: any) => (this.remediation = res.data ?? []),
+      next: (res: any) => {
+        const data = Array.isArray(res.data) ? res.data : [];
+        this.remediation = data.length ? data : this.remediation;
+      },
     });
     this.breachService.getAlerts(this.id).subscribe({
-      next: (res: any) => (this.alerts = res.data ?? []),
+      next: (res: any) => {
+        const normalized = this.normalizeAlerts(res.data);
+        this.alerts = normalized.length ? normalized : this.alerts;
+      },
     });
     if (this.auth.isAnalyst()) {
       this.breachService.getAffectedAccounts(this.id).subscribe({
@@ -496,7 +519,15 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
 
   // Management Actions
   addTimeline(): void {
-    this.breachService.addTimelineEvent(this.id, this.newEvent).subscribe({
+    const eventDate = this.newEvent.occurred_at || new Date().toISOString();
+    const payload: any = {
+      event_date: eventDate,
+      event_type: this.normalizeEventType(this.newEvent.event_type),
+      description: this.newEvent.description,
+      actor: this.newEvent.actor,
+    };
+
+    this.breachService.addTimelineEvent(this.id, payload).subscribe({
       next: () => {
         this.loadSubDocuments();
         this.showAddTimeline = false;
@@ -513,7 +544,14 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
   }
 
   addRemediation(): void {
-    this.breachService.addRemediation(this.id, this.newAction).subscribe({
+    const payload: any = {
+      action: this.newAction.action,
+      status: this.newAction.status,
+      assigned_to: this.newAction.assigned_to,
+      due_date: (this.newAction as any).due_date || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    };
+
+    this.breachService.addRemediation(this.id, payload).subscribe({
       next: () => {
         this.loadSubDocuments();
         this.showAddRemediation = false;
@@ -537,11 +575,18 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
   }
 
   addAlert(): void {
-    this.breachService.addAlert(this.id, this.newAlert).subscribe({
+    const payload: any = {
+      alert_type: this.normalizeAlertType(this.newAlert.alert_type),
+      severity: this.newAlert.severity,
+      details: this.newAlert.message,
+      acknowledged: Boolean(this.newAlert.acknowledged),
+    };
+
+    this.breachService.addAlert(this.id, payload).subscribe({
       next: () => {
         this.loadSubDocuments();
         this.showAddAlert = false;
-        this.newAlert = { message: '', alert_type: 'data_exposure', severity: 'medium', acknowledged: false };
+        this.newAlert = { message: '', alert_type: 'new_exposure', severity: 'medium', acknowledged: false };
       }
     });
   }
@@ -614,7 +659,7 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
       .bindPopup(`
         <div class="text-on-surface">
           <div class="text-xs-caps fw-bold mb-1" style="font-size: 10px;">${this.breach.title}</div>
-          <div class="text-xs-caps text-on-surface-variant mb-0" style="font-size: 8px;">${this.breach.organisation || 'UNSPECIFIED'}</div>
+          <div class="text-xs-caps text-on-surface-variant mb-0" style="font-size: 8px;">${this.getOrganisationName(this.breach)}</div>
         </div>
       `, { className: 'bl-popup' })
       .openPopup();
@@ -631,5 +676,70 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
   severityMapColor(s?: string): string {
     const map: any = { critical: '#ffb3b0', high: '#fb923c', medium: '#fbbf24', low: '#7bd0ff' };
     return map[s?.toLowerCase() || ''] || '#88929b';
+  }
+
+  getAttackVectorLabel(breach: Breach | null): string {
+    const vector = (breach as any)?.attack_vector;
+    if (typeof vector === 'string' && vector.trim()) return vector.toUpperCase();
+    const source = (breach as any)?.source;
+    if (typeof source === 'string' && source.trim()) return `${source}_INTEL`.toUpperCase();
+    return 'UNKNOWN';
+  }
+
+  normalizeTimeline(data: any): TimelineEvent[] {
+    if (!Array.isArray(data)) return [];
+    return data.map((item: any) => ({
+      ...item,
+      occurred_at: item?.occurred_at ?? item?.event_date ?? item?.created_at,
+    }));
+  }
+
+  normalizeAlerts(data: any): MonitoringAlert[] {
+    if (!Array.isArray(data)) return [];
+    return data.map((item: any) => ({
+      ...item,
+      message: item?.message ?? item?.details ?? item?.alert_type ?? 'Alert',
+      created_at: item?.created_at ?? item?.triggered_at,
+      acknowledged: Boolean(item?.acknowledged),
+    }));
+  }
+
+  getAlertMessage(alert: MonitoringAlert): string {
+    const msg = (alert as any)?.message ?? (alert as any)?.details;
+    return typeof msg === 'string' && msg.trim() ? msg : 'NO_ALERT_MESSAGE';
+  }
+
+  getAlertTimestamp(alert: MonitoringAlert): string | undefined {
+    const ts = (alert as any)?.created_at ?? (alert as any)?.triggered_at;
+    return typeof ts === 'string' && ts.trim() ? ts : undefined;
+  }
+
+  normalizeEventType(eventType?: string): string {
+    const value = (eventType || '').toLowerCase().trim();
+    const allowed = new Set(['breach_occurred', 'discovered', 'disclosed', 'contained', 'resolved']);
+    if (allowed.has(value)) return value;
+    return 'discovered';
+  }
+
+  normalizeAlertType(alertType?: string): string {
+    const value = (alertType || '').toLowerCase().trim();
+    const allowed = new Set(['new_exposure', 'credential_stuffing', 'dark_web_mention', 'domain_squatting']);
+    if (allowed.has(value)) return value;
+    return 'new_exposure';
+  }
+
+  getOrganisationName(breach: Breach | null): string {
+    const org: any = breach?.organisation;
+    if (typeof org === 'string' && org.trim()) return org;
+    if (org && typeof org.name === 'string' && org.name.trim()) return org.name;
+    return 'UNSPECIFIED';
+  }
+
+  getOrganisationSize(breach: Breach | null): string {
+    const direct = (breach as any)?.organisation_size;
+    if (typeof direct === 'string' && direct.trim()) return direct;
+    const nested = (breach?.organisation as any)?.size;
+    if (typeof nested === 'string' && nested.trim()) return nested;
+    return 'UNKNOWN';
   }
 }

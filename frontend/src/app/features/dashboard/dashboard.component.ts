@@ -93,8 +93,22 @@ import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } 
                 <div class="text-xs-caps text-on-surface-variant opacity-50" style="font-size: 8px;">LIVE_ANALYTICS_KERNEL V4.2</div>
               </div>
               <div class="d-flex gap-2">
-                <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-1 px-3">7D VIEW</button>
-                <button class="btn btn-primary text-xs-caps py-1 px-3">HISTORICAL</button>
+                <button
+                  class="btn border-0 text-xs-caps py-1 px-3"
+                  [ngClass]="trendView === '7d' ? 'btn-primary' : 'btn-dark bg-surface-container-highest'"
+                  [disabled]="trendLoading"
+                  (click)="setTrendView('7d')"
+                >
+                  7D VIEW
+                </button>
+                <button
+                  class="btn border-0 text-xs-caps py-1 px-3"
+                  [ngClass]="trendView === 'historical' ? 'btn-primary' : 'btn-dark bg-surface-container-highest'"
+                  [disabled]="trendLoading"
+                  (click)="setTrendView('historical')"
+                >
+                  HISTORICAL
+                </button>
               </div>
             </div>
 
@@ -103,10 +117,14 @@ import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } 
             </div>
 
             <div class="glass-panel p-3 rounded-3 mt-4 d-flex justify-content-center align-items-center border border-outline-variant border-opacity-10">
-              <div class="d-flex gap-4">
+              <div class="d-flex gap-4 flex-wrap justify-content-center">
                 <div>
-                  <div class="text-xs-caps text-on-surface-variant mb-1" style="font-size: 8px;">Encryption_Layer</div>
-                  <div class="fw-bold text-on-surface small">AES-256-GCM</div>
+                  <div class="text-xs-caps text-on-surface-variant mb-1" style="font-size: 8px;">Intelligence_Parameters</div>
+                  <div class="fw-bold text-on-surface small">OPEN_ALERTS: {{ summary?.open_alerts ?? 0 }}</div>
+                </div>
+                <div>
+                  <div class="text-xs-caps text-on-surface-variant mb-1" style="font-size: 8px;">Industry_Coverage</div>
+                  <div class="fw-bold text-on-surface small">{{ summary?.industries_affected ?? 0 }} ACTIVE_SECTORS</div>
                 </div>
               </div>
             </div>
@@ -199,7 +217,13 @@ import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } 
           <div class="col-lg-4">
             <div class="card border-0 p-4">
               <h4 class="text-xs-caps text-on-surface mb-4">Target Organisations</h4>
-              <div style="height: 200px;"><canvas #orgChart></canvas></div>
+              @if (isAnalystUser) {
+                <div style="height: 200px;"><canvas #orgChart></canvas></div>
+              } @else {
+                <div class="d-flex h-100 align-items-center justify-content-center text-center text-on-surface-variant" style="min-height: 200px; font-size: 11px;">
+                  ANALYST ROLE REQUIRED FOR ORGANISATION INTELLIGENCE
+                </div>
+              }
             </div>
           </div>
         </div>
@@ -227,17 +251,20 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private analytics = inject(AnalyticsService);
   private breachService = inject(BreachService);
   auth = inject(AuthService);
+  isAnalystUser = false;
 
   summary: AnalyticsSummary | null = null;
   severityData: SeverityBreakdown[] = [];
   trendData: MonthlyTrend[] = [];
   dataTypesData: DataTypeFrequency[] = [];
-  riskData: any[] = [];
-  orgData: any[] = [];
-  industryTrendData: any[] = [];
+  riskData: Array<{ label: string; count: number }> = [];
+  orgData: Array<{ organisation: string; count: number }> = [];
+  industryTrendData: Array<{ industry: string; year: number; value: number }> = [];
   remediationRate = 0;
 
   trendLoading = true;
+  trendView: '7d' | 'historical' = 'historical';
+  trendYear: number | null = null;
   checkingExposure = false;
   exposureResult: any = null;
 
@@ -245,6 +272,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private viewReady = false;
 
   ngOnInit(): void {
+    this.isAnalystUser = this.auth.isAnalyst();
     this.loadData();
   }
 
@@ -263,33 +291,114 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       this.severityData = res.data;
       if (this.viewReady) this.renderSeverity();
     });
-    this.analytics.getMonthlyTrend(new Date().getFullYear()).subscribe(res => {
-      this.trendData = res.data;
-      this.trendLoading = false;
-      if (this.viewReady) this.renderTrend();
-    });
+    this.loadMonthlyTrendWithFallback();
     this.analytics.getDataTypesFrequency().subscribe(res => {
       this.dataTypesData = res.data.slice(0, 5);
       if (this.viewReady) this.renderDataTypes();
     });
     this.analytics.getRiskScores().subscribe(res => {
-      this.riskData = res.data;
+      this.riskData = this.normalizeRiskData(res.data);
       if (this.viewReady) this.renderRisk();
     });
 
-    if (this.auth.isAnalyst()) {
+    if (this.isAnalystUser) {
       this.analytics.getTopOrganisations(5).subscribe(res => {
-        this.orgData = res.data;
+        this.orgData = this.normalizeOrgData(res.data);
         if (this.viewReady) this.renderOrg();
       });
       this.analytics.getRemediationRate().subscribe(res => {
-        this.remediationRate = res.data?.rate || 0;
+        this.remediationRate = this.computeRemediationRate(res.data);
       });
       this.analytics.getIndustryYearTrend().subscribe(res => {
-        this.industryTrendData = res.data;
+        this.industryTrendData = this.normalizeIndustryTrendData(res.data);
         if (this.viewReady) this.renderIndustryTrend();
       });
     }
+  }
+
+  private loadMonthlyTrendWithFallback(): void {
+    const currentYear = new Date().getFullYear();
+    const yearsToTry: number[] = [];
+    for (let y = currentYear; y >= currentYear - 5; y -= 1) yearsToTry.push(y);
+
+    const tryYear = (index: number) => {
+      if (index >= yearsToTry.length) {
+        this.trendData = [];
+        this.trendYear = null;
+        this.trendLoading = false;
+        if (this.viewReady) this.renderTrend();
+        return;
+      }
+
+      const year = yearsToTry[index];
+      this.analytics.getMonthlyTrend(year).subscribe({
+        next: (res) => {
+          const data = Array.isArray(res.data) ? res.data : [];
+          if (data.length > 0) {
+            this.trendData = data;
+            this.trendYear = year;
+            this.trendLoading = false;
+            if (this.viewReady) this.renderTrend();
+            return;
+          }
+          tryYear(index + 1);
+        },
+        error: () => tryYear(index + 1),
+      });
+    };
+
+    tryYear(0);
+  }
+
+  setTrendView(view: '7d' | 'historical'): void {
+    if (this.trendView === view) return;
+    this.trendView = view;
+    if (this.viewReady) this.renderTrend();
+  }
+
+  private normalizeRiskData(data: any): Array<{ label: string; count: number }> {
+    if (!Array.isArray(data)) return [];
+    return data
+      .map((d: any) => {
+        const label = d?.bin ?? d?.range ?? d?._id;
+        const count = Number(d?.count ?? 0);
+        return {
+          label: label === undefined || label === null ? 'unknown' : String(label),
+          count,
+        };
+      })
+      .filter((d) => Number.isFinite(d.count));
+  }
+
+  private normalizeOrgData(data: any): Array<{ organisation: string; count: number }> {
+    if (!Array.isArray(data)) return [];
+    return data
+      .map((d: any) => ({
+        organisation: String(d?.organisation ?? d?.org ?? d?.name ?? 'Unknown'),
+        count: Number(d?.count ?? d?.breach_count ?? 0),
+      }))
+      .filter((d) => Number.isFinite(d.count));
+  }
+
+  private normalizeIndustryTrendData(data: any): Array<{ industry: string; year: number; value: number }> {
+    if (!Array.isArray(data)) return [];
+    return data
+      .map((d: any) => ({
+        industry: String(d?.industry ?? 'Unknown'),
+        year: Number(d?.year ?? 0),
+        value: Number(d?.avg_risk_score ?? d?.breach_count ?? 0),
+      }))
+      .filter((d) => Number.isFinite(d.year) && d.year > 0 && Number.isFinite(d.value));
+  }
+
+  private computeRemediationRate(data: any): number {
+    if (!Array.isArray(data) || data.length === 0) return 0;
+    const rates = data
+      .map((d: any) => Number(d?.completion_rate))
+      .filter((v: number) => Number.isFinite(v));
+    if (!rates.length) return 0;
+    const avgPercentage = rates.reduce((acc, v) => acc + v, 0) / rates.length;
+    return Math.max(0, Math.min(1, avgPercentage / 100));
   }
 
   private renderAllCharts(): void {
@@ -344,13 +453,19 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     const Chart = await this.getChart();
     this.charts[1]?.destroy();
     const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    const monthlyCounts = new Map<number, number>();
+    this.trendData.forEach((d) => monthlyCounts.set(d.month, d.count));
+
+    const allMonthlyPoints = months.map((label, i) => ({ label, value: monthlyCounts.get(i + 1) ?? 0 }));
+    const visiblePoints = this.trendView === '7d' ? allMonthlyPoints.slice(-7) : allMonthlyPoints;
+
     this.charts[1] = new Chart(this.trendChartRef.nativeElement, {
       type: 'line',
       data: {
-        labels: this.trendData.map(d => months[d.month - 1]),
+        labels: visiblePoints.map((p) => p.label),
         datasets: [{
           label: 'Breaches',
-          data: this.trendData.map(d => d.count),
+          data: visiblePoints.map((p) => p.value),
           borderColor: '#0ea5e9',
           borderWidth: 3,
           tension: 0.4,
@@ -419,7 +534,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     this.charts[3] = new Chart(this.riskChartRef.nativeElement, {
       type: 'bar',
       data: {
-        labels: this.riskData.map(d => d.bin),
+        labels: this.riskData.map(d => d.label),
         datasets: [{
           data: this.riskData.map(d => d.count),
           backgroundColor: '#7bd0ff',
@@ -438,7 +553,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private async renderOrg() {
-    if (!this.orgChartRef) return;
+    if (!this.orgChartRef || !this.orgData.length) return;
     const Chart = await this.getChart();
     this.charts[4]?.destroy();
     this.charts[4] = new Chart(this.orgChartRef.nativeElement, {
@@ -478,7 +593,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         label: ind,
         data: years.map(y => {
           const found = this.industryTrendData.find(d => d.industry === ind && d.year === y);
-          return found ? found.avg_risk_score : 0;
+          return found ? found.value : 0;
         }),
         borderColor: colors[i % colors.length],
         backgroundColor: colors[i % colors.length] + '33',

@@ -133,7 +133,7 @@ const SESSION_KEY = 'bl_breach_filters';
                       </div>
                       <div>
                         <div class="fw-bold text-on-surface small">{{ breach.title }}</div>
-                        <div class="text-on-surface-variant" style="font-size: 9px;">ORG: {{ breach.organisation || 'UNKNOWN' }}</div>
+                        <div class="text-on-surface-variant" style="font-size: 9px;">ORG: {{ getOrganisationName(breach) }}</div>
                       </div>
                     </div>
                   </td>
@@ -216,10 +216,10 @@ export class BreachListComponent implements OnInit {
   };
 
   severities = ['critical', 'high', 'medium', 'low', 'informational'];
-  statuses = ['open', 'investigating', 'contained', 'resolved', 'closed'];
+  statuses = ['active', 'investigating', 'contained', 'resolved'];
   industries = [
-    'Finance', 'Healthcare', 'Technology', 'Retail', 'Education',
-    'Government', 'Energy', 'Telecommunications', 'Legal', 'Other',
+    'finance', 'healthcare', 'technology', 'retail', 'education',
+    'government', 'energy', 'other',
   ];
 
   private searchTimer: any;
@@ -296,6 +296,13 @@ export class BreachListComponent implements OnInit {
       case 'retail': return 'shopping_cart';
       default: return 'database';
     }
+  }
+
+  getOrganisationName(breach: Breach): string {
+    const org: any = breach?.organisation;
+    if (typeof org === 'string' && org.trim()) return org;
+    if (org && typeof org.name === 'string' && org.name.trim()) return org.name;
+    return 'UNKNOWN';
   }
 
   // Persist filter state in sessionStorage so page refresh restores it
