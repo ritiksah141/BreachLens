@@ -1,12 +1,14 @@
 import {
   Component, OnInit, OnDestroy, inject,
-  ElementRef, ViewChild, AfterViewInit
+  ElementRef, ViewChild, AfterViewInit, effect
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgClass, DecimalPipe, PercentPipe, CommonModule } from '@angular/common';
 import { AnalyticsService } from '../../core/services/analytics.service';
 import { BreachService } from '../../core/services/breach.service';
 import { AuthService } from '../../core/services/auth.service';
+import { NotificationService } from '../../core/services/notification.service';
+import { ThemeService } from '../../core/services/theme.service';
 import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } from '../../core/models/models';
 
 @Component({
@@ -29,8 +31,13 @@ import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } 
                 <span class="p-1 bg-primary rounded-circle animate-pulse"></span>
               </div>
               <div class="fs-2 fw-bold text-on-surface font-headline">{{ summary?.total_breaches | number }}</div>
-              <div class="text-xs-caps text-primary fw-bold mt-2">
-                <span class="material-symbols-outlined fs-6">trending_up</span> +12% VS LAST_HR
+              <div class="text-xs-caps fw-bold mt-2" [ngClass]="trendDirection === 'up' ? 'text-primary' : (trendDirection === 'down' ? 'text-tertiary' : 'text-on-surface-variant')">
+                <span class="material-symbols-outlined fs-6">{{ trendDirection === 'down' ? 'trending_down' : 'trending_up' }}</span>
+                @if (trendDirection === 'flat') {
+                  No month-over-month change
+                } @else {
+                  {{ trendChangePct }}% vs previous month
+                }
               </div>
             </div>
           </div>
@@ -39,12 +46,12 @@ import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } 
           <div class="col-md-3">
             <div class="card p-4 border-0 border-start border-tertiary border-3 glow-error h-100">
               <div class="d-flex justify-content-between align-items-start mb-2">
-                <span class="text-xs-caps text-on-surface-variant">Critical Status</span>
+                <span class="text-xs-caps text-on-surface-variant">Open Alerts</span>
                 <span class="material-symbols-outlined text-tertiary-container fs-6">warning</span>
               </div>
-              <div class="fs-2 fw-bold text-on-surface font-headline">{{ summary?.active_breaches }}</div>
+              <div class="fs-2 fw-bold text-on-surface font-headline">{{ summary?.open_alerts ?? 0 }}</div>
               <div class="text-xs-caps text-tertiary-container fw-bold mt-2">
-                <span class="material-symbols-outlined fs-6">bolt</span> PEAK_ACTIVITY_DETECTED
+                <span class="material-symbols-outlined fs-6">bolt</span> {{ summary?.active_breaches ?? 0 }} active breach(es)
               </div>
             </div>
           </div>
@@ -53,12 +60,12 @@ import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } 
           <div class="col-md-3">
             <div class="card p-4 border-0 border-start border-secondary border-3 h-100">
               <div class="d-flex justify-content-between align-items-start mb-2">
-                <span class="text-xs-caps text-on-surface-variant">Avg Risk Index</span>
+                <span class="text-xs-caps text-on-surface-variant">Average Risk Score</span>
                 <span class="material-symbols-outlined text-secondary fs-6">speed</span>
               </div>
               <div class="fs-2 fw-bold text-on-surface font-headline">{{ summary?.avg_risk_score | number:'1.1-1' }}</div>
               <div class="text-xs-caps text-on-surface-variant mt-2 d-flex align-items-center gap-2">
-                <span class="p-1 bg-secondary rounded-circle"></span> STABLE_NETWORK_STATE
+                <span class="p-1 bg-secondary rounded-circle"></span> Across {{ summary?.industries_affected ?? 0 }} industries
               </div>
             </div>
           </div>
@@ -70,8 +77,8 @@ import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } 
                 <span class="text-xs-caps text-on-surface-variant">System Health</span>
                 <span class="material-symbols-outlined text-outline fs-6">settings_heart</span>
               </div>
-              <div class="fs-2 fw-bold text-on-surface font-headline">99.8%</div>
-              <div class="text-xs-caps text-on-surface-variant mt-2">UPTIME: 412:12:04</div>
+              <div class="fs-2 fw-bold text-on-surface font-headline">{{ systemHealthPct }}%</div>
+              <div class="text-xs-caps text-on-surface-variant mt-2">Updated {{ lastUpdated | date:'shortTime' }}</div>
             </div>
           </div>
         </div>
@@ -90,7 +97,13 @@ import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } 
                   <span class="p-1 bg-primary rounded-circle"></span>
                   Monthly Threat Propagation
                 </h4>
-                <div class="text-xs-caps text-on-surface-variant opacity-50" style="font-size: 8px;">LIVE_ANALYTICS_KERNEL V4.2</div>
+                <div class="text-xs-caps text-on-surface-variant opacity-50" style="font-size: 8px;">
+                  @if (trendYear) {
+                    DATA YEAR: {{ trendYear }}
+                  } @else {
+                    NO TREND DATA AVAILABLE
+                  }
+                </div>
               </div>
               <div class="d-flex gap-2">
                 <button
@@ -99,7 +112,7 @@ import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } 
                   [disabled]="trendLoading"
                   (click)="setTrendView('7d')"
                 >
-                  7D VIEW
+                    LAST 7
                 </button>
                 <button
                   class="btn border-0 text-xs-caps py-1 px-3"
@@ -107,13 +120,18 @@ import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } 
                   [disabled]="trendLoading"
                   (click)="setTrendView('historical')"
                 >
-                  HISTORICAL
+                    LAST 12
                 </button>
               </div>
             </div>
 
             <div class="flex-grow-1 position-relative" style="min-height: 300px;">
               <canvas #trendChart></canvas>
+              @if (panelErrors['trend']) {
+                <div class="position-absolute top-50 start-50 translate-middle text-xs-caps text-on-surface-variant text-center px-3" style="font-size: 9px;">
+                  {{ panelErrors['trend'] }}
+                </div>
+              }
             </div>
 
             <div class="glass-panel p-3 rounded-3 mt-4 d-flex justify-content-center align-items-center border border-outline-variant border-opacity-10">
@@ -250,6 +268,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private analytics = inject(AnalyticsService);
   private breachService = inject(BreachService);
+  private notifications = inject(NotificationService);
+  private themeService = inject(ThemeService);
   auth = inject(AuthService);
   isAnalystUser = false;
 
@@ -261,6 +281,19 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   orgData: Array<{ organisation: string; count: number }> = [];
   industryTrendData: Array<{ industry: string; year: number; value: number }> = [];
   remediationRate = 0;
+  trendChangePct = 0;
+  trendDirection: 'up' | 'down' | 'flat' = 'flat';
+  systemHealthPct = 100;
+  panelErrors: Record<string, string | null> = {
+    summary: null,
+    trend: null,
+    severity: null,
+    risk: null,
+    dataTypes: null,
+    organisations: null,
+    remediation: null,
+  };
+  lastUpdated: Date | null = null;
 
   trendLoading = true;
   trendView: '7d' | 'historical' = 'historical';
@@ -270,6 +303,12 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private charts: any[] = [];
   private viewReady = false;
+  private hasShownDashboardLoadToast = false;
+
+  private _themeWatcher = effect(() => {
+    this.themeService.theme();
+    if (this.viewReady) this.renderAllCharts();
+  });
 
   ngOnInit(): void {
     this.isAnalystUser = this.auth.isAnalyst();
@@ -286,28 +325,51 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private loadData(): void {
-    this.analytics.getSummary().subscribe(res => this.summary = res.data);
+    this.analytics.getSummary().subscribe({
+      next: (res) => {
+        this.summary = res.data;
+        this.lastUpdated = new Date();
+        this.updateSystemHealth();
+      },
+      error: () => {
+        this.panelErrors['summary'] = 'Failed to load summary metrics.';
+        if (!this.hasShownDashboardLoadToast) {
+          this.notifications.show('Some dashboard metrics failed to load.', 'warning', 3200);
+          this.hasShownDashboardLoadToast = true;
+        }
+      }
+    });
     this.analytics.getSeverityBreakdown().subscribe(res => {
       this.severityData = res.data;
       if (this.viewReady) this.renderSeverity();
+    }, () => {
+      this.panelErrors['severity'] = 'Failed to load severity breakdown.';
     });
     this.loadMonthlyTrendWithFallback();
     this.analytics.getDataTypesFrequency().subscribe(res => {
       this.dataTypesData = res.data.slice(0, 5);
       if (this.viewReady) this.renderDataTypes();
+    }, () => {
+      this.panelErrors['dataTypes'] = 'Failed to load exposed data types.';
     });
     this.analytics.getRiskScores().subscribe(res => {
       this.riskData = this.normalizeRiskData(res.data);
       if (this.viewReady) this.renderRisk();
+    }, () => {
+      this.panelErrors['risk'] = 'Failed to load risk distribution.';
     });
 
     if (this.isAnalystUser) {
       this.analytics.getTopOrganisations(5).subscribe(res => {
         this.orgData = this.normalizeOrgData(res.data);
         if (this.viewReady) this.renderOrg();
+      }, () => {
+        this.panelErrors['organisations'] = 'Failed to load top organisations.';
       });
       this.analytics.getRemediationRate().subscribe(res => {
         this.remediationRate = this.computeRemediationRate(res.data);
+      }, () => {
+        this.panelErrors['remediation'] = 'Failed to load remediation rate.';
       });
       this.analytics.getIndustryYearTrend().subscribe(res => {
         this.industryTrendData = this.normalizeIndustryTrendData(res.data);
@@ -326,6 +388,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         this.trendData = [];
         this.trendYear = null;
         this.trendLoading = false;
+        this.panelErrors['trend'] = 'No monthly trend data found for recent years.';
+        this.updateTrendStats();
         if (this.viewReady) this.renderTrend();
         return;
       }
@@ -338,6 +402,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
             this.trendData = data;
             this.trendYear = year;
             this.trendLoading = false;
+            this.panelErrors['trend'] = null;
+            this.updateTrendStats();
             if (this.viewReady) this.renderTrend();
             return;
           }
@@ -348,6 +414,37 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     };
 
     tryYear(0);
+  }
+
+  private updateTrendStats(): void {
+    if (!this.trendData.length) {
+      this.trendChangePct = 0;
+      this.trendDirection = 'flat';
+      return;
+    }
+
+    const sorted = [...this.trendData].sort((a, b) => a.month - b.month);
+    const latest = sorted[sorted.length - 1]?.count ?? 0;
+    const previous = sorted.length > 1 ? (sorted[sorted.length - 2]?.count ?? 0) : 0;
+
+    if (previous === 0) {
+      this.trendChangePct = latest > 0 ? 100 : 0;
+      this.trendDirection = latest > 0 ? 'up' : 'flat';
+      return;
+    }
+
+    const pct = ((latest - previous) / previous) * 100;
+    this.trendChangePct = Math.round(Math.abs(pct));
+    this.trendDirection = pct > 0 ? 'up' : (pct < 0 ? 'down' : 'flat');
+  }
+
+  private updateSystemHealth(): void {
+    const openAlerts = this.summary?.open_alerts ?? 0;
+    const activeBreaches = this.summary?.active_breaches ?? 0;
+    const risk = this.summary?.avg_risk_score ?? 0;
+
+    const penalty = Math.min(35, openAlerts * 2) + Math.min(25, activeBreaches) + Math.min(20, risk * 2);
+    this.systemHealthPct = Math.max(40, Math.min(100, Math.round(100 - penalty)));
   }
 
   setTrendView(view: '7d' | 'historical'): void {
@@ -363,7 +460,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         const label = d?.bin ?? d?.range ?? d?._id;
         const count = Number(d?.count ?? 0);
         return {
-          label: label === undefined || label === null ? 'unknown' : String(label),
+          label: label === undefined || label === null || String(label).trim() === '' ? 'UNSPECIFIED' : String(label),
           count,
         };
       })
@@ -374,7 +471,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!Array.isArray(data)) return [];
     return data
       .map((d: any) => ({
-        organisation: String(d?.organisation ?? d?.org ?? d?.name ?? 'Unknown'),
+        organisation: String(d?.organisation ?? d?.org ?? d?.name ?? d?.domain ?? 'UNSPECIFIED'),
         count: Number(d?.count ?? d?.breach_count ?? 0),
       }))
       .filter((d) => Number.isFinite(d.count));
@@ -384,7 +481,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!Array.isArray(data)) return [];
     return data
       .map((d: any) => ({
-        industry: String(d?.industry ?? 'Unknown'),
+        industry: String(d?.industry ?? d?.sector ?? 'UNSPECIFIED'),
         year: Number(d?.year ?? 0),
         value: Number(d?.avg_risk_score ?? d?.breach_count ?? 0),
       }))
@@ -418,6 +515,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private async renderSeverity() {
     if (!this.severityChartRef) return;
     const Chart = await this.getChart();
+    const palette = this.getChartPalette();
     this.charts[0]?.destroy();
     this.charts[0] = new Chart(this.severityChartRef.nativeElement, {
       type: 'doughnut',
@@ -437,7 +535,11 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         plugins: {
           legend: { display: false },
           tooltip: {
-            backgroundColor: 'rgba(15, 19, 30, 0.9)',
+            backgroundColor: palette.tooltipBg,
+            borderColor: palette.tooltipBorder,
+            borderWidth: 1,
+            titleColor: palette.tooltipText,
+            bodyColor: palette.tooltipText,
             titleFont: { family: 'Manrope', size: 12 },
             bodyFont: { family: 'Inter', size: 11 },
             padding: 10,
@@ -451,6 +553,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private async renderTrend() {
     if (!this.trendChartRef) return;
     const Chart = await this.getChart();
+    const palette = this.getChartPalette();
     this.charts[1]?.destroy();
     const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
     const monthlyCounts = new Map<number, number>();
@@ -489,12 +592,12 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         plugins: { legend: { display: false } },
         scales: {
           y: {
-            grid: { color: 'rgba(255,255,255,0.03)' },
-            ticks: { color: '#64748b', font: { size: 9, family: 'Inter' } }
+            grid: { color: palette.grid },
+            ticks: { color: palette.tick, font: { size: 9, family: 'Inter' } }
           },
           x: {
             grid: { display: false },
-            ticks: { color: '#64748b', font: { size: 9, family: 'Inter' } }
+            ticks: { color: palette.tick, font: { size: 9, family: 'Inter' } }
           }
         }
       }
@@ -504,6 +607,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private async renderDataTypes() {
     if (!this.dataTypesChartRef) return;
     const Chart = await this.getChart();
+    const palette = this.getChartPalette();
     this.charts[2]?.destroy();
     this.charts[2] = new Chart(this.dataTypesChartRef.nativeElement, {
       type: 'bar',
@@ -520,8 +624,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         indexAxis: 'y',
         plugins: { legend: { display: false } },
         scales: {
-          x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 8 } } },
-          y: { grid: { display: false }, ticks: { color: '#bec8d2', font: { size: 9, family: 'Manrope' } } }
+          x: { grid: { display: false }, ticks: { color: palette.tick, font: { size: 8 } } },
+          y: { grid: { display: false }, ticks: { color: palette.tick, font: { size: 9, family: 'Manrope' } } }
         }
       }
     });
@@ -530,6 +634,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private async renderRisk() {
     if (!this.riskChartRef) return;
     const Chart = await this.getChart();
+    const palette = this.getChartPalette();
     this.charts[3]?.destroy();
     this.charts[3] = new Chart(this.riskChartRef.nativeElement, {
       type: 'bar',
@@ -545,8 +650,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-          x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 8 } } },
-          y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b', font: { size: 8 } } }
+          x: { grid: { display: false }, ticks: { color: palette.tick, font: { size: 8 } } },
+          y: { grid: { color: palette.grid }, ticks: { color: palette.tick, font: { size: 8 } } }
         }
       }
     });
@@ -555,6 +660,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private async renderOrg() {
     if (!this.orgChartRef || !this.orgData.length) return;
     const Chart = await this.getChart();
+    const palette = this.getChartPalette();
     this.charts[4]?.destroy();
     this.charts[4] = new Chart(this.orgChartRef.nativeElement, {
       type: 'polarArea',
@@ -574,7 +680,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       },
       options: {
         maintainAspectRatio: false,
-        scales: { r: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { display: false } } },
+        scales: { r: { grid: { color: palette.grid }, ticks: { display: false } } },
         plugins: { legend: { display: false } }
       }
     });
@@ -583,6 +689,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private async renderIndustryTrend() {
     if (!this.industryTrendChartRef) return;
     const Chart = await this.getChart();
+    const palette = this.getChartPalette();
 
     const industries = Array.from(new Set(this.industryTrendData.map(d => d.industry))).slice(0, 5);
     const years = Array.from(new Set(this.industryTrendData.map(d => d.year))).sort();
@@ -608,17 +715,35 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       data: { labels: years.map(String), datasets },
       options: {
         maintainAspectRatio: false,
-        plugins: { legend: { position: 'bottom', labels: { color: '#64748b', font: { size: 10 } } } },
+        plugins: { legend: { position: 'bottom', labels: { color: palette.tick, font: { size: 10 } } } },
         scales: {
-          y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b' } },
-          x: { grid: { display: false }, ticks: { color: '#64748b' } }
+          y: { grid: { color: palette.grid }, ticks: { color: palette.tick } },
+          x: { grid: { display: false }, ticks: { color: palette.tick } }
         }
       }
     });
   }
 
+  private getChartPalette() {
+    const style = getComputedStyle(document.documentElement);
+    const tick = style.getPropertyValue('--on-surface-variant').trim() || '#64748b';
+    const outline = style.getPropertyValue('--outline-variant').trim() || '#3e4850';
+    const isDark = this.themeService.theme() === 'dark';
+
+    return {
+      tick,
+      grid: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.08)',
+      tooltipBg: isDark ? 'rgba(15, 19, 30, 0.92)' : 'rgba(255, 255, 255, 0.96)',
+      tooltipText: style.getPropertyValue('--on-surface').trim() || '#0f172a',
+      tooltipBorder: outline,
+    };
+  }
+
   checkExposure(value: string): void {
-    if (!value.trim()) return;
+    if (!value.trim()) {
+      this.notifications.show('Enter an email or domain to check exposure.', 'warning', 2600);
+      return;
+    }
     this.checkingExposure = true;
     this.exposureResult = null;
     const isEmail = value.includes('@');
@@ -627,8 +752,16 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       next: (res) => {
         this.exposureResult = res.data;
         this.checkingExposure = false;
+        if (this.exposureResult?.exposed) {
+          this.notifications.show(`Exposure detected in ${this.exposureResult.breach_count ?? 0} breach(es).`, 'warning', 4500);
+        } else {
+          this.notifications.show('No active exposure detected for this query.', 'success', 3000);
+        }
       },
-      error: () => this.checkingExposure = false
+      error: (err) => {
+        this.checkingExposure = false;
+        this.notifications.show(err?.error?.message ?? 'Exposure lookup failed.', 'error', 5000);
+      }
     });
   }
 }

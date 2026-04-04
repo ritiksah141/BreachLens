@@ -3,6 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { NgClass, CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
+import { NotificationService } from '../../../core/services/notification.service';
 
 @Component({
   selector: 'app-login',
@@ -133,6 +134,7 @@ export class LoginComponent {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private notifications = inject(NotificationService);
 
   loading = false;
   serverError = '';
@@ -157,12 +159,14 @@ export class LoginComponent {
     this.auth.login(this.form.value as any).subscribe({
       next: () => {
         this.loading = false;
+        this.notifications.show('Login successful. Welcome back.', 'success', 3000);
         this.router.navigate(['/']);
       },
       error: (err) => {
         this.loading = false;
         this.serverError =
           err?.error?.message ?? 'Login failed. Check your credentials.';
+        this.notifications.show(this.serverError, 'error', 5000);
       },
     });
   }

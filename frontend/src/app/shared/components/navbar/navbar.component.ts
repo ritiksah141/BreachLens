@@ -8,9 +8,9 @@ import { AuthService } from '../../../core/services/auth.service';
   standalone: true,
   imports: [RouterLink, RouterLinkActive, UpperCasePipe],
   template: `
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg bg-surface-container border-bottom border-outline-variant">
       <div class="container-fluid">
-        <a class="navbar-brand fw-bold" routerLink="/">
+        <a class="navbar-brand fw-bold text-on-surface" routerLink="/">
           <span class="text-danger">⬡</span> BreachLens
         </a>
         <button
@@ -24,23 +24,23 @@ import { AuthService } from '../../../core/services/auth.service';
         <div class="collapse navbar-collapse" id="navbarMain">
           <ul class="navbar-nav me-auto">
             <li class="nav-item">
-              <a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">
+              <a class="nav-link text-on-surface-variant" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">
                 Dashboard
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" routerLink="/breaches" routerLinkActive="active">
+              <a class="nav-link text-on-surface-variant" routerLink="/breaches" routerLinkActive="active">
                 Breaches
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" routerLink="/map" routerLinkActive="active">
+              <a class="nav-link text-on-surface-variant" routerLink="/map" routerLinkActive="active">
                 Global Map
               </a>
             </li>
-            @if (auth.isAnalyst()) {
+            @if (auth.isAdmin()) {
               <li class="nav-item">
-                <a class="nav-link" routerLink="/admin" routerLinkActive="active">
+                <a class="nav-link text-on-surface-variant" routerLink="/admin" routerLinkActive="active">
                   Admin
                 </a>
               </li>
@@ -50,7 +50,7 @@ import { AuthService } from '../../../core/services/auth.service';
             @if (auth.isAuthenticated()) {
               <li class="nav-item dropdown">
                 <a
-                  class="nav-link dropdown-toggle"
+                  class="nav-link dropdown-toggle text-on-surface"
                   href="#"
                   role="button"
                   data-bs-toggle="dropdown"
@@ -60,7 +60,7 @@ import { AuthService } from '../../../core/services/auth.service';
                   </span>
                   {{ auth.currentUser()?.username }}
                 </a>
-                <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
+                <ul class="dropdown-menu dropdown-menu-end">
                   <li>
                     <a class="dropdown-item" routerLink="/auth/profile">Profile</a>
                   </li>
@@ -74,7 +74,7 @@ import { AuthService } from '../../../core/services/auth.service';
               </li>
             } @else {
               <li class="nav-item">
-                <a class="nav-link" routerLink="/auth/login">Login</a>
+                <a class="nav-link text-on-surface-variant" routerLink="/auth/login">Login</a>
               </li>
               <li class="nav-item">
                 <a class="nav-link btn btn-outline-danger btn-sm ms-2 px-3" routerLink="/auth/register">

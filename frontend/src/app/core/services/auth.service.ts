@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap, catchError, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { NotificationService } from './notification.service';
 import {
   ApiResponse,
   AuthToken,
@@ -17,12 +18,13 @@ const USER_KEY = 'bl_user';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly apiUrl = environment.apiUrl;
+  private _lastSessionExpiryNoticeAt = 0;
 
   // Reactive state — signals
   private _token = signal<string | null>(localStorage.getItem(TOKEN_KEY));
   private _user = signal<User | null>(this._loadUser());
 
-  readonly isAuthenticated = computed(() => !!this._token());
+  readonly isAuthenticated = computed(() => !!this._getValidToken(this._token()));
   readonly currentUser = computed(() => this._user());
   readonly isAdmin = computed(() => this._user()?.role === 'admin');
   readonly isAnalyst = computed(
@@ -30,14 +32,24 @@ export class AuthService {
       this._user()?.role === 'analyst' || this._user()?.role === 'admin'
   );
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    private notifications: NotificationService
+  ) {
+    this._purgeExpiredSession();
+  }
 
   // ------------------------------------------------------------------
   // Token helpers (used by AuthInterceptor)
   // ------------------------------------------------------------------
 
   getToken(): string | null {
-    return this._token();
+    const token = this._getValidToken(this._token());
+    if (!token && this._token()) {
+      this._clearSession();
+    }
+    return token;
   }
 
   // ------------------------------------------------------------------
@@ -53,6 +65,7 @@ export class AuthService {
           if (token) {
             localStorage.setItem(TOKEN_KEY, token);
             this._token.set(token);
+            this._lastSessionExpiryNoticeAt = 0;
             // Fetch user profile after login
             this.fetchProfile().subscribe();
           }
@@ -73,11 +86,23 @@ export class AuthService {
       // Blacklist the token on the server
       this.http.post(`${this.apiUrl}/auth/logout`, {}).subscribe();
     }
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-    this._token.set(null);
-    this._user.set(null);
+    this._clearSession();
     this.router.navigate(['/']);
+  }
+
+  handleSessionExpired(): void {
+    const hadSession = Boolean(this._token() || this._user());
+    this._clearSession();
+
+    if (!hadSession) return;
+
+    const now = Date.now();
+    if (now - this._lastSessionExpiryNoticeAt > 3000) {
+      this._lastSessionExpiryNoticeAt = now;
+      this.notifications.show('Your session has expired. Please log in again.', 'warning', 5000);
+    }
+
+    this.router.navigate(['/auth/login'], { queryParams: { reason: 'expired' } });
   }
 
   fetchProfile(): Observable<ApiResponse<User>> {
@@ -104,5 +129,42 @@ export class AuthService {
     } catch {
       return null;
     }
+  }
+
+  private _getValidToken(token: string | null): string | null {
+    if (!token || this._isTokenExpired(token)) return null;
+    return token;
+  }
+
+  private _isTokenExpired(token: string): boolean {
+    try {
+      const payload = token.split('.')[1];
+      if (!payload) return true;
+
+      const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
+      const decoded = atob(padded);
+      const parsed = JSON.parse(decoded);
+
+      const exp = Number(parsed?.exp);
+      if (!Number.isFinite(exp)) return false;
+      return exp <= Math.floor(Date.now() / 1000);
+    } catch {
+      return true;
+    }
+  }
+
+  private _purgeExpiredSession(): void {
+    const token = this._token();
+    if (token && this._isTokenExpired(token)) {
+      this._clearSession();
+    }
+  }
+
+  private _clearSession(): void {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    this._token.set(null);
+    this._user.set(null);
   }
 }

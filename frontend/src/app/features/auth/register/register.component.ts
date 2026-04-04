@@ -5,6 +5,7 @@ import {
 } from '@angular/forms';
 import { NgClass } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
+import { NotificationService } from '../../../core/services/notification.service';
 
 // Backend requires: min 8 chars, at least one uppercase, at least one digit
 function passwordStrength(control: AbstractControl): ValidationErrors | null {
@@ -22,12 +23,12 @@ function passwordStrength(control: AbstractControl): ValidationErrors | null {
   template: `
     <div class="row justify-content-center mt-5">
       <div class="col-md-5 col-lg-4">
-        <div class="card bg-dark border-secondary">
+        <div class="card bg-surface-container border-outline-variant">
           <div class="card-body p-4">
-            <h4 class="fw-bold text-light mb-1">
+            <h4 class="fw-bold text-on-surface mb-1">
               <span class="text-danger">⬡</span> Create account
             </h4>
-            <p class="text-muted small mb-4">Join BreachLens</p>
+            <p class="text-on-surface-variant small mb-4">Join BreachLens</p>
 
             @if (serverError) {
               <div class="alert alert-danger py-2 small">{{ serverError }}</div>
@@ -40,11 +41,11 @@ function passwordStrength(control: AbstractControl): ValidationErrors | null {
 
             <form [formGroup]="form" (ngSubmit)="onSubmit()">
               <div class="mb-3">
-                <label class="form-label text-muted small">Username</label>
+                <label class="form-label text-on-surface-variant small">Username</label>
                 <input
                   formControlName="username"
                   type="text"
-                  class="form-control bg-dark text-light border-secondary"
+                  class="form-control bg-surface-container-low text-on-surface border-outline-variant"
                   [ngClass]="{ 'is-invalid': f['username'].invalid && f['username'].touched }"
                   placeholder="john_doe"
                 />
@@ -60,11 +61,11 @@ function passwordStrength(control: AbstractControl): ValidationErrors | null {
               </div>
 
               <div class="mb-3">
-                <label class="form-label text-muted small">Email</label>
+                <label class="form-label text-on-surface-variant small">Email</label>
                 <input
                   formControlName="email"
                   type="email"
-                  class="form-control bg-dark text-light border-secondary"
+                  class="form-control bg-surface-container-low text-on-surface border-outline-variant"
                   [ngClass]="{ 'is-invalid': f['email'].invalid && f['email'].touched }"
                   placeholder="you@example.com"
                 />
@@ -74,11 +75,11 @@ function passwordStrength(control: AbstractControl): ValidationErrors | null {
               </div>
 
               <div class="mb-4">
-                <label class="form-label text-muted small">Password</label>
+                <label class="form-label text-on-surface-variant small">Password</label>
                 <input
                   formControlName="password"
                   type="password"
-                  class="form-control bg-dark text-light border-secondary"
+                  class="form-control bg-surface-container-low text-on-surface border-outline-variant"
                   [ngClass]="{ 'is-invalid': f['password'].invalid && f['password'].touched }"
                   placeholder="Min 8 chars, 1 uppercase, 1 digit"
                 />
@@ -105,8 +106,8 @@ function passwordStrength(control: AbstractControl): ValidationErrors | null {
               </button>
             </form>
 
-            <hr class="border-secondary my-3" />
-            <p class="text-center text-muted small mb-0">
+            <hr class="border-outline-variant my-3" />
+            <p class="text-center text-on-surface-variant small mb-0">
               Have an account?
               <a routerLink="/auth/login" class="text-danger">Sign in</a>
             </p>
@@ -120,6 +121,7 @@ export class RegisterComponent {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private notifications = inject(NotificationService);
 
   loading = false;
   serverError = '';
@@ -146,6 +148,7 @@ export class RegisterComponent {
   onSubmit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.notifications.show('Please fix the highlighted form errors.', 'warning', 3500);
       return;
     }
     this.loading = true;
@@ -155,12 +158,14 @@ export class RegisterComponent {
       next: () => {
         this.loading = false;
         this.success = true;
+        this.notifications.show('Account created successfully. Redirecting to login...', 'success', 2500);
         setTimeout(() => this.router.navigate(['/auth/login']), 2000);
       },
       error: (err) => {
         this.loading = false;
         this.serverError =
           err?.error?.message ?? 'Registration failed. Username or email may be taken.';
+        this.notifications.show(this.serverError, 'error', 5000);
       },
     });
   }

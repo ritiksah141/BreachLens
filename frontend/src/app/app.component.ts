@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { AuthService } from './core/services/auth.service';
 import { ThemeService } from './core/services/theme.service';
+import { NotificationService } from './core/services/notification.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -23,7 +24,7 @@ import { FormsModule } from '@angular/forms';
           <a class="text-decoration-none font-headline fw-semibold text-xs-caps"
              routerLink="/map" routerLinkActive="text-primary border-bottom border-primary border-2 pb-1"
              style="color: var(--on-surface-variant); cursor: pointer;">Network Grid</a>
-          @if (auth.isAnalyst()) {
+          @if (auth.isAdmin()) {
             <a class="text-decoration-none font-headline fw-semibold text-xs-caps"
                routerLink="/admin" routerLinkActive="text-primary border-bottom border-primary border-2 pb-1"
                style="color: var(--on-surface-variant); cursor: pointer;">Admin Terminal</a>
@@ -52,10 +53,10 @@ import { FormsModule } from '@angular/forms';
               <span class="material-symbols-outlined fs-5">person</span>
             </div>
           </button>
-          <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark glass-panel border-outline-variant shadow-lg">
+          <ul class="dropdown-menu dropdown-menu-end glass-panel border-outline-variant shadow-lg">
             @if (auth.isAuthenticated()) {
               <li><a class="dropdown-item text-xs-caps text-on-surface" routerLink="/auth/profile">Profile</a></li>
-              @if (auth.isAnalyst()) {
+              @if (auth.isAdmin()) {
                 <li><a class="dropdown-item text-xs-caps text-on-surface" routerLink="/admin">Admin Control</a></li>
               }
               <li><hr class="dropdown-divider border-outline-variant"></li>
@@ -76,6 +77,19 @@ import { FormsModule } from '@angular/forms';
           <router-outlet />
         </div>
       </main>
+    </div>
+
+    <div class="toast-stack" aria-live="polite" aria-atomic="true">
+      @for (n of notifications.notifications(); track n.id) {
+        <div class="app-toast" [ngClass]="'app-toast-' + n.level">
+          <div class="d-flex align-items-center justify-content-between gap-3">
+            <span class="text-xs-caps toast-message">{{ n.message }}</span>
+            <button class="btn btn-link p-0 text-on-surface-variant border-0" (click)="dismissToast(n.id)" aria-label="Dismiss notification">
+              <span class="material-symbols-outlined fs-6">close</span>
+            </button>
+          </div>
+        </div>
+      }
     </div>
 
     <!-- Footer Ticker -->
@@ -109,17 +123,56 @@ import { FormsModule } from '@angular/forms';
     .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
     .max-width-1600 { max-width: 1600px; margin: 0 auto; }
+    .toast-stack {
+      position: fixed;
+      top: 76px;
+      right: 16px;
+      z-index: 1100;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: min(92vw, 420px);
+    }
+    .app-toast {
+      padding: 0.75rem 0.875rem;
+      border-radius: 0.75rem;
+      border: 1px solid var(--outline-variant);
+      background: var(--surface-container-high);
+      color: var(--on-surface);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+      animation: toast-in 180ms ease-out;
+    }
+    .app-toast-info { border-left: 3px solid #38bdf8; }
+    .app-toast-success { border-left: 3px solid #4ade80; }
+    .app-toast-warning { border-left: 3px solid #f59e0b; }
+    .app-toast-error { border-left: 3px solid #f87171; }
+    .toast-message { letter-spacing: 0.08em; }
+    @keyframes toast-in {
+      from { transform: translateY(-4px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
   `]
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   auth = inject(AuthService);
   themeService = inject(ThemeService);
+  notifications = inject(NotificationService);
   private router = inject(Router);
 
   searchTerm = '';
 
+  ngOnInit(): void {
+    if (this.auth.isAuthenticated()) {
+      this.auth.fetchProfile().subscribe({ error: () => {} });
+    }
+  }
+
   logout() {
     this.auth.logout();
+  }
+
+  dismissToast(id: number): void {
+    this.notifications.dismiss(id);
   }
 
   onSearch() {

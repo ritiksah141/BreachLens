@@ -3,6 +3,7 @@ import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NgClass, SlicePipe, DecimalPipe, TitleCasePipe, CommonModule } from '@angular/common';
 import { BreachService } from '../../../core/services/breach.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import { Breach, BreachFilterParams } from '../../../core/models/models';
 import { SeverityBadgeComponent } from '../../../shared/components/severity-badge/severity-badge.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
@@ -196,6 +197,7 @@ const SESSION_KEY = 'bl_breach_filters';
 })
 export class BreachListComponent implements OnInit {
   private breachService = inject(BreachService);
+  private notifications = inject(NotificationService);
   private route = inject(ActivatedRoute);
 
   breaches: Breach[] = [];
@@ -250,6 +252,7 @@ export class BreachListComponent implements OnInit {
       error: (err) => {
         this.error = err?.error?.message ?? 'Failed to load breaches.';
         this.loading = false;
+        this.notifications.show(this.error, 'error', 4500);
       },
     });
   }
@@ -302,7 +305,15 @@ export class BreachListComponent implements OnInit {
     const org: any = breach?.organisation;
     if (typeof org === 'string' && org.trim()) return org;
     if (org && typeof org.name === 'string' && org.name.trim()) return org.name;
-    return 'UNKNOWN';
+    if (org && typeof org.domain === 'string' && org.domain.trim()) return org.domain.toUpperCase();
+
+    const title = typeof breach?.title === 'string' ? breach.title.trim() : '';
+    if (title) {
+      const compact = title.split(/\s+(Data|Breach|Leak|Incident)\b/i)[0]?.trim();
+      if (compact) return compact.toUpperCase();
+    }
+
+    return 'UNSPECIFIED';
   }
 
   // Persist filter state in sessionStorage so page refresh restores it

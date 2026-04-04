@@ -63,7 +63,7 @@ import { AuthService } from '../../../core/services/auth.service';
                    style="width:120px; height:120px;">
                 <span class="material-symbols-outlined" style="font-size: 5rem;">person</span>
               </div>
-              <div class="position-absolute bottom-0 end-0 p-2 bg-success rounded-circle border border-4 border-dark animate-pulse"></div>
+              <div class="position-absolute bottom-0 end-0 p-2 bg-success rounded-circle border border-4 border-outline-variant animate-pulse"></div>
             </div>
 
             <h3 class="font-headline fw-bold text-on-surface mb-1 fs-4">{{ user?.username }}</h3>
@@ -123,7 +123,7 @@ import { AuthService } from '../../../core/services/auth.service';
                   <a routerLink="/breaches" class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-4 shadow-sm flex-grow-1">
                     <span class="material-symbols-outlined fs-6 me-2">history</span> Investigation_Logs
                   </a>
-                  @if (auth.isAnalyst()) {
+                  @if (auth.isAdmin()) {
                     <a routerLink="/admin" class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-4 shadow-sm flex-grow-1">
                       <span class="material-symbols-outlined fs-6 me-2">admin_panel_settings</span> Command_Terminal
                     </a>

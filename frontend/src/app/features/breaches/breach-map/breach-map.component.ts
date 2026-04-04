@@ -1,8 +1,9 @@
-import { Component, OnInit, AfterViewInit, OnDestroy, inject, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, inject, ElementRef, ViewChild, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { BreachService } from '../../../core/services/breach.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import { SeverityBadgeComponent } from '../../../shared/components/severity-badge/severity-badge.component';
 
 @Component({
@@ -92,6 +93,7 @@ export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private breachService = inject(BreachService);
   private themeService = inject(ThemeService);
+  private notifications = inject(NotificationService);
   private router = inject(Router);
   private map: any;
   private geoJsonLayer: any;
@@ -99,6 +101,11 @@ export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
 
   geoLoading = false;
   geoError = '';
+
+  private _themeWatcher = effect(() => {
+    this.themeService.theme();
+    if (this.map) this.updateTileLayer();
+  });
 
   ngOnInit(): void {}
 
@@ -116,9 +123,6 @@ export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
     this.map = L.map(this.mapContainer.nativeElement).setView([20, 0], 2);
     this.updateTileLayer();
 
-    // Re-apply tiles when theme changes
-    // Since we don't have an observable for theme, we'll check it on a loop or just rely on CSS filters
-    // Actually, Leaflet tiles can be inverted with CSS for dark mode
     this.loadGeoJson();
   }
 
@@ -139,8 +143,14 @@ export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   loadGeoJson(severity?: string) {
-    this.breachService.getGeoJson(severity).subscribe(res => {
-      this.renderMarkers(res.data);
+    this.breachService.getGeoJson(severity).subscribe({
+      next: (res) => {
+        this.renderMarkers(res.data);
+      },
+      error: (err) => {
+        this.geoError = err?.error?.message ?? 'Failed to load map telemetry.';
+        this.notifications.show(this.geoError, 'error', 4500);
+      }
     });
   }
 
@@ -151,6 +161,7 @@ export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
   useMyLocation() {
     if (!navigator.geolocation) {
       this.geoError = 'Geolocation not supported.';
+      this.notifications.show(this.geoError, 'warning', 3200);
       return;
     }
 
@@ -166,16 +177,19 @@ export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
           next: (res) => {
             this.renderMarkers(res.data);
             this.geoLoading = false;
+            this.notifications.show('Loaded nearby breaches.', 'success', 2500);
           },
-          error: () => {
-            this.geoError = 'Failed to load local breaches.';
+          error: (err) => {
+            this.geoError = err?.error?.message ?? 'Failed to load local breaches.';
             this.geoLoading = false;
+            this.notifications.show(this.geoError, 'error', 4500);
           }
         });
       },
-      (err) => {
+      () => {
         this.geoError = 'Location access denied or unavailable.';
         this.geoLoading = false;
+        this.notifications.show(this.geoError, 'warning', 3500);
       }
     );
   }
@@ -210,7 +224,7 @@ export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
           <div class="text-on-surface">
             <div class="text-xs-caps fw-bold mb-1" style="font-size: 10px;">${props.title}</div>
             <div class="small mb-3 d-flex align-items-center gap-2">
-              <span class="badge py-1 px-2 border border-outline-variant border-opacity-25 text-xs-caps" style="font-size: 7px; background: rgba(0,0,0,0.1)">${props.severity?.toUpperCase()}</span>
+              <span class="badge py-1 px-2 border border-outline-variant border-opacity-25 text-xs-caps" style="font-size: 7px; background: var(--surface-container-low); color: var(--on-surface)">${props.severity?.toUpperCase()}</span>
               <span class="text-on-surface-variant fw-bold" style="font-size: 8px; text-transform: uppercase;">${props.industry}</span>
             </div>
             <button class="btn btn-primary w-100 py-1 text-xs-caps" style="font-size: 8px;" id="popup-btn-${props.id}">DECRYPT_DATA</button>

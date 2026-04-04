@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AdminService } from '../../../core/services/admin.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import { User } from '../../../core/models/models';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
@@ -47,7 +48,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
                       <div class="p-2 bg-surface-container-highest rounded-circle position-relative">
                         <span class="material-symbols-outlined text-on-surface-variant fs-5">person</span>
                         @if (user.is_active) {
-                          <span class="position-absolute bottom-0 end-0 p-1 bg-success rounded-circle border border-dark"></span>
+                          <span class="position-absolute bottom-0 end-0 p-1 bg-success rounded-circle border border-outline-variant"></span>
                         }
                       </div>
                       <div>
@@ -121,6 +122,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 })
 export class UserManagementComponent implements OnInit {
   private adminService = inject(AdminService);
+  private notifications = inject(NotificationService);
   auth = inject(AuthService);
 
   users: User[] = [];
@@ -145,6 +147,7 @@ export class UserManagementComponent implements OnInit {
       error: (err) => {
         this.error = err?.error?.message ?? 'Failed to load users.';
         this.loading = false;
+        this.notifications.show(this.error, 'error', 4500);
       }
     });
   }
@@ -165,10 +168,12 @@ export class UserManagementComponent implements OnInit {
       next: () => {
         this.success = 'User role updated.';
         this.loadUsers();
+        this.notifications.show(this.success, 'success', 2500);
       },
       error: (err) => {
         this.error = err?.error?.message ?? 'Failed to update role.';
         this.loadUsers();
+        this.notifications.show(this.error, 'error', 5000);
       }
     });
   }
@@ -185,9 +190,11 @@ export class UserManagementComponent implements OnInit {
       next: () => {
         this.success = `User ${action}d successfully.`;
         this.loadUsers();
+        this.notifications.show(this.success, 'success', 2500);
       },
       error: (err) => {
         this.error = err?.error?.message ?? `Failed to ${action} user.`;
+        this.notifications.show(this.error, 'error', 5000);
       }
     });
   }

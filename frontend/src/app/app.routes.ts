@@ -32,7 +32,7 @@ export const routes: Routes = [
   },
   {
     path: 'admin',
-    canActivate: [analystGuard],
+    canActivate: [adminGuard],
     loadComponent: () =>
       import('./features/admin/admin.component').then((m) => m.AdminComponent),
   },

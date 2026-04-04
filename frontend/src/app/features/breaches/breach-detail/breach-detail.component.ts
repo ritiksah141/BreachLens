@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { BreachService } from '../../../core/services/breach.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import { Breach, TimelineEvent, RemediationAction, MonitoringAlert, AffectedAccount } from '../../../core/models/models';
 import { SeverityBadgeComponent } from '../../../shared/components/severity-badge/severity-badge.component';
 
@@ -428,6 +429,7 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
 
   private breachService = inject(BreachService);
   private themeService = inject(ThemeService);
+  private notifications = inject(NotificationService);
   auth = inject(AuthService);
 
   breach: Breach | null = null;
@@ -487,6 +489,7 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.error = err?.error?.message ?? 'Breach not found.';
         this.loading = false;
+        this.notifications.show(this.error, 'error', 5000);
       },
     });
   }
@@ -532,14 +535,20 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
         this.loadSubDocuments();
         this.showAddTimeline = false;
         this.newEvent = { event_type: '', description: '', occurred_at: new Date().toISOString().slice(0, 16) };
-      }
+        this.notifications.show('Timeline event added.', 'success', 2500);
+      },
+      error: (err) => this.notifyApiError(err, 'Failed to add timeline event.'),
     });
   }
 
   deleteTimeline(eventId: string): void {
     if (!confirm('Delete this timeline event?')) return;
     this.breachService.deleteTimelineEvent(this.id, eventId).subscribe({
-      next: () => this.loadSubDocuments()
+      next: () => {
+        this.loadSubDocuments();
+        this.notifications.show('Timeline event deleted.', 'info', 2200);
+      },
+      error: (err) => this.notifyApiError(err, 'Failed to delete timeline event.'),
     });
   }
 
@@ -556,21 +565,31 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
         this.loadSubDocuments();
         this.showAddRemediation = false;
         this.newAction = { action: '', status: 'pending', assigned_to: '' };
-      }
+        this.notifications.show('Remediation protocol added.', 'success', 2500);
+      },
+      error: (err) => this.notifyApiError(err, 'Failed to add remediation protocol.'),
     });
   }
 
   updateRemediationStatus(action: RemediationAction, event: any): void {
     const newStatus = event.target.value;
     this.breachService.updateRemediation(this.id, action._id!, { status: newStatus }).subscribe({
-      next: () => this.loadSubDocuments()
+      next: () => {
+        this.loadSubDocuments();
+        this.notifications.show('Remediation status updated.', 'info', 2200);
+      },
+      error: (err) => this.notifyApiError(err, 'Failed to update remediation status.'),
     });
   }
 
   deleteRemediation(actionId: string): void {
     if (!confirm('Delete this remediation action?')) return;
     this.breachService.deleteRemediation(this.id, actionId).subscribe({
-      next: () => this.loadSubDocuments()
+      next: () => {
+        this.loadSubDocuments();
+        this.notifications.show('Remediation protocol deleted.', 'info', 2200);
+      },
+      error: (err) => this.notifyApiError(err, 'Failed to delete remediation protocol.'),
     });
   }
 
@@ -587,20 +606,30 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
         this.loadSubDocuments();
         this.showAddAlert = false;
         this.newAlert = { message: '', alert_type: 'new_exposure', severity: 'medium', acknowledged: false };
-      }
+        this.notifications.show('Monitoring alert added.', 'success', 2500);
+      },
+      error: (err) => this.notifyApiError(err, 'Failed to add monitoring alert.'),
     });
   }
 
   toggleAlertAck(alert: MonitoringAlert): void {
     this.breachService.updateAlert(this.id, alert._id!, { acknowledged: !alert.acknowledged }).subscribe({
-      next: () => this.loadSubDocuments()
+      next: () => {
+        this.loadSubDocuments();
+        this.notifications.show('Alert acknowledgement updated.', 'info', 2200);
+      },
+      error: (err) => this.notifyApiError(err, 'Failed to update alert acknowledgement.'),
     });
   }
 
   deleteAlert(alertId: string): void {
     if (!confirm('Delete this monitoring alert?')) return;
     this.breachService.deleteAlert(this.id, alertId).subscribe({
-      next: () => this.loadSubDocuments()
+      next: () => {
+        this.loadSubDocuments();
+        this.notifications.show('Monitoring alert deleted.', 'info', 2200);
+      },
+      error: (err) => this.notifyApiError(err, 'Failed to delete monitoring alert.'),
     });
   }
 
@@ -610,21 +639,36 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
         this.loadSubDocuments();
         this.showAddAccount = false;
         this.newAccount = { email: '', username: '', notified: false };
-      }
+        this.notifications.show('Affected account added.', 'success', 2500);
+      },
+      error: (err) => this.notifyApiError(err, 'Failed to add affected account.'),
     });
   }
 
   toggleAccountNotified(acc: AffectedAccount): void {
     this.breachService.updateAffectedAccount(this.id, acc._id!, { notified: !acc.notified }).subscribe({
-      next: () => this.loadSubDocuments()
+      next: () => {
+        this.loadSubDocuments();
+        this.notifications.show('Account notification status updated.', 'info', 2200);
+      },
+      error: (err) => this.notifyApiError(err, 'Failed to update account status.'),
     });
   }
 
   deleteAccount(accId: string): void {
     if (!confirm('Remove this account record?')) return;
     this.breachService.deleteAffectedAccount(this.id, accId).subscribe({
-      next: () => this.loadSubDocuments()
+      next: () => {
+        this.loadSubDocuments();
+        this.notifications.show('Affected account removed.', 'info', 2200);
+      },
+      error: (err) => this.notifyApiError(err, 'Failed to remove affected account.'),
     });
+  }
+
+  private notifyApiError(err: any, fallback: string): void {
+    const message = err?.error?.message ?? fallback;
+    this.notifications.show(message, 'error', 5000);
   }
 
   private async initMap(): Promise<void> {
@@ -681,9 +725,29 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
   getAttackVectorLabel(breach: Breach | null): string {
     const vector = (breach as any)?.attack_vector;
     if (typeof vector === 'string' && vector.trim()) return vector.toUpperCase();
+
+    const description = typeof breach?.description === 'string' ? breach.description.toLowerCase() : '';
+    const patterns: Array<{ regex: RegExp; label: string }> = [
+      { regex: /(phish|spear\s*phish|smish|vish|social engineering)/i, label: 'PHISHING' },
+      { regex: /(ransomware|encrypt(ed|ion)? files|double extortion)/i, label: 'RANSOMWARE' },
+      { regex: /(credential stuffing|password spray|brute force|stolen credentials)/i, label: 'CREDENTIAL_STUFFING' },
+      { regex: /(sql injection|sqli|injection flaw)/i, label: 'SQL_INJECTION' },
+      { regex: /(api (key )?leak|exposed api|token leak|hardcoded secret)/i, label: 'API_EXPOSURE' },
+      { regex: /(misconfig|misconfiguration|open bucket|public s3|exposed database|unsecured database)/i, label: 'MISCONFIGURATION' },
+      { regex: /(third[- ]party|vendor|supply chain|dependency compromise)/i, label: 'SUPPLY_CHAIN' },
+      { regex: /(malware|infostealer|trojan|keylogger)/i, label: 'MALWARE' },
+      { regex: /(insider|privilege abuse|internal actor)/i, label: 'INSIDER_THREAT' },
+    ];
+
+    if (description) {
+      const match = patterns.find((p) => p.regex.test(description));
+      if (match) return match.label;
+    }
+
     const source = (breach as any)?.source;
     if (typeof source === 'string' && source.trim()) return `${source}_INTEL`.toUpperCase();
-    return 'UNKNOWN';
+    if (typeof breach?.source_url === 'string' && breach.source_url.trim()) return 'OPEN_SOURCE_INTEL';
+    return 'UNSPECIFIED';
   }
 
   normalizeTimeline(data: any): TimelineEvent[] {
@@ -740,6 +804,15 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
     if (typeof direct === 'string' && direct.trim()) return direct;
     const nested = (breach?.organisation as any)?.size;
     if (typeof nested === 'string' && nested.trim()) return nested;
-    return 'UNKNOWN';
+
+    const affected = Number((breach as any)?.affected_records_count ?? 0);
+    if (Number.isFinite(affected) && affected > 0) {
+      if (affected >= 1_000_000) return 'ENTERPRISE';
+      if (affected >= 100_000) return 'LARGE';
+      if (affected >= 10_000) return 'MID';
+      return 'SMALL';
+    }
+
+    return 'UNSPECIFIED';
   }
 }

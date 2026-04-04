@@ -95,6 +95,67 @@ body {
   color: var(--on-surface) !important;
 }
 
+/* Theme utility surfaces used across templates */
+.bg-surface { background-color: var(--surface) !important; }
+.bg-surface-container-lowest { background-color: var(--surface-container-lowest) !important; }
+.bg-surface-container-low { background-color: var(--surface-container-low) !important; }
+.bg-surface-container { background-color: var(--surface-container) !important; }
+.bg-surface-container-high { background-color: var(--surface-container-high) !important; }
+.bg-surface-container-highest { background-color: var(--surface-container-highest) !important; }
+
+.border-outline { border-color: var(--outline) !important; }
+.border-outline-variant { border-color: var(--outline-variant) !important; }
+
+/* Make bootstrap dark classes theme-aware for light mode compatibility */
+.btn-dark {
+  background-color: var(--surface-container-highest) !important;
+  color: var(--on-surface) !important;
+  border-color: var(--outline-variant) !important;
+}
+
+.btn-dark:hover,
+.btn-dark:focus {
+  background-color: var(--surface-container-high) !important;
+  color: var(--on-surface) !important;
+  border-color: var(--outline) !important;
+}
+
+.dropdown-menu,
+.dropdown-menu-dark {
+  background-color: var(--surface-container-high) !important;
+  color: var(--on-surface) !important;
+  border: 1px solid var(--outline-variant) !important;
+}
+
+.dropdown-item {
+  color: var(--on-surface) !important;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  background-color: var(--surface-container) !important;
+  color: var(--on-surface) !important;
+}
+
+.dropdown-divider {
+  border-color: var(--outline-variant) !important;
+}
+
+.text-muted { color: var(--on-surface-variant) !important; }
+
+[data-theme='light'] .bg-dark {
+  background-color: var(--surface-container) !important;
+}
+
+[data-theme='light'] .text-light {
+  color: var(--on-surface) !important;
+}
+
+[data-theme='light'] .border-dark,
+[data-theme='light'] .border-secondary {
+  border-color: var(--outline-variant) !important;
+}
+
 .btn-primary {
   background-color: var(--primary-container) !important;
   color: var(--on-primary-container) !important;
@@ -118,6 +179,13 @@ body {
   border: 1px solid var(--outline-variant) !important;
   color: var(--on-surface) !important;
   font-size: 0.875rem;
+}
+
+.form-select,
+.input-group-text {
+  background-color: var(--surface-container-low) !important;
+  border: 1px solid var(--outline-variant) !important;
+  color: var(--on-surface) !important;
 }
 
 .form-control:focus {

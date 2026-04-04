@@ -7,6 +7,7 @@ import { NgClass, DecimalPipe, UpperCasePipe, TitleCasePipe, KeyValuePipe, DateP
 import { BreachService } from '../../core/services/breach.service';
 import { AdminService } from '../../core/services/admin.service';
 import { AuthService } from '../../core/services/auth.service';
+import { NotificationService } from '../../core/services/notification.service';
 import { Breach, SystemStats, AuditLog } from '../../core/models/models';
 import { SeverityBadgeComponent } from '../../shared/components/severity-badge/severity-badge.component';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
@@ -33,7 +34,7 @@ import { UserManagementComponent } from './user-management/user-management.compo
       </div>
     </div>
 
-    @if (!auth.isAnalyst()) {
+    @if (!auth.isAdmin()) {
       <div class="alert bg-error-container bg-opacity-10 border-error text-error p-4 rounded-3 shadow-lg">
         <div class="d-flex align-items-center gap-3">
           <span class="material-symbols-outlined fs-2">security</span>
@@ -45,7 +46,7 @@ import { UserManagementComponent } from './user-management/user-management.compo
       </div>
     }
 
-    @if (auth.isAnalyst()) {
+    @if (auth.isAdmin()) {
       <!-- System Stats Row -->
       @if (stats) {
         <div class="row g-4 mb-4">
@@ -338,6 +339,7 @@ export class AdminComponent implements OnInit {
   private adminService = inject(AdminService);
   private fb = inject(FormBuilder);
   private route = inject(ActivatedRoute);
+  private notifications = inject(NotificationService);
   auth = inject(AuthService);
 
   activeTab = 'manage';
@@ -397,10 +399,10 @@ export class AdminComponent implements OnInit {
   }
 
   refreshStats(): void {
-    if (this.auth.isAnalyst()) {
+    if (this.auth.isAdmin()) {
       this.adminService.getSystemStats().subscribe({
         next: (res) => (this.stats = res.data),
-        error: () => {}
+        error: () => this.notifications.show('Failed to refresh system stats.', 'warning', 3000)
       });
     }
   }
@@ -413,7 +415,10 @@ export class AdminComponent implements OnInit {
         this.totalPages = res.meta?.total_pages ?? 1;
         this.listLoading = false;
       },
-      error: () => (this.listLoading = false),
+      error: () => {
+        this.listLoading = false;
+        this.notifications.show('Failed to load breach logs.', 'error', 4500);
+      },
     });
   }
 
@@ -430,7 +435,10 @@ export class AdminComponent implements OnInit {
         this.auditTotalPages = res.meta?.total_pages ?? 1;
         this.auditLoading = false;
       },
-      error: () => (this.auditLoading = false)
+      error: () => {
+        this.auditLoading = false;
+        this.notifications.show('Failed to load audit logs.', 'error', 4500);
+      }
     });
   }
 
@@ -454,6 +462,7 @@ export class AdminComponent implements OnInit {
           }
         } catch (err) {
           this.bulkError = 'Invalid JSON file.';
+          this.notifications.show(this.bulkError, 'error', 4000);
         }
       };
       reader.readAsText(file);
@@ -475,14 +484,17 @@ export class AdminComponent implements OnInit {
           this.bulkLoading = false;
           this.loadBreaches();
           this.refreshStats();
+          this.notifications.show(this.bulkSuccess, 'success', 3500);
         },
         error: (err) => {
           this.bulkError = err?.error?.message ?? 'Bulk import failed. Ensure data schema is correct.';
           this.bulkLoading = false;
+          this.notifications.show(this.bulkError, 'error', 5000);
         }
       });
     } catch (e) {
       this.bulkError = 'Invalid JSON structure. Must be an array of objects.';
+      this.notifications.show(this.bulkError, 'error', 4500);
     }
   }
 
@@ -506,6 +518,9 @@ export class AdminComponent implements OnInit {
           discovered_date: b.discovered_date?.slice(0, 10),
         });
       },
+      error: (err) => {
+        this.notifications.show(err?.error?.message ?? 'Failed to load breach details.', 'error', 4500);
+      }
     });
   }
 
@@ -551,10 +566,12 @@ export class AdminComponent implements OnInit {
         this.loadBreaches();
         this.refreshStats();
         if (!this.editingId) this.breachForm.reset({ affected_records_count: 0 });
+        this.notifications.show(this.formSuccess, 'success', 3000);
       },
       error: (err) => {
         this.formLoading = false;
         this.formError = err?.error?.message ?? 'Operation failed.';
+        this.notifications.show(this.formError, 'error', 5000);
       }
     });
   }
@@ -567,6 +584,10 @@ export class AdminComponent implements OnInit {
           if (this.selectedId === id) this.startCreate();
           this.loadBreaches();
           this.refreshStats();
+          this.notifications.show('Breach record deleted.', 'info', 2500);
+        },
+        error: (err) => {
+          this.notifications.show(err?.error?.message ?? 'Failed to delete breach record.', 'error', 5000);
         }
       });
     }
@@ -585,6 +606,10 @@ export class AdminComponent implements OnInit {
           this.selectedIds.clear();
           this.loadBreaches();
           this.refreshStats();
+          this.notifications.show(`${ids.length} breach records deleted.`, 'success', 3000);
+        },
+        error: (err) => {
+          this.notifications.show(err?.error?.message ?? 'Bulk delete failed.', 'error', 5000);
         }
       });
     }
