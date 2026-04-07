@@ -80,6 +80,22 @@ export class AuthService {
       .pipe(catchError((err) => throwError(() => err)));
   }
 
+  requestPasswordReset(email: string): Observable<ApiResponse<{ message: string; reset_token?: string }>> {
+    return this.http
+      .post<ApiResponse<{ message: string; reset_token?: string }>>(`${this.apiUrl}/auth/forgot-password`, { email })
+      .pipe(catchError((err) => throwError(() => err)));
+  }
+
+  resetPassword(token: string, newPassword: string, confirmPassword: string): Observable<ApiResponse<{ message: string }>> {
+    return this.http
+      .post<ApiResponse<{ message: string }>>(`${this.apiUrl}/auth/reset-password`, {
+        token,
+        new_password: newPassword,
+        confirm_password: confirmPassword,
+      })
+      .pipe(catchError((err) => throwError(() => err)));
+  }
+
   logout(): void {
     const token = this._token();
     if (token) {

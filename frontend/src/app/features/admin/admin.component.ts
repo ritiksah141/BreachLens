@@ -23,8 +23,8 @@ import { UserManagementComponent } from './user-management/user-management.compo
   template: `
     <div class="d-flex justify-content-between align-items-end mb-4">
       <div>
-        <h2 class="font-headline fw-extrabold text-on-surface tracking-tight mb-1">Command Center</h2>
-        <p class="text-on-surface-variant mb-0 small text-uppercase tracking-widest" style="font-size: 9px;">Administrative Terminal v2.0</p>
+        <h2 class="font-headline fw-extrabold text-on-surface tracking-tight page-title">Command Center</h2>
+        <p class="page-subtitle mb-0">Administrative Terminal v2.0</p>
       </div>
       <div class="d-flex gap-3 align-items-center">
         <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-3" (click)="refreshStats()">
@@ -39,7 +39,7 @@ import { UserManagementComponent } from './user-management/user-management.compo
         <div class="d-flex align-items-center gap-3">
           <span class="material-symbols-outlined fs-2">security</span>
           <div>
-            <div class="fw-bold text-xs-caps mb-1">Access_Denied</div>
+            <div class="fw-bold text-xs-caps mb-1">Access denied</div>
             <div class="small">Elevated privileges required for terminal access. Please <a routerLink="/auth/login" class="text-error fw-bold">Authenticate</a>.</div>
           </div>
         </div>
@@ -52,7 +52,7 @@ import { UserManagementComponent } from './user-management/user-management.compo
         <div class="row g-4 mb-4">
           <div class="col-md-4">
             <div class="card p-3 border-0 border-start border-primary border-3 glow-primary">
-              <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">Operator_Network</div>
+              <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">Operator network</div>
               <div class="d-flex justify-content-between align-items-end">
                 <h3 class="mb-0 fw-bold font-headline text-on-surface">{{ stats.users.total }}</h3>
                 <div class="text-xs-caps" style="font-size: 8px;">
@@ -64,7 +64,7 @@ import { UserManagementComponent } from './user-management/user-management.compo
           </div>
           <div class="col-md-4">
             <div class="card p-3 border-0 border-start border-secondary border-3">
-              <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">Intelligence_Repository</div>
+              <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">Intelligence repository</div>
               <div class="d-flex justify-content-between align-items-end">
                 <h3 class="mb-0 fw-bold font-headline text-on-surface">{{ stats.breaches.total }}</h3>
                 <div class="text-xs-caps text-on-surface-variant" style="font-size: 8px;">
@@ -76,10 +76,10 @@ import { UserManagementComponent } from './user-management/user-management.compo
           </div>
           <div class="col-md-4">
             <div class="card p-3 border-0 border-start border-tertiary border-3 glow-error">
-              <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">Alert_Monitoring</div>
+              <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">Alert monitoring</div>
               <div class="d-flex justify-content-between align-items-end">
                 <h3 class="mb-0 fw-bold font-headline text-tertiary">{{ stats.alerts.unacknowledged }}</h3>
-                <div class="text-xs-caps text-tertiary" style="font-size: 8px;">UNACKNOWLEDGED_EVENTS</div>
+                <div class="text-xs-caps text-tertiary" style="font-size: 8px;">Unacknowledged events</div>
               </div>
             </div>
           </div>
@@ -90,14 +90,14 @@ import { UserManagementComponent } from './user-management/user-management.compo
       <div class="glass-panel p-1 rounded-3 mb-4 d-inline-flex border border-outline-variant border-opacity-10">
         <button class="btn text-xs-caps py-2 px-4 transition-all"
                 [ngClass]="activeTab === 'manage' ? 'btn-primary shadow-sm' : 'btn-link text-on-surface-variant text-decoration-none'"
-                (click)="activeTab = 'manage'">Manage_Logs</button>
+          (click)="activeTab = 'manage'">Manage logs</button>
         <button class="btn text-xs-caps py-2 px-4 transition-all"
                 [ngClass]="activeTab === 'bulk' ? 'btn-primary shadow-sm' : 'btn-link text-on-surface-variant text-decoration-none'"
-                (click)="activeTab = 'bulk'">Bulk_Import</button>
+          (click)="activeTab = 'bulk'">Bulk import</button>
         @if (auth.isAdmin()) {
           <button class="btn text-xs-caps py-2 px-4 transition-all"
                   [ngClass]="activeTab === 'audit' ? 'btn-primary shadow-sm' : 'btn-link text-on-surface-variant text-decoration-none'"
-                  (click)="loadAuditLogs(); activeTab = 'audit'">Audit_Trail</button>
+            (click)="loadAuditLogs(); activeTab = 'audit'">Audit trail</button>
           <button class="btn text-xs-caps py-2 px-4 transition-all"
                   [ngClass]="activeTab === 'users' ? 'btn-primary shadow-sm' : 'btn-link text-on-surface-variant text-decoration-none'"
                   (click)="activeTab = 'users'">Operators</button>
@@ -110,14 +110,14 @@ import { UserManagementComponent } from './user-management/user-management.compo
             <div class="col-lg-5">
               <div class="card border-0 bg-surface-container-low h-100 shadow-lg">
                 <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center">
-                  <span class="text-xs-caps text-on-surface">Active_Investigation_Log</span>
+                  <span class="text-xs-caps text-on-surface">Active investigation log</span>
                   <div class="d-flex gap-2">
                     @if (selectedIds.size > 0 && auth.isAdmin()) {
                       <button class="btn btn-dark bg-error-container bg-opacity-10 text-error border-0 text-xs-caps py-1 px-2" (click)="bulkDelete()" style="font-size: 8px;">
                         DELETE ({{ selectedIds.size }})
                       </button>
                     }
-                    <button class="btn btn-primary text-xs-caps py-1 px-2" (click)="startCreate()" style="font-size: 8px;">+ NEW_ENTRY</button>
+                    <button class="btn btn-primary text-xs-caps py-1 px-2" (click)="startCreate()" style="font-size: 8px;">+ New entry</button>
                   </div>
                 </div>
                 <div class="p-0 overflow-auto custom-scrollbar" style="max-height: 600px;">
@@ -163,7 +163,7 @@ import { UserManagementComponent } from './user-management/user-management.compo
             <div class="col-lg-7">
               <div class="card border-0 bg-surface-container-low shadow-lg">
                 <div class="p-3 border-bottom border-outline-variant border-opacity-10">
-                  <span class="text-xs-caps text-on-surface">{{ editingId ? 'Edit_Log_Entry' : 'Initialize_New_Entry' }}</span>
+                  <span class="text-xs-caps text-on-surface">{{ editingId ? 'Edit log entry' : 'Create new entry' }}</span>
                 </div>
                 <div class="p-4 p-md-5">
                   @if (formSuccess) { <div class="alert bg-success-container bg-opacity-10 border-success text-success py-2 small mb-4 text-xs-caps">{{ formSuccess }}</div> }
@@ -172,48 +172,48 @@ import { UserManagementComponent } from './user-management/user-management.compo
                   <form [formGroup]="breachForm" (ngSubmit)="onSubmit()" class="d-flex flex-column gap-4">
                     <div class="row g-4">
                       <div class="col-12">
-                        <label class="text-xs-caps text-on-surface-variant mb-2">Event_Title</label>
-                        <input formControlName="title" class="form-control bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('title')" placeholder="ENTER_IDENTIFIER..." />
+                        <label class="text-xs-caps text-on-surface-variant mb-2">Event title</label>
+                        <input formControlName="title" class="form-control bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('title')" placeholder="Enter title..." />
                       </div>
                       <div class="col-12">
-                        <label class="text-xs-caps text-on-surface-variant mb-2">Detailed_Description</label>
-                        <textarea formControlName="description" class="form-control bg-surface-container-high border-0 text-on-surface" rows="4" [ngClass]="fc('description')" placeholder="TELEMETRY_DATA_AND_CONTEXT..."></textarea>
+                        <label class="text-xs-caps text-on-surface-variant mb-2">Detailed description</label>
+                        <textarea formControlName="description" class="form-control bg-surface-container-high border-0 text-on-surface" rows="4" [ngClass]="fc('description')" placeholder="Telemetry data and context..."></textarea>
                       </div>
                       <div class="col-md-6">
-                        <label class="text-xs-caps text-on-surface-variant mb-2">Threat_Level</label>
+                        <label class="text-xs-caps text-on-surface-variant mb-2">Threat level</label>
                         <select formControlName="severity" class="form-select bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('severity')">
-                          <option value="">SELECT_LEVEL...</option>
+                          <option value="">Select level...</option>
                           @for (s of severities; track s) { <option [value]="s">{{ s | uppercase }}</option> }
                         </select>
                       </div>
                       <div class="col-md-6">
-                        <label class="text-xs-caps text-on-surface-variant mb-2">Containment_Status</label>
+                        <label class="text-xs-caps text-on-surface-variant mb-2">Containment status</label>
                         <select formControlName="status" class="form-select bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('status')">
-                          <option value="">SELECT_STATUS...</option>
+                          <option value="">Select status...</option>
                           @for (s of statuses; track s) { <option [value]="s">{{ s | uppercase }}</option> }
                         </select>
                       </div>
                       <div class="col-md-6">
-                        <label class="text-xs-caps text-on-surface-variant mb-2">Industry_Sector</label>
+                        <label class="text-xs-caps text-on-surface-variant mb-2">Industry sector</label>
                         <select formControlName="industry" class="form-select bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('industry')">
-                          <option value="">SELECT_SECTOR...</option>
+                          <option value="">Select sector...</option>
                           @for (i of industries; track i) { <option [value]="i">{{ i | uppercase }}</option> }
                         </select>
                       </div>
                       <div class="col-md-6">
-                        <label class="text-xs-caps text-on-surface-variant mb-2">Impacted_Records</label>
+                        <label class="text-xs-caps text-on-surface-variant mb-2">Impacted records</label>
                         <input formControlName="affected_records_count" type="number" class="form-control bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('affected_records_count')" />
                       </div>
                       <div class="col-md-6">
-                        <label class="text-xs-caps text-on-surface-variant mb-2">Incident_Date</label>
+                        <label class="text-xs-caps text-on-surface-variant mb-2">Incident date</label>
                         <input formControlName="breach_date" type="date" class="form-control bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('breach_date')" />
                       </div>
                       <div class="col-md-6">
-                        <label class="text-xs-caps text-on-surface-variant mb-2">Discovery_Date</label>
+                        <label class="text-xs-caps text-on-surface-variant mb-2">Discovery date</label>
                         <input formControlName="discovered_date" type="date" class="form-control bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('discovered_date')" />
                       </div>
                       <div class="col-md-6">
-                        <label class="text-xs-caps text-on-surface-variant mb-2">Risk_Index (0-10)</label>
+                        <label class="text-xs-caps text-on-surface-variant mb-2">Risk index (0-10)</label>
                         <input formControlName="risk_score" type="number" step="0.1" class="form-control bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('risk_score')" />
                       </div>
                     </div>
@@ -221,7 +221,7 @@ import { UserManagementComponent } from './user-management/user-management.compo
                     <div class="d-flex gap-3 mt-2">
                       <button type="submit" class="btn btn-primary px-4 py-3 text-xs-caps flex-grow-1" [disabled]="formLoading">
                         @if (formLoading) { <span class="spinner-border spinner-border-sm me-2"></span> }
-                        {{ editingId ? 'UPDATE_TELEMETRY' : 'COMMIT_NEW_ENTRY' }}
+                        {{ editingId ? 'Update entry' : 'Create entry' }}
                       </button>
                       @if (editingId) {
                         <button type="button" class="btn btn-outline-secondary px-4 py-3 text-xs-caps border-outline-variant border-opacity-25" (click)="cancelEdit()">CANCEL</button>
@@ -238,22 +238,22 @@ import { UserManagementComponent } from './user-management/user-management.compo
           <div class="animate__animated animate__fadeIn">
             <div class="card border-0 bg-surface-container-low shadow-lg overflow-hidden">
               <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between">
-                <span class="text-xs-caps text-on-surface">Bulk_Import_Processor</span>
-                <span class="text-xs-caps text-on-surface-variant" style="font-size: 8px;">JSON_SCHEMA_REQUIRED</span>
+                <span class="text-xs-caps text-on-surface">Bulk import processor</span>
+                <span class="text-xs-caps text-on-surface-variant" style="font-size: 8px;">JSON schema required</span>
               </div>
               <div class="card-body p-4 p-md-5">
                 <p class="text-on-surface-variant small mb-4">Initialize large-scale telemetry imports via encrypted data packets.</p>
 
                 <div class="mb-5 p-4 bg-surface-container-high border border-outline-variant border-opacity-10 rounded-3">
-                  <label class="text-xs-caps text-on-surface-variant mb-3">Upload_Log_Packet</label>
+                  <label class="text-xs-caps text-on-surface-variant mb-3">Upload log packet</label>
                   <input type="file" (change)="onFileSelected($event)" accept=".json" class="form-control bg-surface-container border-0 text-on-surface" />
                 </div>
 
                 <div class="mb-4">
-                  <label class="text-xs-caps text-on-surface-variant mb-3">Manual_Buffer_Entry</label>
+                  <label class="text-xs-caps text-on-surface-variant mb-3">Manual buffer entry</label>
                   <textarea #jsonInput class="form-control bg-surface-container-high border-0 font-monospace text-primary"
                             style="font-size: 11px; height: 300px;"
-                            placeholder='[ { "title": "Breach_01", ... } ]'></textarea>
+                            placeholder='[ { "title": "Breach 01", ... } ]'></textarea>
                 </div>
 
                 @if (bulkSuccess) { <div class="alert bg-success-container bg-opacity-10 border-success text-success py-2 small mb-4 text-xs-caps">{{ bulkSuccess }}</div> }
@@ -261,7 +261,7 @@ import { UserManagementComponent } from './user-management/user-management.compo
 
                 <button class="btn btn-primary py-3 px-5 text-xs-caps" (click)="onBulkImport(jsonInput.value)" [disabled]="bulkLoading">
                   @if (bulkLoading) { <span class="spinner-border spinner-border-sm me-2"></span> }
-                  PROCESS_IMPORT
+                  Process import
                 </button>
               </div>
             </div>
@@ -272,8 +272,8 @@ import { UserManagementComponent } from './user-management/user-management.compo
           <div class="animate__animated animate__fadeIn">
             <div class="card border-0 bg-surface-container-low shadow-lg overflow-hidden">
               <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center">
-                <span class="text-xs-caps text-on-surface">System_Audit_Trail</span>
-                <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-1 px-2" style="font-size: 8px;" (click)="loadAuditLogs()">REFRESH_TRAIL</button>
+                <span class="text-xs-caps text-on-surface">System audit trail</span>
+                <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-1 px-2" style="font-size: 8px;" (click)="loadAuditLogs()">Refresh trail</button>
               </div>
               <div class="p-0 table-responsive">
                 <table class="table table-hover mb-0 align-middle custom-terminal-table">
@@ -284,7 +284,7 @@ import { UserManagementComponent } from './user-management/user-management.compo
                       <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Action</th>
                       <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Resource</th>
                       <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Result</th>
-                      <th class="pe-4 text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Origin_IP</th>
+                      <th class="pe-4 text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Origin IP</th>
                     </tr>
                   </thead>
                   <tbody class="border-top-0">

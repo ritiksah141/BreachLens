@@ -13,17 +13,17 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
   template: `
     <div class="d-flex justify-content-between align-items-end mb-4 mt-2">
       <div>
-        <h2 class="font-headline fw-extrabold text-on-surface tracking-tight mb-1">Global Incursion Map</h2>
-        <p class="text-xs-caps text-on-surface-variant mb-0" style="font-size: 9px;">Geospatial Threat Visualization Kernel</p>
+        <h2 class="font-headline fw-extrabold text-on-surface tracking-tight page-title">Global Incursion Map</h2>
+        <p class="page-subtitle mb-0">Geospatial threat visualization</p>
       </div>
       <div class="d-flex gap-2 align-items-center">
         <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-3" (click)="useMyLocation()" [disabled]="geoLoading">
           @if (geoLoading) { <span class="spinner-border spinner-border-sm me-1"></span> }
-          <span class="material-symbols-outlined fs-6 me-1">my_location</span> Near_Me
+          <span class="material-symbols-outlined fs-6 me-1">my_location</span> Near me
         </button>
         <select #sevSelect class="form-select bg-surface-container border-0 text-xs-caps py-2"
                 style="width: auto; font-size: 10px;" (change)="filterBySeverity(sevSelect.value)">
-          <option value="">ALL_SEVERITIES</option>
+          <option value="">All severities</option>
           <option value="critical">CRITICAL</option>
           <option value="high">HIGH</option>
           <option value="medium">MEDIUM</option>

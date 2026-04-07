@@ -99,9 +99,9 @@ import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } 
                 </h4>
                 <div class="text-xs-caps text-on-surface-variant opacity-50" style="font-size: 8px;">
                   @if (trendYear) {
-                    DATA YEAR: {{ trendYear }}
+                    Data year: {{ trendYear }}
                   } @else {
-                    NO TREND DATA AVAILABLE
+                    No trend data available
                   }
                 </div>
               </div>
@@ -137,12 +137,12 @@ import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } 
             <div class="glass-panel p-3 rounded-3 mt-4 d-flex justify-content-center align-items-center border border-outline-variant border-opacity-10">
               <div class="d-flex gap-4 flex-wrap justify-content-center">
                 <div>
-                  <div class="text-xs-caps text-on-surface-variant mb-1" style="font-size: 8px;">Intelligence_Parameters</div>
-                  <div class="fw-bold text-on-surface small">OPEN_ALERTS: {{ summary?.open_alerts ?? 0 }}</div>
+                  <div class="text-xs-caps text-on-surface-variant mb-1" style="font-size: 8px;">Intelligence Parameters</div>
+                  <div class="fw-bold text-on-surface small">Open alerts: {{ summary?.open_alerts ?? 0 }}</div>
                 </div>
                 <div>
-                  <div class="text-xs-caps text-on-surface-variant mb-1" style="font-size: 8px;">Industry_Coverage</div>
-                  <div class="fw-bold text-on-surface small">{{ summary?.industries_affected ?? 0 }} ACTIVE_SECTORS</div>
+                  <div class="text-xs-caps text-on-surface-variant mb-1" style="font-size: 8px;">Industry Coverage</div>
+                  <div class="fw-bold text-on-surface small">{{ summary?.industries_affected ?? 0 }} active sectors</div>
                 </div>
               </div>
             </div>
@@ -162,7 +162,7 @@ import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } 
         <div class="card border-0 p-4" style="height: 260px;">
           <div class="d-flex flex-column h-100">
             <h4 class="text-xs-caps text-on-surface mb-2">Exposure Checker</h4>
-            <p class="text-on-surface-variant mb-3" style="font-size: 11px;">VERIFY DOMAIN OR IDENTITY INTRUSIONS</p>
+            <p class="text-on-surface-variant mb-3" style="font-size: 11px;">Verify domain or identity intrusions</p>
 
             <div class="input-group mb-3">
               <span class="input-group-text bg-surface-container-low border-0 text-on-surface-variant">
@@ -170,9 +170,9 @@ import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } 
               </span>
               <input
                 #exposureInput
-                class="form-control bg-surface-container-low border-0 ps-0 text-on-surface"
+                class="form-control bg-surface-container-low border-0 ps-2 text-on-surface"
                 type="text"
-                placeholder="IDENTITY_QUERY..."
+                placeholder="Search email, username, or domain..."
                 (keyup.enter)="checkExposure(exposureInput.value)"
                 style="font-size: 11px;"
               />
@@ -184,7 +184,7 @@ import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } 
                 @if (checkingExposure) {
                   <span class="spinner-border spinner-border-sm"></span>
                 } @else {
-                  GO
+                  Check
                 }
               </button>
             </div>
@@ -195,10 +195,10 @@ import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } 
                 [ngClass]="exposureResult.exposed ? 'bg-error-container bg-opacity-10 border-error' : 'bg-success-container bg-opacity-10 border-success'"
               >
                 @if (exposureResult.exposed) {
-                  <div class="text-xs-caps text-error mb-1" style="font-size: 8px;">Critical_Alert</div>
+                  <div class="text-xs-caps text-error mb-1" style="font-size: 8px;">Critical Alert</div>
                   <div class="text-on-surface fw-bold" style="font-size: 10px;">Found in {{ exposureResult.breach_count }} breach(es)</div>
                 } @else {
-                  <div class="text-xs-caps text-success mb-1" style="font-size: 8px;">Clear_Signal</div>
+                  <div class="text-xs-caps text-success mb-1" style="font-size: 8px;">Clear Signal</div>
                   <div class="text-on-surface fw-bold" style="font-size: 10px;">No active intrusions detected</div>
                 }
               </div>
@@ -239,7 +239,7 @@ import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } 
                 <div style="height: 200px;"><canvas #orgChart></canvas></div>
               } @else {
                 <div class="d-flex h-100 align-items-center justify-content-center text-center text-on-surface-variant" style="min-height: 200px; font-size: 11px;">
-                  ANALYST ROLE REQUIRED FOR ORGANISATION INTELLIGENCE
+                  Analyst role required for organisation intelligence
                 </div>
               }
             </div>

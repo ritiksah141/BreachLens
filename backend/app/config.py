@@ -22,6 +22,8 @@ class Config:
         "CORS_ORIGINS", "http://localhost:4200"
     ).split(",")
 
+    SWAGGER_ENABLED: bool = os.getenv("SWAGGER_ENABLED", "true").lower() in ("true", "1", "yes")
+
     RATELIMIT_STORAGE_URL: str = os.getenv("RATELIMIT_STORAGE_URL", "memory://")
     RATELIMIT_ENABLED: bool = os.getenv("RATELIMIT_ENABLED", "true").lower() not in ("false", "0", "no")
     RATELIMIT_DEFAULT: str = "200 per day;50 per hour"
@@ -32,18 +34,19 @@ class Config:
 
     # Request logging settings
     REQUEST_IP_POLICY: str = os.getenv("REQUEST_IP_POLICY", "anonymize")  # Options: "full", "anonymize", "none"
-    IP_ANONYMIZATION_SALT: str = os.getenv("IP_ANONYMIZATION_SALT", "default-breach-lens-salt-change-in-production")
+    IP_ANONYMIZATION_SALT: str = os.getenv("IP_ANONYMIZATION_SALT", "")
 
     # Account lockout settings
     MAX_LOGIN_ATTEMPTS: int = int(os.getenv("MAX_LOGIN_ATTEMPTS", 5))
     LOCKOUT_DURATION_MINUTES: int = int(os.getenv("LOCKOUT_DURATION_MINUTES", 15))
 
+    # Password reset settings
+    PASSWORD_RESET_TOKEN_TTL_MINUTES: int = int(os.getenv("PASSWORD_RESET_TOKEN_TTL_MINUTES", 30))
+
 
 class DevelopmentConfig(Config):
     """Development configuration."""
     DEBUG: bool = True
-    # Development-only insecure defaults
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-secret-key")
 
 
 class TestingConfig(Config):
@@ -58,7 +61,16 @@ class TestingConfig(Config):
     CACHE_TYPE: str = "NullCache"  # Disable caching in tests to avoid Python 3.14 serialization issues
 
 
+class ProductionConfig(Config):
+    """Production configuration with stricter secure defaults."""
+    DEBUG: bool = False
+    SWAGGER_ENABLED: bool = os.getenv("SWAGGER_ENABLED", "false").lower() in ("true", "1", "yes")
+    RATELIMIT_STORAGE_URL: str = os.getenv("RATELIMIT_STORAGE_URL", "redis://localhost:6379/0")
+    CACHE_TYPE: str = os.getenv("CACHE_TYPE", "RedisCache")
+
+
 config: dict = {
     "development": DevelopmentConfig,
     "testing": TestingConfig,
+    "production": ProductionConfig,
 }

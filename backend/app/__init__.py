@@ -30,25 +30,30 @@ def create_app(config_name: str = "development") -> Flask:
         Configured Flask application instance.
     """
     app = Flask(__name__)
+    if config_name not in config:
+        raise ValueError(f"Unknown config '{config_name}'. Expected one of: {', '.join(config.keys())}")
     app.config.from_object(config[config_name])
+    _validate_security_config(app, config_name)
 
     # Disable strict slashes globally to prevent redirects for preflight requests
     app.url_map.strict_slashes = False
 
     # Initialise extensions
     mongo.init_app(app)
-    cors.init_app(app, resources={r"/api/.*": {"origins": app.config.get("CORS_ORIGINS", ["*"])}})
+    allowed_origins = [o.strip() for o in app.config.get("CORS_ORIGINS", []) if o.strip()]
+    cors.init_app(app, resources={r"/api/.*": {"origins": allowed_origins}})
     limiter.init_app(app)
     cache.init_app(app)
 
-    # Swagger UI at /api/docs
-    Swagger(app, template=SWAGGER_TEMPLATE, config={
-        "headers": [],
-        "specs": [{"endpoint": "apispec", "route": "/api/docs/apispec.json"}],
-        "static_url_path": "/flasgger_static",
-        "swagger_ui": True,
-        "specs_route": "/api/docs",
-    })
+    # Swagger UI at /api/docs (disabled by default in production)
+    if app.config.get("SWAGGER_ENABLED", True):
+        Swagger(app, template=SWAGGER_TEMPLATE, config={
+            "headers": [],
+            "specs": [{"endpoint": "apispec", "route": "/api/docs/apispec.json"}],
+            "static_url_path": "/flasgger_static",
+            "swagger_ui": True,
+            "specs_route": "/api/docs",
+        })
 
     # Register Blueprints
     app.register_blueprint(auth_bp)
@@ -133,3 +138,30 @@ def _register_error_handlers(app: Flask) -> None:
     @app.errorhandler(500)
     def internal_error(e):
         return jsonify({"status": "error", "message": "An internal server error occurred.", "code": 500}), 500
+
+
+def _validate_security_config(app: Flask, config_name: str) -> None:
+    """Validate security-critical runtime config before app starts."""
+    if config_name == "testing":
+        return
+
+    secret_key = (app.config.get("SECRET_KEY") or "").strip()
+    weak_keys = {"", "dev-secret-key", "test-secret-key-for-jwt-encoding", "changeme", "default"}
+    if secret_key in weak_keys:
+        raise RuntimeError("SECRET_KEY must be explicitly set to a strong value.")
+
+    if app.config.get("REQUEST_IP_POLICY") == "anonymize":
+        salt = (app.config.get("IP_ANONYMIZATION_SALT") or "").strip()
+        if not salt:
+            raise RuntimeError("IP_ANONYMIZATION_SALT must be set when REQUEST_IP_POLICY='anonymize'.")
+
+    origins = [o.strip() for o in app.config.get("CORS_ORIGINS", []) if o.strip()]
+    if not origins:
+        raise RuntimeError("CORS_ORIGINS must contain at least one explicit origin.")
+
+    if config_name == "production":
+        if "*" in origins:
+            raise RuntimeError("CORS_ORIGINS cannot contain '*' in production.")
+        localhost_origins = ("http://localhost", "https://localhost", "http://127.0.0.1", "https://127.0.0.1")
+        if any(origin.startswith(localhost) for origin in origins for localhost in localhost_origins):
+            raise RuntimeError("CORS_ORIGINS must not include localhost in production.")

@@ -5,6 +5,8 @@ Uses the raw ``pyjwt`` library for token generation (``jwt.encode``) as
 required by the module specification.  Passwords are hashed with ``bcrypt``.
 """
 from datetime import datetime, timedelta
+import hashlib
+import secrets
 from typing import Optional, Tuple
 
 import bcrypt
@@ -205,3 +207,89 @@ class AuthService:
             {"email": email.lower()},
             {"$set": {"failed_login_attempts": 0}, "$unset": {"locked_until": ""}},
         )
+
+    def resolve_lockout_identity(self, email: str = None, username: str = None) -> Optional[str]:
+        """Resolve the canonical email key used for lockout tracking.
+
+        Returns a lower-cased email when a matching account exists, else ``None``.
+        """
+        if email:
+            return email.lower()
+        if username:
+            user = self.col.find_one({"username": username}, {"email": 1})
+            if user and user.get("email"):
+                return str(user["email"]).lower()
+        return None
+
+    # ------------------------------------------------------------------ #
+    # Password reset
+    # ------------------------------------------------------------------ #
+
+    def create_password_reset_token(self, email: str) -> tuple[bool, Optional[str]]:
+        """Create a password reset token for an existing user.
+
+        Returns ``(True, raw_token)`` when the user exists, else ``(False, None)``.
+        """
+        user = self.col.find_one({"email": email.lower()}, {"_id": 1})
+        if not user:
+            return False, None
+
+        raw_token = secrets.token_urlsafe(32)
+        token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+        ttl_minutes = int(current_app.config.get("PASSWORD_RESET_TOKEN_TTL_MINUTES", 30))
+        expires_at = datetime.utcnow() + timedelta(minutes=ttl_minutes)
+
+        self.col.update_one(
+            {"_id": user["_id"]},
+            {
+                "$set": {
+                    "password_reset_token_hash": token_hash,
+                    "password_reset_expires_at": expires_at,
+                    "password_reset_requested_at": datetime.utcnow(),
+                }
+            },
+        )
+
+        return True, raw_token
+
+    def reset_password_with_token(self, token: str, new_password: str) -> tuple[bool, str]:
+        """Reset password for a user identified by a valid reset token."""
+        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        now = datetime.utcnow()
+
+        user = self.col.find_one(
+            {
+                "password_reset_token_hash": token_hash,
+                "password_reset_expires_at": {"$gt": now},
+            },
+            {"_id": 1, "password_hash": 1},
+        )
+        if not user:
+            return False, "Invalid or expired reset token."
+
+        existing_hash = user.get("password_hash")
+        if existing_hash and bcrypt.checkpw(new_password.encode("utf-8"), existing_hash.encode("utf-8")):
+            return False, "New password must be different from your current password."
+
+        password_hash = bcrypt.hashpw(
+            new_password.encode("utf-8"), bcrypt.gensalt(rounds=12)
+        ).decode("utf-8")
+
+        self.col.update_one(
+            {"_id": user["_id"]},
+            {
+                "$set": {
+                    "password_hash": password_hash,
+                    "updated_at": now,
+                    "failed_login_attempts": 0,
+                },
+                "$unset": {
+                    "password_reset_token_hash": "",
+                    "password_reset_expires_at": "",
+                    "password_reset_requested_at": "",
+                    "locked_until": "",
+                },
+            },
+        )
+
+        return True, "Password has been reset successfully."

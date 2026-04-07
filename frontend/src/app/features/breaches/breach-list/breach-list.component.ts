@@ -17,12 +17,12 @@ const SESSION_KEY = 'bl_breach_filters';
   template: `
     <div class="d-flex justify-content-between align-items-end mb-4">
       <div>
-        <h2 class="font-headline fw-extrabold text-on-surface tracking-tight mb-1">Active Breaches</h2>
-        <p class="text-on-surface-variant mb-0 small">Monitoring global leak sites and dark web forums in real-time.</p>
+        <h2 class="font-headline fw-extrabold text-on-surface tracking-tight page-title">Active Breaches</h2>
+        <p class="page-subtitle mb-0">Monitoring global leak sites and dark web forums in real-time.</p>
       </div>
       <div class="text-end">
         <div class="text-xs-caps text-primary mb-1">Total Records</div>
-        <div class="font-headline fw-bold text-on-surface fs-4">{{ total | number }}</div>
+        <div class="font-headline fw-bold text-on-surface fs-4 metric-emphasis">{{ total | number }}</div>
       </div>
     </div>
 
@@ -35,9 +35,9 @@ const SESSION_KEY = 'bl_breach_filters';
               <span class="material-symbols-outlined fs-6">search</span>
             </span>
             <input
-              class="form-control bg-surface-container-low border-0 ps-0 text-xs-caps"
+              class="form-control bg-surface-container-low border-0 ps-2 text-xs-caps"
               type="text"
-              placeholder="SEARCH_DATABASE..."
+              placeholder="Search breaches..."
               [(ngModel)]="filters.search"
               (input)="onSearchChange()"
               style="font-size: 10px;"
@@ -51,7 +51,7 @@ const SESSION_KEY = 'bl_breach_filters';
             (change)="applyFilters()"
             style="font-size: 10px;"
           >
-            <option value="">ALL_SEVERITIES</option>
+            <option value="">All severities</option>
             @for (s of severities; track s) {
               <option [value]="s">{{ s | uppercase }}</option>
             }
@@ -64,7 +64,7 @@ const SESSION_KEY = 'bl_breach_filters';
             (change)="applyFilters()"
             style="font-size: 10px;"
           >
-            <option value="">ALL_INDUSTRIES</option>
+            <option value="">All industries</option>
             @for (i of industries; track i) {
               <option [value]="i">{{ i | uppercase }}</option>
             }
@@ -77,8 +77,8 @@ const SESSION_KEY = 'bl_breach_filters';
             (change)="applyFilters()"
             style="font-size: 10px;"
           >
-            <option value="created_at">DATE_ADDED</option>
-            <option value="risk_score">RISK_SCORE</option>
+            <option value="created_at">Date added</option>
+            <option value="risk_score">Risk score</option>
             <option value="affected_records_count">RECORDS</option>
           </select>
         </div>
@@ -109,9 +109,9 @@ const SESSION_KEY = 'bl_breach_filters';
             <thead>
               <tr class="bg-surface-container-low">
                 <th class="ps-4 text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 9px;">Severity</th>
-                <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 9px;">Event_Identifier</th>
+                <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 9px;">Event identifier</th>
                 <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 9px;">Records</th>
-                <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 9px;">Date_Detected</th>
+                <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 9px;">Date detected</th>
                 <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 9px;">Status</th>
                 <th class="pe-4 border-0"></th>
               </tr>
@@ -134,7 +134,7 @@ const SESSION_KEY = 'bl_breach_filters';
                       </div>
                       <div>
                         <div class="fw-bold text-on-surface small">{{ breach.title }}</div>
-                        <div class="text-on-surface-variant" style="font-size: 9px;">ORG: {{ getOrganisationName(breach) }}</div>
+                        <div class="text-on-surface-variant" style="font-size: 9px;">Org: {{ getOrganisationName(breach) }}</div>
                       </div>
                     </div>
                   </td>

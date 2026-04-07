@@ -14,8 +14,13 @@ import { NotificationService } from '../../../core/services/notification.service
       <div class="col-md-5 col-lg-4">
         <!-- Brand Anchor -->
         <div class="text-center mb-5">
-          <div class="d-inline-flex p-3 bg-surface-container rounded-3 mb-3 glow-primary">
-            <span class="material-symbols-outlined text-primary fs-2" style="font-variation-settings: 'FILL' 1;">security</span>
+          <div class="login-brand-mark d-inline-flex mb-3" aria-hidden="true">
+            <span class="login-brand-chip login-brand-chip-a">
+              <span class="material-symbols-outlined login-brand-chip-icon">security</span>
+            </span>
+            <span class="login-brand-chip login-brand-chip-b">
+              <span class="material-symbols-outlined login-brand-chip-icon">visibility</span>
+            </span>
           </div>
           <h1 class="font-headline fw-extrabold text-on-surface tracking-tighter mb-1">BreachLens</h1>
           <p class="text-xs-caps text-on-surface-variant">Intelligence Suite</p>
@@ -42,7 +47,7 @@ import { NotificationService } from '../../../core/services/notification.service
           <form [formGroup]="form" (ngSubmit)="onSubmit()" class="d-flex flex-column gap-4">
             <!-- Email Input -->
             <div>
-              <label class="text-xs-caps text-on-surface-variant mb-2">Corporate Email</label>
+              <label class="text-xs-caps text-on-surface-variant mb-2">Email</label>
               <div class="input-group">
                 <span class="input-group-text bg-surface-container-low border-0 text-on-surface-variant">
                   <span class="material-symbols-outlined fs-6">alternate_email</span>
@@ -50,22 +55,28 @@ import { NotificationService } from '../../../core/services/notification.service
                 <input
                   formControlName="email"
                   type="email"
-                  class="form-control bg-surface-container-low border-0 ps-0 text-on-surface"
+                  class="form-control bg-surface-container-low border-0 ps-2 text-on-surface"
                   [ngClass]="{ 'is-invalid': f['email'].invalid && f['email'].touched }"
-                  placeholder="name@organization.com"
+                  placeholder="Email Address"
                   style="font-size: 13px;"
                 />
               </div>
               @if (f['email'].invalid && f['email'].touched) {
-                <div class="text-error mt-1" style="font-size: 10px;">VALID_EMAIL_REQUIRED</div>
+                <div class="text-error mt-1" style="font-size: 10px;">VALID EMAIL REQUIRED</div>
               }
             </div>
 
             <!-- Password Input -->
             <div>
               <div class="d-flex justify-content-between align-items-center mb-2">
-                <label class="text-xs-caps text-on-surface-variant">Credential Key</label>
-                <a href="#" class="text-decoration-none text-primary fw-bold" style="font-size: 10px;">FORGOT_KEY?</a>
+                <label class="text-xs-caps text-on-surface-variant">Password</label>
+                <button
+                  type="button"
+                  class="btn btn-outline-primary action-pill-btn action-pill-btn-sm"
+                  (click)="onForgotPassword()"
+                >
+                  Forgot Password?
+                </button>
               </div>
               <div class="input-group">
                 <span class="input-group-text bg-surface-container-low border-0 text-on-surface-variant">
@@ -73,15 +84,23 @@ import { NotificationService } from '../../../core/services/notification.service
                 </span>
                 <input
                   formControlName="password"
-                  type="password"
-                  class="form-control bg-surface-container-low border-0 ps-0 text-on-surface"
+                  [type]="showPassword ? 'text' : 'password'"
+                  class="form-control bg-surface-container-low border-0 ps-2 text-on-surface"
                   [ngClass]="{ 'is-invalid': f['password'].invalid && f['password'].touched }"
                   placeholder="••••••••••••"
                   style="font-size: 13px;"
                 />
+                <button
+                  type="button"
+                  class="input-group-text bg-surface-container-low border-0 text-on-surface-variant pwd-toggle"
+                  (click)="togglePasswordVisibility()"
+                  [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+                >
+                  <span class="material-symbols-outlined fs-6">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
+                </button>
               </div>
               @if (f['password'].invalid && f['password'].touched) {
-                <div class="text-error mt-1" style="font-size: 10px;">CREDENTIAL_REQUIRED</div>
+                <div class="text-error mt-1" style="font-size: 10px;">CREDENTIAL REQUIRED</div>
               }
             </div>
 
@@ -102,9 +121,15 @@ import { NotificationService } from '../../../core/services/notification.service
 
           <footer class="mt-5 pt-4 border-top border-outline-variant border-opacity-10 text-center">
             <p class="text-on-surface-variant small mb-0">
-              New to the suite?
-              <a routerLink="/auth/register" class="text-primary fw-bold text-decoration-none ms-1">REQUEST DEPLOYMENT</a>
+              New to BreachLens?
             </p>
+            <button
+              type="button"
+              class="btn btn-outline-primary mt-3 px-4 py-2 action-pill-btn"
+              (click)="goToRegister()"
+            >
+              Create account
+            </button>
           </footer>
         </div>
 
@@ -128,6 +153,87 @@ import { NotificationService } from '../../../core/services/notification.service
     .text-error { color: var(--error) !important; }
     .border-error { border-color: var(--error) !important; }
     .glow-primary { box-shadow: 0 0 40px rgba(0, 167, 224, 0.15), 0 0 10px rgba(123, 208, 255, 0.05); }
+    .pwd-toggle { cursor: pointer; }
+    .action-pill-btn {
+      border-radius: 999px;
+      letter-spacing: 0.08em;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      border-color: var(--outline-variant);
+    }
+    .action-pill-btn:hover {
+      border-color: var(--primary);
+      color: var(--on-surface);
+      background: var(--surface-container-high);
+    }
+    .action-pill-btn-sm {
+      padding: 0.22rem 0.6rem;
+      font-size: 0.58rem;
+      letter-spacing: 0.12em;
+      line-height: 1.15;
+    }
+    .login-brand-mark {
+      width: 62px;
+      height: 62px;
+      border-radius: 1rem;
+      padding: 8px;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      border: 1px solid var(--outline-variant);
+      background: linear-gradient(145deg, var(--surface-container-high), var(--surface-container-low));
+      box-shadow: 0 0 18px rgba(123, 208, 255, 0.12);
+      position: relative;
+      overflow: hidden;
+    }
+    .login-brand-mark::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        -35deg,
+        transparent 0,
+        transparent 6px,
+        rgba(136, 146, 155, 0.16) 6px,
+        rgba(136, 146, 155, 0.16) 7px
+      );
+      opacity: 0.5;
+    }
+    .login-brand-chip {
+      position: relative;
+      z-index: 1;
+      width: 20px;
+      height: 34px;
+      border-radius: 0.55rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-headline);
+      font-weight: 800;
+      font-size: 0.9rem;
+      letter-spacing: 0.05em;
+      color: var(--primary);
+      border: 1px solid var(--outline-variant);
+      background: var(--surface-container-lowest);
+      text-shadow: 0 0 8px rgba(123, 208, 255, 0.2);
+    }
+    .login-brand-chip-icon {
+      font-size: 13px;
+      font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 20;
+      line-height: 1;
+    }
+    .login-brand-chip-a { transform: rotate(-8deg) translateY(-1px); }
+    .login-brand-chip-b { transform: rotate(8deg) translateY(1px); }
+    :host-context([data-theme='light']) .login-brand-mark {
+      box-shadow: 0 0 12px rgba(14, 165, 233, 0.1);
+    }
+    :host-context([data-theme='light']) .login-brand-mark::before {
+      opacity: 0.32;
+    }
+    :host-context([data-theme='light']) .login-brand-chip {
+      text-shadow: none;
+    }
   `]
 })
 export class LoginComponent {
@@ -138,6 +244,7 @@ export class LoginComponent {
 
   loading = false;
   serverError = '';
+  showPassword = false;
 
   form = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -146,6 +253,18 @@ export class LoginComponent {
 
   get f() {
     return this.form.controls;
+  }
+
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
+  }
+
+  goToRegister(): void {
+    this.router.navigate(['/auth/register'], { queryParams: { role: 'analyst' } });
+  }
+
+  onForgotPassword(): void {
+    this.router.navigate(['/auth/reset-password']);
   }
 
   onSubmit(): void {

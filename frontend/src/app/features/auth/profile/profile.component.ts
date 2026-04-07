@@ -8,135 +8,121 @@ import { AuthService } from '../../../core/services/auth.service';
   standalone: true,
   imports: [RouterLink, NgClass, DatePipe, UpperCasePipe, CommonModule],
   template: `
-    <div class="row g-4 mt-2">
-      <!-- Profile Header Bento -->
-      <div class="col-12">
-        <div class="row g-4">
-          <!-- Clearance Level Card -->
-          <div class="col-md-4">
-            <div class="card p-4 border-0 border-start border-primary border-3 h-100 glow-primary position-relative overflow-hidden">
-              <div class="position-absolute top-0 end-0 p-2 opacity-10">
-                <span class="material-symbols-outlined fs-1">verified_user</span>
-              </div>
-              <div class="text-xs-caps text-on-surface-variant mb-2">Clearance_Verification</div>
-              <div class="fs-2 fw-bold text-on-surface font-headline">
-                {{ user?.role === 'admin' ? 'LEVEL_5' : (user?.role === 'analyst' ? 'LEVEL_3' : 'LEVEL_1') }}
-              </div>
-              <div class="text-xs-caps text-primary fw-bold mt-2">
-                {{ user?.role | uppercase }}_ACCESS_GRANTED
-              </div>
-            </div>
+    <div class="profile-shell mt-2">
+      <div class="row g-4 mb-4">
+        <div class="col-md-4">
+          <div class="card p-4 border-0 border-start border-primary border-3 h-100 glow-primary">
+            <div class="text-xs-caps text-on-surface-variant mb-2">Clearance</div>
+            <div class="fs-2 fw-bold text-on-surface font-headline mb-1">{{ clearanceLabel }}</div>
+            <div class="text-xs-caps" [ngClass]="roleToneClass()">{{ roleLabel }} access granted</div>
           </div>
-
-          <!-- Status Card -->
-          <div class="col-md-4">
-            <div class="card p-4 border-0 border-start border-success border-3 h-100">
-              <div class="text-xs-caps text-on-surface-variant mb-2">Connectivity_Status</div>
-              <div class="fs-2 fw-bold text-success font-headline d-flex align-items-center gap-2">
-                ONLINE
-                <span class="p-1 bg-success rounded-circle animate-pulse"></span>
-              </div>
-              <div class="text-xs-caps text-on-surface-variant mt-2">ACTIVE_SESSION_STABLE</div>
-            </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card p-4 border-0 border-start border-secondary border-3 h-100">
+            <div class="text-xs-caps text-on-surface-variant mb-2">Last activity</div>
+            <div class="fs-5 fw-bold text-on-surface font-headline">{{ user?.last_login ? (user?.last_login | date:'MMM dd, yyyy HH:mm') : 'No login recorded' }}</div>
+            <div class="text-xs-caps text-on-surface-variant mt-2">Session telemetry</div>
           </div>
-
-          <!-- Deployment Card -->
-          <div class="col-md-4">
-            <div class="card p-4 border-0 border-start border-secondary border-3 h-100">
-              <div class="text-xs-caps text-on-surface-variant mb-2">Deployment_Timeline</div>
-              <div class="fs-3 fw-bold text-on-surface font-headline">{{ user?.created_at | date:'MMM dd, yyyy' }}</div>
-              <div class="text-xs-caps text-on-surface-variant mt-2 uppercase">Member_Since_Deployment</div>
+        </div>
+        <div class="col-md-4">
+          <div class="card p-4 border-0 border-start border-tertiary border-3 h-100 glow-error">
+            <div class="text-xs-caps text-on-surface-variant mb-2">Status</div>
+            <div class="d-flex align-items-center gap-2 fs-6 fw-bold text-success">
+              <span class="status-dot"></span>
+              Online
             </div>
+            <div class="text-xs-caps text-on-surface-variant mt-2">Member since {{ user?.created_at | date:'MMM yyyy' }}</div>
           </div>
         </div>
       </div>
 
-      <!-- Identity & Security Grid -->
-      <div class="col-lg-4">
-        <div class="card border-0 bg-surface-container-low h-100 shadow-lg position-relative overflow-hidden">
-          <div class="position-absolute top-0 start-0 w-100 h-100 opacity-5 pointer-events-none"
-               style="background-image: radial-gradient(var(--primary) 1px, transparent 1px); background-size: 20px 20px;"></div>
-
-          <div class="card-body p-4 p-xl-5 text-center position-relative z-1">
-            <div class="mb-4 d-inline-block position-relative">
-              <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center text-primary glow-primary border border-primary border-opacity-25 mx-auto"
-                   style="width:120px; height:120px;">
-                <span class="material-symbols-outlined" style="font-size: 5rem;">person</span>
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <div class="card border-0 shadow-lg profile-identity-card position-relative overflow-hidden">
+            <div class="position-absolute inset-0 profile-grid-overlay"></div>
+            <div class="card-body p-4 p-xl-5 text-center position-relative z-1">
+              <div class="identity-orb mx-auto mb-4">
+                <span class="identity-initial">{{ initials }}</span>
               </div>
-              <div class="position-absolute bottom-0 end-0 p-2 bg-success rounded-circle border border-4 border-outline-variant animate-pulse"></div>
-            </div>
 
-            <h3 class="font-headline fw-bold text-on-surface mb-1 fs-4">{{ user?.username }}</h3>
-            <p class="text-xs-caps text-primary opacity-75 mb-4">{{ user?.email }}</p>
+              <h2 class="font-headline fw-extrabold text-on-surface mb-1 fs-3">{{ user?.username || 'Unknown User' }}</h2>
+              <p class="text-on-surface-variant mb-4 small">{{ user?.email || 'No email available' }}</p>
 
-            <div class="badge py-2 px-4 glass-panel border border-outline-variant border-opacity-25 text-xs-caps mb-5"
-                 [ngClass]="roleColorClass()">
-              {{ user?.role }}
-            </div>
+              <span class="badge py-2 px-4 glass-panel border border-outline-variant border-opacity-25 text-xs-caps mb-4" [ngClass]="roleToneClass()">
+                {{ roleLabel }}
+              </span>
 
-            <div class="d-grid gap-2">
-              <button class="btn btn-primary text-xs-caps py-2" (click)="auth.logout()">
-                <span class="material-symbols-outlined fs-6 me-2">power_settings_new</span> Terminate_Session
-              </button>
+              <div class="d-grid gap-2">
+                <button class="btn btn-primary text-xs-caps py-2" (click)="auth.logout()">
+                  <span class="material-symbols-outlined fs-6 me-2">power_settings_new</span>
+                  Terminate session
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="col-lg-8">
-        <div class="card border-0 bg-surface-container-low h-100 shadow-lg overflow-hidden">
-          <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center bg-surface-container">
-            <span class="text-xs-caps text-on-surface fw-bold">Operator_Telemetry_Data</span>
-            <span class="text-xs-caps text-on-surface-variant" style="font-size: 8px;">NODE_ID: {{ (user?._id ?? '0x000').slice(-8) | uppercase }}</span>
-          </div>
+        <div class="col-lg-8">
+          <div class="card border-0 bg-surface-container-low shadow-lg overflow-hidden h-100">
+            <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center bg-surface-container">
+              <span class="text-xs-caps text-on-surface fw-bold">Operator telemetry data</span>
+              <span class="text-xs-caps text-on-surface-variant" style="font-size: 8px;">Node ID: {{ (user?._id ?? '0x000').slice(-8) | uppercase }}</span>
+            </div>
 
-          <div class="card-body p-4 p-xl-5">
-            <div class="row g-4">
-              <!-- Data Fields -->
-              <div class="col-md-6">
-                <div class="p-3 glass-panel rounded-3 border border-outline-variant border-opacity-10">
-                  <label class="text-xs-caps text-on-surface-variant mb-2 d-block">Operator_Identifier</label>
-                  <div class="text-on-surface font-mono small">{{ user?._id }}</div>
+            <div class="card-body p-4 p-xl-5">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <div class="glass-panel rounded-3 border border-outline-variant border-opacity-10 p-3 h-100">
+                    <div class="text-xs-caps text-on-surface-variant mb-2">User ID</div>
+                    <div class="text-on-surface font-mono small profile-value">{{ user?._id || 'N/A' }}</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="glass-panel rounded-3 border border-outline-variant border-opacity-10 p-3 h-100">
+                    <div class="text-xs-caps text-on-surface-variant mb-2">Role</div>
+                    <div class="text-on-surface fw-bold text-capitalize">{{ user?.role || 'guest' }}</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="glass-panel rounded-3 border border-outline-variant border-opacity-10 p-3 h-100">
+                    <div class="text-xs-caps text-on-surface-variant mb-2">Email</div>
+                    <div class="text-on-surface font-mono small profile-value">{{ user?.email || 'N/A' }}</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="glass-panel rounded-3 border border-outline-variant border-opacity-10 p-3 h-100">
+                    <div class="text-xs-caps text-on-surface-variant mb-2">Created</div>
+                    <div class="text-on-surface font-mono small">{{ user?.created_at | date:'yyyy-MM-dd HH:mm:ss' }}</div>
+                  </div>
                 </div>
               </div>
-              <div class="col-md-6">
-                <div class="p-3 glass-panel rounded-3 border border-outline-variant border-opacity-10">
-                  <label class="text-xs-caps text-on-surface-variant mb-2 d-block">Assigned_Email</label>
-                  <div class="text-on-surface font-mono small">{{ user?.email }}</div>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="p-3 glass-panel rounded-3 border border-outline-variant border-opacity-10">
-                  <label class="text-xs-caps text-on-surface-variant mb-2 d-block">Last_Sync_Signal</label>
-                  <div class="text-on-surface font-mono small">{{ user?.last_login | date:'yyyy-MM-dd || HH:mm:ss' }}</div>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="p-3 glass-panel rounded-3 border border-outline-variant border-opacity-10">
-                  <label class="text-xs-caps text-on-surface-variant mb-2 d-block">Registration_Timestamp</label>
-                  <div class="text-on-surface font-mono small">{{ user?.created_at | date:'yyyy-MM-dd || HH:mm:ss' }}</div>
-                </div>
-              </div>
-              <div class="col-12 mt-5">
-                <h4 class="text-xs-caps text-on-surface mb-4">Account_Security_Operations</h4>
+
+              <div class="mt-5">
+                <h4 class="text-xs-caps text-on-surface mb-3">Navigation shortcuts</h4>
                 <div class="d-flex flex-wrap gap-3">
                   <a routerLink="/breaches" class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-4 shadow-sm flex-grow-1">
-                    <span class="material-symbols-outlined fs-6 me-2">history</span> Investigation_Logs
+                    <span class="material-symbols-outlined fs-6 me-2">history</span>
+                    Investigation logs
+                  </a>
+                  <a routerLink="/map" class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-4 shadow-sm flex-grow-1">
+                    <span class="material-symbols-outlined fs-6 me-2">travel_explore</span>
+                    Global map
                   </a>
                   @if (auth.isAdmin()) {
                     <a routerLink="/admin" class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-4 shadow-sm flex-grow-1">
-                      <span class="material-symbols-outlined fs-6 me-2">admin_panel_settings</span> Command_Terminal
+                      <span class="material-symbols-outlined fs-6 me-2">admin_panel_settings</span>
+                      Command terminal
                     </a>
                   }
                 </div>
               </div>
             </div>
-          </div>
 
-          <div class="bg-surface-container px-4 py-3 border-top border-outline-variant border-opacity-10 mt-auto">
-            <div class="d-flex justify-content-between align-items-center opacity-50">
-              <span class="text-xs-caps" style="font-size: 8px;">SECURITY_PROTOCOL: AES-256-GCM</span>
-              <span class="text-xs-caps" style="font-size: 8px;">ENCRYPTION_STATUS: NOMINAL</span>
+            <div class="bg-surface-container px-4 py-3 border-top border-outline-variant border-opacity-10">
+              <div class="d-flex justify-content-between align-items-center opacity-75 flex-wrap gap-2">
+                <span class="text-xs-caps" style="font-size: 8px;">Security protocol: AES-256-GCM</span>
+                <span class="text-xs-caps" style="font-size: 8px;">Encryption status: nominal</span>
+              </div>
             </div>
           </div>
         </div>
@@ -145,13 +131,57 @@ import { AuthService } from '../../../core/services/auth.service';
   `,
   styles: [`
     .text-xs-caps { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; }
+    .profile-shell { padding-bottom: 5rem; }
     .glow-primary { box-shadow: 0 0 20px rgba(0, 167, 224, 0.15); }
-    .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+    .glow-error { box-shadow: 0 0 20px rgba(248, 113, 113, 0.15); }
 
-    .text-admin { color: var(--tertiary-container) !important; border-color: var(--tertiary-container) !important; }
-    .text-analyst { color: var(--primary) !important; border-color: var(--primary) !important; }
-    .text-guest { color: var(--on-surface-variant) !important; border-color: var(--on-surface-variant) !important; }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 12px rgba(74, 222, 128, 0.65);
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    .profile-identity-card { min-height: 100%; }
+    .profile-grid-overlay {
+      opacity: 0.06;
+      background-image: linear-gradient(var(--on-surface) 1px, transparent 1px), linear-gradient(90deg, var(--on-surface) 1px, transparent 1px);
+      background-size: 24px 24px;
+      pointer-events: none;
+    }
+
+    .identity-orb {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 1px solid rgba(123, 208, 255, 0.35);
+      background: radial-gradient(circle at 30% 30%, rgba(123, 208, 255, 0.25), rgba(123, 208, 255, 0.08));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 30px rgba(123, 208, 255, 0.18);
+    }
+
+    .identity-initial {
+      font-family: var(--font-headline);
+      font-size: 3rem;
+      font-weight: 800;
+      color: var(--primary);
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    .profile-value {
+      word-break: break-word;
+    }
+
+    .role-admin { color: var(--tertiary-container) !important; border-color: var(--tertiary-container) !important; }
+    .role-analyst { color: var(--primary) !important; border-color: var(--primary) !important; }
+    .role-guest { color: var(--on-surface-variant) !important; border-color: var(--on-surface-variant) !important; }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
   `]
 })
 export class ProfileComponent implements OnInit {
@@ -169,9 +199,19 @@ export class ProfileComponent implements OnInit {
     this.auth.fetchProfile().subscribe();
   }
 
-  roleColorClass(): string {
-    if (this.user?.role === 'admin') return 'text-admin';
-    if (this.user?.role === 'analyst') return 'text-analyst';
-    return 'text-guest';
+  get roleLabel(): string {
+    return (this.user?.role ?? 'guest').toUpperCase();
+  }
+
+  get clearanceLabel(): string {
+    if (this.user?.role === 'admin') return 'Level 5';
+    if (this.user?.role === 'analyst') return 'Level 3';
+    return 'Level 1';
+  }
+
+  roleToneClass(): string {
+    if (this.user?.role === 'admin') return 'role-admin';
+    if (this.user?.role === 'analyst') return 'role-analyst';
+    return 'role-guest';
   }
 }

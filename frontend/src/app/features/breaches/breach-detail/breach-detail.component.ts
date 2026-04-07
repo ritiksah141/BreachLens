@@ -18,11 +18,11 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
   template: `
     <div class="mb-4 d-flex justify-content-between align-items-center mt-2">
       <a routerLink="/breaches" class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-3 shadow-sm d-flex align-items-center gap-2">
-        <span class="material-symbols-outlined fs-6">arrow_back</span> Return_to_Log
+        <span class="material-symbols-outlined fs-6">arrow_back</span> Back to breach log
       </a>
       @if (auth.isAnalyst()) {
         <div class="badge py-2 px-3 glass-panel border border-tertiary border-opacity-25 text-tertiary text-xs-caps glow-error">
-          <span class="p-1 bg-tertiary rounded-circle animate-pulse me-2"></span> ANALYST_ACCESS_ENABLED
+          <span class="p-1 bg-tertiary rounded-circle animate-pulse me-2"></span> Analyst access enabled
         </div>
       }
     </div>
@@ -58,7 +58,7 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
                 </div>
                 @if (auth.isAnalyst()) {
                   <a [routerLink]="['/admin']" [queryParams]="{edit: breach._id}" class="btn btn-primary text-xs-caps py-2 px-4 shadow-sm">
-                    MODIFY_RECORD
+                    Edit record
                   </a>
                 }
               </div>
@@ -68,13 +68,13 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
               <div class="row g-4 mt-auto">
                 <div class="col-6 col-md-3">
                   <div class="p-3 glass-panel rounded-3 border border-outline-variant border-opacity-10 text-center h-100">
-                    <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">RECORDS_COMPROMISED</div>
+                    <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">Records compromised</div>
                     <div class="fs-4 fw-bold text-on-surface font-headline">{{ breach.affected_records_count | number }}</div>
                   </div>
                 </div>
                 <div class="col-6 col-md-3">
                   <div class="p-3 glass-panel rounded-3 border border-outline-variant border-opacity-10 text-center h-100">
-                    <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">RISK_INDEX_V2</div>
+                    <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">Risk score</div>
                     <div class="fs-4 fw-bold font-headline" [ngClass]="riskColor(breach.risk_score)">
                       {{ (breach.risk_score ?? 0) | number:'1.1-1' }}
                     </div>
@@ -82,14 +82,14 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
                 </div>
                 <div class="col-6 col-md-3">
                   <div class="p-3 glass-panel rounded-3 border border-outline-variant border-opacity-10 text-center h-100">
-                    <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">EVENT_TIMESTAMP</div>
+                    <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">Event date</div>
                     <div class="fs-6 fw-bold text-on-surface">{{ breach.breach_date | date:'MMM dd, yyyy' }}</div>
                   </div>
                 </div>
                 <div class="col-6 col-md-3">
                   <div class="p-3 glass-panel rounded-3 border border-outline-variant border-opacity-10 text-center h-100">
-                    <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">DETECTION_LAG</div>
-                    <div class="fs-6 fw-bold text-on-surface">{{ detectionLag }} DAYS</div>
+                    <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">Detection lag</div>
+                    <div class="fs-6 fw-bold text-on-surface">{{ detectionLag }} days</div>
                   </div>
                 </div>
               </div>
@@ -101,7 +101,7 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
         <div class="col-lg-4">
           <div class="card border-0 bg-surface-container shadow-lg h-100 overflow-hidden">
             <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center bg-surface-container-high">
-              <span class="text-xs-caps text-on-surface">Geospatial_Origin</span>
+              <span class="text-xs-caps text-on-surface">Geospatial origin</span>
               <span class="material-symbols-outlined fs-6 text-on-surface-variant">location_on</span>
             </div>
             <div class="card-body p-0 position-relative">
@@ -110,7 +110,7 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
               } @else {
                 <div class="d-flex flex-column align-items-center justify-content-center h-100 p-5 text-center opacity-25">
                   <span class="material-symbols-outlined fs-1 mb-2">map_off</span>
-                  <div class="text-xs-caps">Coordinates_Unavailable</div>
+                  <div class="text-xs-caps">Coordinates unavailable</div>
                 </div>
               }
             </div>
@@ -124,29 +124,29 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
           <!-- Intelligence Parameters -->
           <div class="card border-0 bg-surface-container-low shadow-lg mb-4 overflow-hidden">
             <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center bg-surface-container">
-              <span class="text-xs-caps text-on-surface">Intelligence_Parameters</span>
+              <span class="text-xs-caps text-on-surface">Intelligence parameters</span>
               <span class="text-xs-caps text-on-surface-variant" style="font-size: 8px;">ID: {{ (breach._id).slice(-12) | uppercase }}</span>
             </div>
             <div class="card-body p-4">
               <div class="d-flex flex-column gap-3">
                 <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-outline-variant border-opacity-10">
-                  <span class="text-xs-caps text-on-surface-variant" style="font-size: 9px;">Target_Organisation</span>
+                  <span class="text-xs-caps text-on-surface-variant" style="font-size: 9px;">Target organisation</span>
                   <span class="fw-bold text-on-surface small">{{ getOrganisationName(breach) }}</span>
                 </div>
                 <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-outline-variant border-opacity-10">
-                  <span class="text-xs-caps text-on-surface-variant" style="font-size: 9px;">Org_Complexity</span>
+                  <span class="text-xs-caps text-on-surface-variant" style="font-size: 9px;">Org complexity</span>
                   <span class="fw-bold text-on-surface small">{{ getOrganisationSize(breach) }}</span>
                 </div>
                 <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-outline-variant border-opacity-10">
-                  <span class="text-xs-caps text-on-surface-variant" style="font-size: 9px;">Incursion_Vector</span>
+                  <span class="text-xs-caps text-on-surface-variant" style="font-size: 9px;">Attack vector</span>
                   <span class="fw-bold text-on-surface small">{{ getAttackVectorLabel(breach) }}</span>
                 </div>
                 <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-outline-variant border-opacity-10" *ngIf="breach.source_url">
-                  <span class="text-xs-caps text-on-surface-variant" style="font-size: 9px;">Source_Intel_Link</span>
-                  <a [href]="breach.source_url" target="_blank" class="text-primary text-decoration-none fw-bold small">EXTERNAL_INTEL ↗</a>
+                  <span class="text-xs-caps text-on-surface-variant" style="font-size: 9px;">Source link</span>
+                  <a [href]="breach.source_url" target="_blank" class="text-primary text-decoration-none fw-bold small">External intel ↗</a>
                 </div>
                 <div class="mt-2">
-                  <span class="text-xs-caps text-on-surface-variant mb-2 d-block" style="font-size: 9px;">Exposed_Data_Clusters</span>
+                  <span class="text-xs-caps text-on-surface-variant mb-2 d-block" style="font-size: 9px;">Exposed data types</span>
                   <div class="d-flex flex-wrap gap-2">
                     @for (dt of breach.data_types_exposed; track dt) {
                       <span class="badge py-1 px-2 glass-panel border border-outline-variant border-opacity-25 text-on-surface text-xs-caps" style="font-size: 7px;">{{ dt }}</span>
@@ -161,10 +161,10 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
           @if (auth.isAuthenticated()) {
             <div class="card border-0 bg-surface-container-low shadow-lg mb-4 overflow-hidden">
               <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center bg-surface-container">
-                <span class="text-xs-caps text-on-surface">Surveillance_Alerts</span>
+                <span class="text-xs-caps text-on-surface">Monitoring alerts</span>
                 @if (auth.isAnalyst()) {
                   <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-1 px-2" style="font-size: 8px;" (click)="showAddAlert = !showAddAlert">
-                    {{ showAddAlert ? 'CANCEL' : '+ ADD_ALERT' }}
+                    {{ showAddAlert ? 'Cancel' : '+ Add alert' }}
                   </button>
                 }
               </div>
@@ -173,14 +173,14 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
                 <div class="card-body border-bottom border-outline-variant border-opacity-10 bg-surface-container-high">
                   <div class="row g-3">
                     <div class="col-12">
-                      <input [(ngModel)]="newAlert.message" class="form-control bg-surface-container-low border-0 text-xs-caps" placeholder="ALERT_MESSAGE..." style="font-size: 10px;" />
+                      <input [(ngModel)]="newAlert.message" class="form-control bg-surface-container-low border-0 text-xs-caps" placeholder="Alert message..." style="font-size: 10px;" />
                     </div>
                     <div class="col-md-6">
                       <select [(ngModel)]="newAlert.alert_type" class="form-select bg-surface-container-low border-0 text-xs-caps" style="font-size: 10px;">
-                        <option value="new_exposure">NEW_EXPOSURE</option>
-                        <option value="credential_stuffing">CREDENTIAL_STUFFING</option>
-                        <option value="dark_web_mention">DARK_WEB_MENTION</option>
-                        <option value="domain_squatting">DOMAIN_SQUATTING</option>
+                        <option value="new_exposure">New exposure</option>
+                        <option value="credential_stuffing">Credential stuffing</option>
+                        <option value="dark_web_mention">Dark web mention</option>
+                        <option value="domain_squatting">Domain squatting</option>
                       </select>
                     </div>
                     <div class="col-md-6">
@@ -192,7 +192,7 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
                       </select>
                     </div>
                     <div class="col-12 text-end">
-                      <button class="btn btn-primary text-xs-caps py-1 px-3" (click)="addAlert()" [disabled]="!newAlert.message" style="font-size: 9px;">COMMIT_ALERT</button>
+                      <button class="btn btn-primary text-xs-caps py-1 px-3" (click)="addAlert()" [disabled]="!newAlert.message" style="font-size: 9px;">Save alert</button>
                     </div>
                   </div>
                 </div>
@@ -201,7 +201,7 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
               <div class="p-0 overflow-auto" style="max-height: 400px;">
                 <ul class="list-group list-group-flush">
                   @if (alerts.length === 0) {
-                    <li class="list-group-item bg-transparent text-on-surface-variant small text-center py-4 opacity-50">NO_ACTIVE_ALERTS</li>
+                    <li class="list-group-item bg-transparent text-on-surface-variant small text-center py-4 opacity-50">No active alerts</li>
                   }
                   @for (alert of alerts; track alert._id) {
                     <li class="list-group-item bg-transparent border-outline-variant border-opacity-10 p-3">
@@ -241,10 +241,10 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
           @if (auth.isAuthenticated()) {
             <div class="card border-0 bg-surface-container-low shadow-lg mb-4 overflow-hidden">
               <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center bg-surface-container">
-                <span class="text-xs-caps text-on-surface">Event_Incident_Timeline</span>
+                <span class="text-xs-caps text-on-surface">Incident timeline</span>
                 @if (auth.isAnalyst()) {
                   <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-1 px-2" style="font-size: 8px;" (click)="showAddTimeline = !showAddTimeline">
-                    {{ showAddTimeline ? 'CANCEL' : '+ ADD_EVENT' }}
+                    {{ showAddTimeline ? 'Cancel' : '+ Add event' }}
                   </button>
                 }
               </div>
@@ -253,16 +253,16 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
                 <div class="card-body border-bottom border-outline-variant border-opacity-10 bg-surface-container-high">
                   <div class="row g-3">
                     <div class="col-md-6">
-                      <input [(ngModel)]="newEvent.event_type" class="form-control bg-surface-container-low border-0 text-xs-caps" placeholder="EVENT_TYPE..." style="font-size: 10px;" />
+                      <input [(ngModel)]="newEvent.event_type" class="form-control bg-surface-container-low border-0 text-xs-caps" placeholder="Event type..." style="font-size: 10px;" />
                     </div>
                     <div class="col-md-6">
                       <input type="datetime-local" [(ngModel)]="newEvent.occurred_at" class="form-control bg-surface-container-low border-0 text-xs-caps text-on-surface" style="font-size: 10px;" />
                     </div>
                     <div class="col-12">
-                      <textarea [(ngModel)]="newEvent.description" class="form-control bg-surface-container-low border-0 text-xs-caps" rows="2" placeholder="EVENT_DESCRIPTION..." style="font-size: 10px;"></textarea>
+                      <textarea [(ngModel)]="newEvent.description" class="form-control bg-surface-container-low border-0 text-xs-caps" rows="2" placeholder="Event description..." style="font-size: 10px;"></textarea>
                     </div>
                     <div class="col-12 text-end">
-                      <button class="btn btn-primary text-xs-caps py-1 px-3" (click)="addTimeline()" [disabled]="!newEvent.event_type || !newEvent.description" style="font-size: 9px;">COMMIT_EVENT</button>
+                      <button class="btn btn-primary text-xs-caps py-1 px-3" (click)="addTimeline()" [disabled]="!newEvent.event_type || !newEvent.description" style="font-size: 9px;">Save event</button>
                     </div>
                   </div>
                 </div>
@@ -270,7 +270,7 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
 
               <div class="card-body p-4">
                 @if (timeline.length === 0) {
-                  <p class="text-on-surface-variant small text-center py-4 opacity-50 text-xs-caps">NO_TIMELINE_DATA</p>
+                  <p class="text-on-surface-variant small text-center py-4 opacity-50 text-xs-caps">No timeline data</p>
                 }
                 <div class="position-relative ps-4 ms-2 border-start border-outline-variant border-opacity-25 py-2">
                   @for (event of timeline; track event._id) {
@@ -290,7 +290,7 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
                       <div class="p-3 glass-panel rounded-3 border border-outline-variant border-opacity-10">
                         <p class="text-on-surface-variant small mb-0">{{ event.description }}</p>
                         @if (event.actor) {
-                          <div class="mt-2 text-xs-caps opacity-50" style="font-size: 7px;">OPERATOR: {{ event.actor | uppercase }}</div>
+                          <div class="mt-2 text-xs-caps opacity-50" style="font-size: 7px;">Operator: {{ event.actor | uppercase }}</div>
                         }
                       </div>
                     </div>
@@ -304,10 +304,10 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
           @if (auth.isAuthenticated()) {
             <div class="card border-0 bg-surface-container-low shadow-lg overflow-hidden">
               <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center bg-surface-container">
-                <span class="text-xs-caps text-on-surface">Mitigation_Protocols</span>
+                <span class="text-xs-caps text-on-surface">Mitigation protocols</span>
                 @if (auth.isAnalyst()) {
                   <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-1 px-2" style="font-size: 8px;" (click)="showAddRemediation = !showAddRemediation">
-                    {{ showAddRemediation ? 'CANCEL' : '+ ADD_PROTOCOL' }}
+                    {{ showAddRemediation ? 'Cancel' : '+ Add protocol' }}
                   </button>
                 }
               </div>
@@ -316,20 +316,20 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
                 <div class="card-body border-bottom border-outline-variant border-opacity-10 bg-surface-container-high">
                   <div class="row g-3">
                     <div class="col-12">
-                      <input [(ngModel)]="newAction.action" class="form-control bg-surface-container-low border-0 text-xs-caps" placeholder="MITIGATION_ACTION..." style="font-size: 10px;" />
+                      <input [(ngModel)]="newAction.action" class="form-control bg-surface-container-low border-0 text-xs-caps" placeholder="Mitigation action..." style="font-size: 10px;" />
                     </div>
                     <div class="col-md-6">
                       <select [(ngModel)]="newAction.status" class="form-select bg-surface-container-low border-0 text-xs-caps" style="font-size: 10px;">
                         <option value="pending">PENDING</option>
-                        <option value="in_progress">IN_PROGRESS</option>
+                        <option value="in_progress">IN PROGRESS</option>
                         <option value="completed">COMPLETED</option>
                       </select>
                     </div>
                     <div class="col-md-6">
-                      <input [(ngModel)]="newAction.assigned_to" class="form-control bg-surface-container-low border-0 text-xs-caps" placeholder="ASSIGNED_OPERATOR..." style="font-size: 10px;" />
+                      <input [(ngModel)]="newAction.assigned_to" class="form-control bg-surface-container-low border-0 text-xs-caps" placeholder="Assigned operator..." style="font-size: 10px;" />
                     </div>
                     <div class="col-12 text-end">
-                      <button class="btn btn-primary text-xs-caps py-1 px-3" (click)="addRemediation()" [disabled]="!newAction.action" style="font-size: 9px;">COMMIT_PROTOCOL</button>
+                      <button class="btn btn-primary text-xs-caps py-1 px-3" (click)="addRemediation()" [disabled]="!newAction.action" style="font-size: 9px;">Save protocol</button>
                     </div>
                   </div>
                 </div>
@@ -338,7 +338,7 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
               <div class="p-0">
                 <ul class="list-group list-group-flush">
                   @if (remediation.length === 0) {
-                    <li class="list-group-item bg-transparent text-on-surface-variant small text-center py-4 opacity-50 text-xs-caps">NO_ACTIVE_PROTOCOLS</li>
+                    <li class="list-group-item bg-transparent text-on-surface-variant small text-center py-4 opacity-50 text-xs-caps">No active protocols</li>
                   }
                   @for (action of remediation; track action._id) {
                     <li class="list-group-item bg-transparent border-outline-variant border-opacity-10 p-3">
@@ -355,7 +355,7 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
                                   style="font-size: 8px; height: 24px; width: auto;"
                                 >
                                   <option value="pending">PENDING</option>
-                                  <option value="in_progress">IN_PROGRESS</option>
+                                  <option value="in_progress">IN PROGRESS</option>
                                   <option value="completed">COMPLETED</option>
                                 </select>
                               }
@@ -376,7 +376,7 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
                             </div>
                           </div>
                           @if (action.assigned_to) {
-                            <div class="text-xs-caps text-on-surface-variant opacity-50" style="font-size: 8px;">OPERATOR_ASSIGNED: {{ action.assigned_to | uppercase }}</div>
+                            <div class="text-xs-caps text-on-surface-variant opacity-50" style="font-size: 8px;">Assigned to: {{ action.assigned_to | uppercase }}</div>
                           }
                         </div>
                       </div>
@@ -391,10 +391,10 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
             <div class="card border-0 bg-surface-container-low shadow-lg p-4 mt-4 text-center">
               <div class="p-3 glass-panel rounded-3 border border-outline-variant border-opacity-10 mb-3">
                 <span class="material-symbols-outlined fs-1 text-primary mb-2">lock</span>
-                <h4 class="text-xs-caps text-on-surface">Secure_Access_Required</h4>
+                <h4 class="text-xs-caps text-on-surface">Secure access required</h4>
                 <p class="text-on-surface-variant small mb-0">Full intelligence timeline and mitigation protocols require authorization.</p>
               </div>
-              <a routerLink="/auth/login" class="btn btn-primary text-xs-caps py-2 w-100 mt-2">AUTHORIZE_SESSION</a>
+              <a routerLink="/auth/login" class="btn btn-primary text-xs-caps py-2 w-100 mt-2">Authorize session</a>
             </div>
           }
         </div>
@@ -730,7 +730,7 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
     const patterns: Array<{ regex: RegExp; label: string }> = [
       { regex: /(phish|spear\s*phish|smish|vish|social engineering)/i, label: 'PHISHING' },
       { regex: /(ransomware|encrypt(ed|ion)? files|double extortion)/i, label: 'RANSOMWARE' },
-      { regex: /(credential stuffing|password spray|brute force|stolen credentials)/i, label: 'CREDENTIAL_STUFFING' },
+      { regex: /(credential stuffing|password spray|brute force|stolen credentials)/i, label: 'Credential stuffing' },
       { regex: /(sql injection|sqli|injection flaw)/i, label: 'SQL_INJECTION' },
       { regex: /(api (key )?leak|exposed api|token leak|hardcoded secret)/i, label: 'API_EXPOSURE' },
       { regex: /(misconfig|misconfiguration|open bucket|public s3|exposed database|unsecured database)/i, label: 'MISCONFIGURATION' },

@@ -62,7 +62,7 @@ login_bp = Blueprint("login", __name__, url_prefix="/api/v1")
 auth_service = AuthService()
 
 _USERNAME_RE = re.compile(r"^[a-zA-Z0-9_]{3,30}$")
-_PASSWORD_RE = re.compile(r"^(?=.*[A-Z])(?=.*\d).{8,}$")
+_PASSWORD_RE = re.compile(r"^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$")
 
 
 def _validate_registration(data: dict) -> list[str]:
@@ -175,14 +175,14 @@ def login():
     email = data.get("email")
     username = data.get("username")
     password = data.get("password")
+    lockout_key = auth_service.resolve_lockout_identity(email=email, username=username)
 
     if not password or (not email and not username):
         return error_response("'email' (or 'username') and 'password' are required.", 400)
 
     # Check account lockout before attempting authentication
-    lockout_key = email or username
-    if email:
-        is_locked, remaining = auth_service.check_account_lockout(email)
+    if lockout_key:
+        is_locked, remaining = auth_service.check_account_lockout(lockout_key)
         if is_locked:
             return error_response(
                 f"Account is locked due to too many failed login attempts. "
@@ -197,13 +197,13 @@ def login():
     )
     if err:
         # Record failed login attempt
-        if email:
-            auth_service.record_failed_login(email)
+        if lockout_key:
+            auth_service.record_failed_login(lockout_key)
         return error_response(err, 401)
 
     # Reset failed attempts on successful login
-    if email:
-        auth_service.reset_failed_attempts(email)
+    if lockout_key:
+        auth_service.reset_failed_attempts(lockout_key)
 
     return success_response(token_data)
 
@@ -267,11 +267,17 @@ def forgot_password():
     if not email or not is_valid_email(email):
         return error_response("A valid 'email' is required.", 422)
 
-    # Always return success to prevent user enumeration
-    # In production, an email with a reset link would be sent here
-    return success_response({
-        "message": "If an account with that email exists, a password reset link has been sent."
-    })
+    exists, reset_token = auth_service.create_password_reset_token(email)
+
+    payload = {
+        "message": "If an account with that email exists, a password reset link has been sent.",
+    }
+    # Dev/testing convenience: expose token for local flow when no mail service exists.
+    if exists and (current_app.config.get("DEBUG") or current_app.config.get("TESTING")):
+        payload["reset_token"] = reset_token
+
+    # Always return success to prevent user enumeration.
+    return success_response(payload)
 
 
 @auth_bp.post("/reset-password")
@@ -281,19 +287,23 @@ def reset_password():
     data = request.get_json(silent=True) or {}
     token = data.get("token")
     new_password = data.get("new_password")
+    confirm_password = data.get("confirm_password")
 
     if not token:
         return error_response("'token' is required.", 400)
     if not new_password:
         return error_response("'new_password' is required.", 400)
+    if confirm_password is not None and new_password != confirm_password:
+        return error_response("'confirm_password' must match 'new_password'.", 422)
 
-    _password_re = re.compile(r"^(?=.*[A-Z])(?=.*\d).{8,}$")
-    if not _password_re.match(new_password):
+    if not _PASSWORD_RE.match(new_password):
         return error_response(
-            "Password must be at least 8 characters and include one uppercase letter and one digit.",
+            "Password must be at least 8 characters and include one uppercase letter, one digit, and one special character.",
             422,
         )
 
-    # In production, validate the token against a stored reset token.
-    # For now, return a generic error (no valid tokens exist in this implementation).
-    return error_response("Invalid or expired reset token.", 400)
+    ok, message = auth_service.reset_password_with_token(token=token, new_password=new_password)
+    if not ok:
+        return error_response(message, 400)
+
+    return success_response({"message": message})

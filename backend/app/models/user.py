@@ -22,7 +22,7 @@ _MAX_USERNAME_LEN = 30   # Matches regex ceiling
 
 # Pre-compiled patterns
 _USERNAME_RE = re.compile(r"^[a-zA-Z0-9_]{3,30}$")
-_PASSWORD_RE = re.compile(r"^(?=.*[A-Z])(?=.*\d).{8,}$")
+_PASSWORD_RE = re.compile(r"^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$")
 
 
 class UserSchema:
@@ -80,7 +80,7 @@ class UserSchema:
             errors.append("A valid email address is required.")
         if not _PASSWORD_RE.match(password):
             errors.append(
-                "Password must be at least 8 characters and include one uppercase letter and one digit."
+                "Password must be at least 8 characters and include one uppercase letter, one digit, and one special character."
             )
         if role == "admin":
             errors.append("Cannot self-register with the 'admin' role.")
@@ -127,7 +127,7 @@ class UserSchema:
                 errors.append(f"Password must not exceed {_MAX_PASSWORD_LEN} characters.")
             elif not _PASSWORD_RE.match(data["password"]):
                 errors.append(
-                    "Password must be at least 8 characters and include one uppercase letter and one digit."
+                    "Password must be at least 8 characters and include one uppercase letter, one digit, and one special character."
                 )
 
         if "role" in data:

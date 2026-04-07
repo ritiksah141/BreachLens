@@ -5,11 +5,11 @@ Implements the module-required authentication pattern:
 
 1. Tokens are read from the ``x-access-token`` request header.
 2. Tokens are decoded with the raw ``pyjwt`` library (``jwt.decode``).
-3. The ``blacklist`` MongoDB collection is checked via ``find_one()`` before
+4. The ``blacklist`` MongoDB collection is checked via ``find_one()`` before
    granting access — if the token is found, the request is rejected with
    "Token has been cancelled".
-4. HTTP Basic Authentication (``Authorization: Basic …``) is also supported
-   as the login mechanism.
+5. HTTP Basic Authentication (``Authorization: Basic …``) is only used by the
+    explicit login endpoint flow, not as a fallback for protected resources.
 
 Decorators provided (all use ``functools.wraps``):
 - ``@jwt_required``   — any authenticated user.
@@ -79,6 +79,8 @@ def _try_basic_auth() -> bool:
     Parse ``Authorization: Basic <base64(username:password)>``, verify the
     credentials against the ``users`` collection with ``bcrypt.checkpw()``,
     and populate ``flask.g`` on success.
+
+    Note: this helper is intended for explicit login flows only.
     """
     auth_header = request.headers.get("Authorization", "")
     if not auth_header.startswith("Basic "):
@@ -124,7 +126,7 @@ def jwt_required(f: Callable) -> Callable:
     1. Reads the token from ``x-access-token``.
     2. Checks the ``blacklist`` collection via ``find_one()``.
     3. Decodes with ``jwt.decode()`` using the app's ``SECRET_KEY``.
-    4. Falls back to HTTP Basic Auth if no token is present.
+    4. Rejects requests without a token.
     """
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -140,10 +142,6 @@ def jwt_required(f: Callable) -> Callable:
                 return error_response("Token is invalid or has expired.", 401)
 
             _populate_g(payload)
-            return f(*args, **kwargs)
-
-        # No JWT — try Basic Auth as fallback
-        if _try_basic_auth():
             return f(*args, **kwargs)
 
         return error_response("Token is missing.", 401)
@@ -173,12 +171,6 @@ def admin_required(f: Callable) -> Callable:
             _populate_g(payload)
             return f(*args, **kwargs)
 
-        # No JWT — try Basic Auth as fallback
-        if _try_basic_auth():
-            if g.current_user_role != "admin":
-                return error_response("Admin access required.", 403)
-            return f(*args, **kwargs)
-
         return error_response("Token is missing.", 401)
     return decorated
 
@@ -206,14 +198,6 @@ def require_role(*roles: str) -> Callable:
                 _populate_g(payload)
                 role = g.current_user_role
                 if role not in roles:
-                    return error_response(
-                        "You are not authorized to access this resource.", 403
-                    )
-                return f(*args, **kwargs)
-
-            # No JWT — try Basic Auth as fallback
-            if _try_basic_auth():
-                if g.current_user_role not in roles:
                     return error_response(
                         "You are not authorized to access this resource.", 403
                     )

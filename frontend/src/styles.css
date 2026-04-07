@@ -229,6 +229,27 @@ body {
 .text-on-surface { color: var(--on-surface) !important; }
 .text-on-surface-variant { color: var(--on-surface-variant) !important; }
 
+.page-title {
+  font-family: var(--font-headline);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--on-surface);
+  margin-bottom: 0.25rem;
+  text-wrap: balance;
+}
+
+.page-subtitle {
+  color: var(--on-surface-variant);
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
+}
+
+.metric-emphasis {
+  font-family: var(--font-headline);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
 /* Refined Glass Panel for theme awareness */
 .glass-panel {
   background: rgba(27, 31, 43, 0.6) !important;
