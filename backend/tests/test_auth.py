@@ -33,7 +33,7 @@ class TestRegister:
         resp = client.post("/api/v1/auth/register", json={
             "username": "validuser",
             "email": "not-an-email",
-            "password": "ValidPass1",  # pragma: allowlist secret
+            "password": "ValidPass1!",  # pragma: allowlist secret
         })
         assert resp.status_code == 422
         body = resp.get_json()
@@ -53,7 +53,7 @@ class TestRegister:
         resp = client.post("/api/v1/auth/register", json={
             "username": "hackeradmin",
             "email": "hacker@test.com",
-            "password": "ValidPass1",  # pragma: allowlist secret
+            "password": "ValidPass1!",  # pragma: allowlist secret
             "role": "admin",
         })
         assert resp.status_code == 422
@@ -71,7 +71,7 @@ class TestRegister:
             resp = client.post("/api/v1/auth/register", json={
                 "username": "newuser",
                 "email": "newuser@test.com",
-                "password": "ValidPass1",  # pragma: allowlist secret
+                "password": "ValidPass1!",  # pragma: allowlist secret
             })
         assert resp.status_code == 201
         assert resp.get_json()["status"] == "success"
@@ -85,7 +85,7 @@ class TestRegister:
             resp = client.post("/api/v1/auth/register", json={
                 "username": "dupuser",
                 "email": "dup@test.com",
-                "password": "ValidPass1",  # pragma: allowlist secret
+                "password": "ValidPass1!",  # pragma: allowlist secret
             })
         assert resp.status_code == 409
 
@@ -130,7 +130,7 @@ class TestLogin:
         with patch("app.routes.auth.auth_service.login", return_value=(token_data, None)):
             resp = client.post("/api/v1/auth/login", json={
                 "email": "analyst@test.com",
-                "password": "ValidPass1",  # pragma: allowlist secret
+                "password": "ValidPass1!",  # pragma: allowlist secret
             })
         assert resp.status_code == 200
         body = resp.get_json()

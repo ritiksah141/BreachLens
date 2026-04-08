@@ -1323,7 +1323,7 @@ class TestUserSchemaRegistration:
         errors = UserSchema.validate_registration({
             "username": "validuser",
             "email": "valid@example.com",
-            "password": "StrongPass1",  # pragma: allowlist secret
+            "password": "StrongPass1!",  # pragma: allowlist secret
         })
         assert errors == []
 
@@ -1331,7 +1331,7 @@ class TestUserSchemaRegistration:
         errors = UserSchema.validate_registration({
             "username": "",
             "email": "a@b.com",
-            "password": "StrongPass1",  # pragma: allowlist secret
+            "password": "StrongPass1!",  # pragma: allowlist secret
         })
         assert len(errors) > 0
 
@@ -1339,7 +1339,7 @@ class TestUserSchemaRegistration:
         errors = UserSchema.validate_registration({
             "username": "bad user!",
             "email": "a@b.com",
-            "password": "StrongPass1", # pragma: allowlist secret
+            "password": "StrongPass1!", # pragma: allowlist secret
         })
         assert any("Username" in e for e in errors)
 
@@ -1347,7 +1347,7 @@ class TestUserSchemaRegistration:
         errors = UserSchema.validate_registration({
             "username": "validuser",
             "email": "not-an-email",
-            "password": "StrongPass1", # pragma: allowlist secret
+            "password": "StrongPass1!", # pragma: allowlist secret
         })
         assert any("email" in e.lower() for e in errors)
 
@@ -1363,7 +1363,7 @@ class TestUserSchemaRegistration:
         errors = UserSchema.validate_registration({
             "username": "validuser",
             "email": "a@b.com",
-            "password": "StrongPass1", # pragma: allowlist secret
+            "password": "StrongPass1!", # pragma: allowlist secret
             "role": "admin",
         })
         assert any("admin" in e.lower() for e in errors)

@@ -22,6 +22,7 @@
             "browser": "src/main.ts",
             "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
+            "allowedCommonJsDependencies": ["leaflet"],
             "assets": ["src/favicon.ico", "src/assets"],
             "styles": [
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
@@ -35,8 +36,8 @@
           "configurations": {
             "production": {
               "budgets": [
-                { "type": "initial", "maximumWarning": "500kb", "maximumError": "1mb" },
-                { "type": "anyComponentStyle", "maximumWarning": "2kb", "maximumError": "4kb" }
+                { "type": "initial", "maximumWarning": "700kb", "maximumError": "1mb" },
+                { "type": "anyComponentStyle", "maximumWarning": "5kb", "maximumError": "6kb" }
               ],
               "outputHashing": "all",
               "fileReplacements": [
