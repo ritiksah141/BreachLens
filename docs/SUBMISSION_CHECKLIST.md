@@ -2,6 +2,7 @@
 
 **Submission Deadline**: [Your deadline]
 **Target Grade**: High 1st (90-95%)
+**Rubric Matrix**: `docs/CW2_90_EVIDENCE_MATRIX.md`
 
 ---
 
@@ -26,29 +27,41 @@
 
 ---
 
-### **2. Testing Evidence** 🔄 ALMOST COMPLETE
+### **2. Testing Evidence** 🔄 IN PROGRESS (HARD DATA UPDATED)
 
-- [x] **Unit Tests**: 586 tests passing (100% pass rate)
-- [x] **Coverage Report**: 88% overall
-  - HTML report: `backend/htmlcov/index.html`
-  - JSON report: `evidence/backend/coverage.json`
-- [x] **Security Tests**: Included in 586 tests (account lockout, NoSQL injection, XSS)
-- [x] **Postman Collection**: 64 requests, 108 assertions
-- [ ] **Postman Evidence PDFs**: ⚠️ NEEDS GENERATION
+- [x] **Backend Tests (2026-04-15)**: 615 passed, 2 skipped, 14 deselected
+- [x] **Frontend Tests (2026-04-15)**: 27 passed, 0 failed (`ChromeHeadless`)
+- [x] **Frontend Production Build (2026-04-15)**: successful build to `frontend/dist/breachlens-frontend`
+- [x] **Coverage Report**: available under `backend/htmlcov/index.html`
+- [x] **Security Tests**: included in backend suite (auth lockout, validation, sanitization)
+- [x] **Postman Collection**: available and runnable
+- [ ] **Postman/Newman export artefacts**: must be exported for submission evidence
+- [ ] **UI evidence pack**: screenshots/video for analyst/admin/map workflows
+- [ ] **Mobile + accessibility evidence**: final proof capture required
 
-**Action Required:**
+**Action Required Before 90% Claim:**
 ```bash
 # 1. Start backend
 cd backend
 python seed/seed_data.py --reset
 python run.py
 
-# 2. In Postman Desktop App:
-#    - Run full collection (64 requests, ~108 assertions)
-#    - Export Collection Runner PDF
+# 2. In Postman Desktop App / Newman:
+#    - Run full collection and save pass output
+#    - Export Collection Runner PDF/HTML report
 #    - Export API Documentation PDF
+#
+# 3. Capture frontend evidence:
+#    - Advanced search + facets
+#    - Subdocument query + facet summary
+#    - Attack-surface panel on dashboard
+#    - Admin role actions
+#    - Geospatial map search
 # See: backend/postman/README.md for detailed instructions
 ```
+
+**Submission Gate Rule:**
+- Do not declare "90%+ submission ready" until all unchecked evidence items above are completed and indexed in `submission/`.
 
 ---
 

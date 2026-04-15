@@ -301,3 +301,170 @@ class AnalyticsService:
         base["industries_affected"] = len(self.col.distinct("industry"))
 
         return base
+
+    # ------------------------------------------------------------------ #
+    # 8.11 — Attack Surface Profile                                        #
+    # ------------------------------------------------------------------ #
+
+    def attack_surface_profile(self, industry: str | None = None) -> dict:
+        """Comprehensive attack surface profile using a faceted aggregation pipeline."""
+        match_stage = {}
+        if industry:
+            match_stage["industry"] = industry
+
+        pipeline = []
+        if match_stage:
+            pipeline.append({"$match": match_stage})
+
+        pipeline.extend([
+            {
+                "$facet": {
+                    "overview": [
+                        {
+                            "$group": {
+                                "_id": None,
+                                "breach_count": {"$sum": 1},
+                                "avg_risk_score": {"$avg": "$risk_score"},
+                                "total_records_exposed": {"$sum": "$affected_records_count"},
+                                "avg_records_per_breach": {"$avg": "$affected_records_count"},
+                            }
+                        },
+                        {
+                            "$project": {
+                                "_id": 0,
+                                "breach_count": 1,
+                                "avg_risk_score": {"$round": ["$avg_risk_score", 2]},
+                                "total_records_exposed": 1,
+                                "avg_records_per_breach": {"$round": ["$avg_records_per_breach", 0]},
+                            }
+                        },
+                    ],
+                    "severity_mix": [
+                        {"$group": {"_id": "$severity", "count": {"$sum": 1}}},
+                        {"$project": {"_id": 0, "severity": "$_id", "count": 1}},
+                        {"$sort": {"count": -1}},
+                    ],
+                    "top_data_types": [
+                        {"$unwind": "$data_types_exposed"},
+                        {"$group": {"_id": "$data_types_exposed", "count": {"$sum": 1}}},
+                        {"$project": {"_id": 0, "data_type": "$_id", "count": 1}},
+                        {"$sort": {"count": -1}},
+                        {"$limit": 10},
+                    ],
+                    "industry_risk_ranking": [
+                        {
+                            "$group": {
+                                "_id": "$industry",
+                                "breach_count": {"$sum": 1},
+                                "avg_risk_score": {"$avg": "$risk_score"},
+                                "total_records_exposed": {"$sum": "$affected_records_count"},
+                            }
+                        },
+                        {
+                            "$project": {
+                                "_id": 0,
+                                "industry": "$_id",
+                                "breach_count": 1,
+                                "avg_risk_score": {"$round": ["$avg_risk_score", 2]},
+                                "total_records_exposed": 1,
+                            }
+                        },
+                        {"$sort": {"avg_risk_score": -1}},
+                        {"$limit": 10},
+                    ],
+                    "alert_pressure": [
+                        {"$unwind": {"path": "$monitoring_alerts", "preserveNullAndEmptyArrays": True}},
+                        {
+                            "$group": {
+                                "_id": None,
+                                "total_alerts": {
+                                    "$sum": {
+                                        "$cond": [{"$ifNull": ["$monitoring_alerts", False]}, 1, 0]
+                                    }
+                                },
+                                "unacknowledged_alerts": {
+                                    "$sum": {
+                                        "$cond": [
+                                            {
+                                                "$and": [
+                                                    {"$ifNull": ["$monitoring_alerts", False]},
+                                                    {"$eq": ["$monitoring_alerts.acknowledged", False]},
+                                                ]
+                                            },
+                                            1,
+                                            0,
+                                        ]
+                                    }
+                                },
+                            }
+                        },
+                        {
+                            "$project": {
+                                "_id": 0,
+                                "total_alerts": 1,
+                                "unacknowledged_alerts": 1,
+                                "unacknowledged_rate": {
+                                    "$cond": [
+                                        {"$eq": ["$total_alerts", 0]},
+                                        0,
+                                        {
+                                            "$round": [
+                                                {
+                                                    "$multiply": [
+                                                        {
+                                                            "$divide": [
+                                                                "$unacknowledged_alerts",
+                                                                "$total_alerts",
+                                                            ]
+                                                        },
+                                                        100,
+                                                    ]
+                                                },
+                                                1,
+                                            ]
+                                        },
+                                    ]
+                                },
+                            }
+                        },
+                    ],
+                }
+            }
+        ])
+
+        result = list(self.col.aggregate(pipeline))
+        if not result:
+            return {
+                "overview": {
+                    "breach_count": 0,
+                    "avg_risk_score": 0.0,
+                    "total_records_exposed": 0,
+                    "avg_records_per_breach": 0,
+                },
+                "severity_mix": [],
+                "top_data_types": [],
+                "industry_risk_ranking": [],
+                "alert_pressure": {
+                    "total_alerts": 0,
+                    "unacknowledged_alerts": 0,
+                    "unacknowledged_rate": 0,
+                },
+            }
+
+        faceted = result[0]
+        return {
+            "overview": faceted.get("overview", [{}])[0] if faceted.get("overview") else {
+                "breach_count": 0,
+                "avg_risk_score": 0.0,
+                "total_records_exposed": 0,
+                "avg_records_per_breach": 0,
+            },
+            "severity_mix": faceted.get("severity_mix", []),
+            "top_data_types": faceted.get("top_data_types", []),
+            "industry_risk_ranking": faceted.get("industry_risk_ranking", []),
+            "alert_pressure": faceted.get("alert_pressure", [{}])[0] if faceted.get("alert_pressure") else {
+                "total_alerts": 0,
+                "unacknowledged_alerts": 0,
+                "unacknowledged_rate": 0,
+            },
+        }

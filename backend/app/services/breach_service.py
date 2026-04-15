@@ -89,6 +89,10 @@ class BreachService:
         self.col.create_index([("risk_score", DESCENDING)], background=True)
         self.col.create_index([("breach_date", DESCENDING)], background=True)
         self.col.create_index([("organisation.domain", ASCENDING)], background=True)
+        self.col.create_index([("affected_accounts.email", ASCENDING)], background=True)
+        self.col.create_index([("timeline.event_type", ASCENDING), ("timeline.event_date", DESCENDING)], background=True)
+        self.col.create_index([("remediation.status", ASCENDING), ("remediation.due_date", ASCENDING)], background=True)
+        self.col.create_index([("monitoring_alerts.severity", ASCENDING), ("monitoring_alerts.acknowledged", ASCENDING)], background=True)
 
     # ------------------------------------------------------------------ #
     # Helpers                                                               #
@@ -178,6 +182,312 @@ class BreachService:
             .limit(limit)
         )
         return list(cursor), total
+
+    def advanced_search(
+        self,
+        page: int = 1,
+        limit: int = 20,
+        sort_by: str = "created_at",
+        order: str = "desc",
+        query_text: Optional[str] = None,
+        severities: Optional[list[str]] = None,
+        statuses: Optional[list[str]] = None,
+        industries: Optional[list[str]] = None,
+        data_types: Optional[list[str]] = None,
+        breach_from: Optional[str] = None,
+        breach_to: Optional[str] = None,
+        min_risk: Optional[float] = None,
+        max_risk: Optional[float] = None,
+        min_records: Optional[float] = None,
+        max_records: Optional[float] = None,
+        has_location: Optional[bool] = None,
+        include_accounts: bool = False,
+        include_facets: bool = False,
+    ) -> tuple[list[dict], int, dict]:
+        """Run advanced multi-criteria search and optional facet aggregations."""
+        query: dict = {}
+
+        if query_text:
+            query["$or"] = [
+                safe_regex_query(query_text, "title"),
+                safe_regex_query(query_text, "description"),
+                safe_regex_query(query_text, "organisation.name"),
+                safe_regex_query(query_text, "industry"),
+            ]
+
+        if severities:
+            query["severity"] = {"$in": severities}
+        if statuses:
+            query["status"] = {"$in": statuses}
+        if industries:
+            query["industry"] = {"$in": industries}
+        if data_types:
+            query["data_types_exposed"] = {"$all": data_types}
+
+        if breach_from or breach_to:
+            date_filter: dict = {}
+            if breach_from:
+                date_filter["$gte"] = parse_iso_date(breach_from)
+            if breach_to:
+                date_filter["$lte"] = parse_iso_date(breach_to)
+            query["breach_date"] = date_filter
+
+        if min_risk is not None or max_risk is not None:
+            risk_filter: dict = {}
+            if min_risk is not None:
+                risk_filter["$gte"] = min_risk
+            if max_risk is not None:
+                risk_filter["$lte"] = max_risk
+            query["risk_score"] = risk_filter
+
+        if min_records is not None or max_records is not None:
+            records_filter: dict = {}
+            if min_records is not None:
+                records_filter["$gte"] = int(min_records)
+            if max_records is not None:
+                records_filter["$lte"] = int(max_records)
+            query["affected_records_count"] = records_filter
+
+        if has_location is True:
+            query["location"] = {"$exists": True, "$ne": None}
+        elif has_location is False:
+            no_location_filter = {
+                "$or": [
+                    {"location": {"$exists": False}},
+                    {"location": None},
+                ]
+            }
+            if query:
+                query = {"$and": [query, no_location_filter]}
+            else:
+                query = no_location_filter
+
+        projection = None if include_accounts else {"affected_accounts": 0}
+        total = self.col.count_documents(query)
+
+        sort_field = SORT_FIELD_MAP.get(sort_by, "created_at")
+        sort_dir = DESCENDING if order == "desc" else ASCENDING
+
+        docs = list(
+            self.col.find(query, projection)
+            .sort(sort_field, sort_dir)
+            .skip((page - 1) * limit)
+            .limit(limit)
+        )
+
+        facets: dict = {}
+        if include_facets:
+            facet_pipeline = [
+                {"$match": query},
+                {
+                    "$facet": {
+                        "severity": [
+                            {"$group": {"_id": "$severity", "count": {"$sum": 1}}},
+                            {"$project": {"_id": 0, "value": "$_id", "count": 1}},
+                            {"$sort": {"count": -1}},
+                        ],
+                        "status": [
+                            {"$group": {"_id": "$status", "count": {"$sum": 1}}},
+                            {"$project": {"_id": 0, "value": "$_id", "count": 1}},
+                            {"$sort": {"count": -1}},
+                        ],
+                        "industry": [
+                            {"$group": {"_id": "$industry", "count": {"$sum": 1}}},
+                            {"$project": {"_id": 0, "value": "$_id", "count": 1}},
+                            {"$sort": {"count": -1}},
+                        ],
+                        "top_data_types": [
+                            {"$unwind": "$data_types_exposed"},
+                            {"$group": {"_id": "$data_types_exposed", "count": {"$sum": 1}}},
+                            {"$project": {"_id": 0, "value": "$_id", "count": 1}},
+                            {"$sort": {"count": -1}},
+                            {"$limit": 10},
+                        ],
+                    }
+                },
+            ]
+            facet_results = list(self.col.aggregate(facet_pipeline))
+            facets = facet_results[0] if facet_results else {}
+
+        return docs, total, facets
+
+    def get_filter_options(self) -> dict:
+        """Build dynamic filter options and numeric ranges for frontend query UI."""
+        severities = sorted([s for s in self.col.distinct("severity") if s])
+        statuses = sorted([s for s in self.col.distinct("status") if s])
+        industries = sorted([s for s in self.col.distinct("industry") if s])
+
+        data_type_pipeline = [
+            {"$unwind": {"path": "$data_types_exposed", "preserveNullAndEmptyArrays": False}},
+            {"$group": {"_id": "$data_types_exposed", "count": {"$sum": 1}}},
+            {"$project": {"_id": 0, "value": "$_id", "count": 1}},
+            {"$sort": {"count": -1, "value": 1}},
+        ]
+        data_types = list(self.col.aggregate(data_type_pipeline))
+
+        range_pipeline = [
+            {
+                "$group": {
+                    "_id": None,
+                    "min_risk": {"$min": "$risk_score"},
+                    "max_risk": {"$max": "$risk_score"},
+                    "min_records": {"$min": "$affected_records_count"},
+                    "max_records": {"$max": "$affected_records_count"},
+                }
+            },
+            {
+                "$project": {
+                    "_id": 0,
+                    "min_risk": {"$ifNull": ["$min_risk", 0]},
+                    "max_risk": {"$ifNull": ["$max_risk", 10]},
+                    "min_records": {"$ifNull": ["$min_records", 0]},
+                    "max_records": {"$ifNull": ["$max_records", 0]},
+                }
+            },
+        ]
+        range_result = list(self.col.aggregate(range_pipeline))
+        ranges = range_result[0] if range_result else {
+            "min_risk": 0,
+            "max_risk": 10,
+            "min_records": 0,
+            "max_records": 0,
+        }
+
+        return {
+            "severities": severities,
+            "statuses": statuses,
+            "industries": industries,
+            "data_types": data_types,
+            "ranges": {
+                "min_risk": float(ranges["min_risk"]),
+                "max_risk": float(ranges["max_risk"]),
+                "min_records": int(ranges["min_records"]),
+                "max_records": int(ranges["max_records"]),
+            },
+        }
+
+    def query_subdocuments(
+        self,
+        page: int = 1,
+        limit: int = 20,
+        sort_by: str = "risk_score",
+        order: str = "desc",
+        timeline_event_types: Optional[list[str]] = None,
+        timeline_from: Optional[str] = None,
+        timeline_to: Optional[str] = None,
+        remediation_statuses: Optional[list[str]] = None,
+        alert_severities: Optional[list[str]] = None,
+        alert_acknowledged: Optional[bool] = None,
+        account_notified: Optional[bool] = None,
+        exposed_data_types: Optional[list[str]] = None,
+    ) -> tuple[list[dict], int, dict]:
+        """Query and aggregate nested subdocument structures for advanced analytics use-cases."""
+        query: dict = {}
+        and_filters: list[dict] = []
+
+        if timeline_event_types or timeline_from or timeline_to:
+            elem: dict = {}
+            if timeline_event_types:
+                elem["event_type"] = {"$in": timeline_event_types}
+            date_clause: dict = {}
+            if timeline_from:
+                date_clause["$gte"] = parse_iso_date(timeline_from)
+            if timeline_to:
+                date_clause["$lte"] = parse_iso_date(timeline_to)
+            if date_clause:
+                elem["event_date"] = date_clause
+            and_filters.append({"timeline": {"$elemMatch": elem}})
+
+        if remediation_statuses:
+            and_filters.append({"remediation": {"$elemMatch": {"status": {"$in": remediation_statuses}}}})
+
+        if alert_severities or alert_acknowledged is not None:
+            elem: dict = {}
+            if alert_severities:
+                elem["severity"] = {"$in": alert_severities}
+            if alert_acknowledged is not None:
+                elem["acknowledged"] = alert_acknowledged
+            and_filters.append({"monitoring_alerts": {"$elemMatch": elem}})
+
+        if account_notified is not None or exposed_data_types:
+            elem: dict = {}
+            if account_notified is not None:
+                elem["notified"] = account_notified
+            if exposed_data_types:
+                elem["data_exposed"] = {"$in": exposed_data_types}
+            and_filters.append({"affected_accounts": {"$elemMatch": elem}})
+
+        if and_filters:
+            query = {"$and": and_filters}
+
+        sort_field = SORT_FIELD_MAP.get(sort_by, "risk_score")
+        sort_dir = DESCENDING if order == "desc" else ASCENDING
+
+        projection = {
+            "title": 1,
+            "severity": 1,
+            "status": 1,
+            "industry": 1,
+            "risk_score": 1,
+            "affected_records_count": 1,
+            "breach_date": 1,
+            "affected_accounts": 1,
+            "timeline": 1,
+            "remediation": 1,
+            "monitoring_alerts": 1,
+        }
+
+        total = self.col.count_documents(query)
+        docs = list(
+            self.col.find(query, projection)
+            .sort(sort_field, sort_dir)
+            .skip((page - 1) * limit)
+            .limit(limit)
+        )
+
+        for doc in docs:
+            doc["subdoc_counts"] = {
+                "affected_accounts": len(doc.get("affected_accounts", [])),
+                "timeline": len(doc.get("timeline", [])),
+                "remediation": len(doc.get("remediation", [])),
+                "monitoring_alerts": len(doc.get("monitoring_alerts", [])),
+            }
+
+        facet_pipeline = [
+            {"$match": query},
+            {
+                "$facet": {
+                    "timeline_event_types": [
+                        {"$unwind": "$timeline"},
+                        {"$group": {"_id": "$timeline.event_type", "count": {"$sum": 1}}},
+                        {"$project": {"_id": 0, "value": "$_id", "count": 1}},
+                        {"$sort": {"count": -1}},
+                    ],
+                    "remediation_statuses": [
+                        {"$unwind": "$remediation"},
+                        {"$group": {"_id": "$remediation.status", "count": {"$sum": 1}}},
+                        {"$project": {"_id": 0, "value": "$_id", "count": 1}},
+                        {"$sort": {"count": -1}},
+                    ],
+                    "alert_severities": [
+                        {"$unwind": "$monitoring_alerts"},
+                        {"$group": {"_id": "$monitoring_alerts.severity", "count": {"$sum": 1}}},
+                        {"$project": {"_id": 0, "value": "$_id", "count": 1}},
+                        {"$sort": {"count": -1}},
+                    ],
+                    "account_notified_mix": [
+                        {"$unwind": "$affected_accounts"},
+                        {"$group": {"_id": "$affected_accounts.notified", "count": {"$sum": 1}}},
+                        {"$project": {"_id": 0, "notified": "$_id", "count": 1}},
+                        {"$sort": {"count": -1}},
+                    ],
+                }
+            },
+        ]
+        facet_result = list(self.col.aggregate(facet_pipeline))
+        facets = facet_result[0] if facet_result else {}
+
+        return docs, total, facets
 
     def get_by_id(
         self, breach_id: str, include_accounts: bool = False

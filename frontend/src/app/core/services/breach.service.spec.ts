@@ -26,7 +26,7 @@ describe('BreachService', () => {
   it('getBreaches() should send GET with query params', () => {
     service.getBreaches({ page: 2, limit: 10, severity: 'critical', search: 'hack' }).subscribe();
 
-    const req = http.expectOne((r) => r.url === `${base}/`);
+    const req = http.expectOne((r) => r.url === `${base}`);
     expect(req.request.method).toBe('GET');
     expect(req.request.params.get('page')).toBe('2');
     expect(req.request.params.get('severity')).toBe('critical');
@@ -42,9 +42,9 @@ describe('BreachService', () => {
   });
 
   it('createBreach() should POST to /breaches/', () => {
-    const payload = { title: 'New breach', severity: 'high' };
+    const payload = { title: 'New breach', severity: 'high' as const };
     service.createBreach(payload).subscribe();
-    const req = http.expectOne(`${base}/`);
+    const req = http.expectOne(`${base}`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual(payload);
     req.flush({ data: { _id: '999', ...payload } });
@@ -84,5 +84,29 @@ describe('BreachService', () => {
     const req = http.expectOne((r) => r.url.includes('geo/geojson'));
     expect(req.request.params.get('severity')).toBe('critical');
     req.flush({ data: { type: 'FeatureCollection', features: [] } });
+  });
+
+  it('getAdvancedSearch() should send advanced query params', () => {
+    service.getAdvancedSearch({ q: 'corp', severities: ['critical', 'high'], include_facets: true }).subscribe();
+    const req = http.expectOne((r) => r.url.endsWith('/advanced-search'));
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('q')).toBe('corp');
+    expect(req.request.params.get('severities')).toBe('critical,high');
+    expect(req.request.params.get('include_facets')).toBe('true');
+    req.flush({ data: [], meta: { page: 1, limit: 20, total: 0, total_pages: 0 } });
+  });
+
+  it('querySubdocuments() should send deep query params', () => {
+    service.querySubdocuments({
+      timeline_event_types: ['discovered'],
+      remediation_statuses: ['completed'],
+      account_notified: true,
+    }).subscribe();
+    const req = http.expectOne((r) => r.url.endsWith('/subdocuments/query'));
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('timeline_event_types')).toBe('discovered');
+    expect(req.request.params.get('remediation_statuses')).toBe('completed');
+    expect(req.request.params.get('account_notified')).toBe('true');
+    req.flush({ data: [], meta: { page: 1, limit: 20, total: 0, total_pages: 0, facets: {} } });
   });
 });

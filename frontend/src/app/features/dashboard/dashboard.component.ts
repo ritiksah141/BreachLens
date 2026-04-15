@@ -9,7 +9,7 @@ import { BreachService } from '../../core/services/breach.service';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { ThemeService } from '../../core/services/theme.service';
-import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } from '../../core/models/models';
+import { AnalyticsSummary, AttackSurfaceProfile, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } from '../../core/models/models';
 
 @Component({
   selector: 'app-dashboard',
@@ -87,8 +87,7 @@ import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } 
       <!-- Main Visualization Panel -->
       <div class="col-lg-8">
         <div class="card border-0 bg-surface-container-low position-relative overflow-hidden h-100" style="min-height: 550px;">
-          <div class="position-absolute inset-0 opacity-5 pointer-events-none"
-               style="background-image: linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px); background-size: 40px 40px;"></div>
+          <div class="position-absolute inset-0 opacity-5 pointer-events-none viz-grid"></div>
 
           <div class="card-body p-4 position-relative z-1 d-flex flex-column">
             <div class="d-flex justify-content-between align-items-start mb-4">
@@ -244,6 +243,45 @@ import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } 
               }
             </div>
           </div>
+
+          @if (isAnalystUser && attackSurfaceProfile) {
+            <div class="col-12">
+              <div class="card border-0 p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h4 class="text-xs-caps text-on-surface mb-0">Attack Surface Profile</h4>
+                  <span class="text-xs-caps text-on-surface-variant">Unacknowledged: {{ attackSurfaceProfile.alert_pressure.unacknowledged_rate | number:'1.0-1' }}%</span>
+                </div>
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <div class="glass-panel p-3 rounded-3 border border-outline-variant border-opacity-10">
+                      <div class="text-xs-caps text-on-surface-variant mb-1">Breaches in scope</div>
+                      <div class="fw-bold text-on-surface">{{ attackSurfaceProfile.overview.breach_count | number }}</div>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="glass-panel p-3 rounded-3 border border-outline-variant border-opacity-10">
+                      <div class="text-xs-caps text-on-surface-variant mb-1">Avg records/breach</div>
+                      <div class="fw-bold text-on-surface">{{ attackSurfaceProfile.overview.avg_records_per_breach | number }}</div>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="glass-panel p-3 rounded-3 border border-outline-variant border-opacity-10">
+                      <div class="text-xs-caps text-on-surface-variant mb-1">Total alerts</div>
+                      <div class="fw-bold text-on-surface">{{ attackSurfaceProfile.alert_pressure.total_alerts | number }}</div>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="glass-panel p-3 rounded-3 border border-outline-variant border-opacity-10">
+                      <div class="text-xs-caps text-on-surface-variant mb-1">Top exposed data type</div>
+                      <div class="fw-bold text-on-surface">
+                        {{ attackSurfaceProfile.top_data_types.length ? attackSurfaceProfile.top_data_types[0].data_type : 'N/A' }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
         </div>
       </div>
     </div>
@@ -253,9 +291,12 @@ import { AnalyticsSummary, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } 
     .text-xs-caps { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; }
     .glow-primary { box-shadow: 0 0 15px rgba(0, 167, 224, 0.15); }
     .glow-error { box-shadow: 0 0 15px rgba(248, 113, 113, 0.15); }
-    .bg-success-container { background-color: #0a1a10; }
-    .border-success { border-color: #4ade80 !important; }
-    .text-success { color: #4ade80 !important; }
+    .viz-grid {
+      background-image:
+        linear-gradient(var(--grid-overlay) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-overlay) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
   `]
 })
 export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -284,6 +325,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   trendChangePct = 0;
   trendDirection: 'up' | 'down' | 'flat' = 'flat';
   systemHealthPct = 100;
+  attackSurfaceProfile: AttackSurfaceProfile | null = null;
   panelErrors: Record<string, string | null> = {
     summary: null,
     trend: null,
@@ -292,6 +334,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     dataTypes: null,
     organisations: null,
     remediation: null,
+    attackSurface: null,
   };
   lastUpdated: Date | null = null;
 
@@ -375,6 +418,15 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         this.industryTrendData = this.normalizeIndustryTrendData(res.data);
         if (this.viewReady) this.renderIndustryTrend();
       });
+      this.analytics.getAttackSurfaceProfile().subscribe({
+        next: (res) => {
+          this.attackSurfaceProfile = res.data;
+          this.updateSystemHealth();
+        },
+        error: () => {
+          this.panelErrors['attackSurface'] = 'Failed to load attack surface profile.';
+        },
+      });
     }
   }
 
@@ -442,8 +494,13 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     const openAlerts = this.summary?.open_alerts ?? 0;
     const activeBreaches = this.summary?.active_breaches ?? 0;
     const risk = this.summary?.avg_risk_score ?? 0;
+    const unackedRate = this.attackSurfaceProfile?.alert_pressure?.unacknowledged_rate ?? 0;
 
-    const penalty = Math.min(35, openAlerts * 2) + Math.min(25, activeBreaches) + Math.min(20, risk * 2);
+    const penalty =
+      Math.min(35, openAlerts * 2) +
+      Math.min(25, activeBreaches) +
+      Math.min(20, risk * 2) +
+      Math.min(20, unackedRate * 0.4);
     this.systemHealthPct = Math.max(40, Math.min(100, Math.round(100 - penalty)));
   }
 

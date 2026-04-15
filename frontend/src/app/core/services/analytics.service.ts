@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+  AttackSurfaceProfile,
   ApiResponse,
   AnalyticsSummary,
   SeverityBreakdown,
@@ -59,5 +60,13 @@ export class AnalyticsService {
   getRiskScores(bins = 10): Observable<ApiResponse<any>> {
     const params = new HttpParams().set('bins', bins.toString());
     return this.http.get<ApiResponse<any>>(`${this.base}/risk-scores`, { params });
+  }
+
+  getAttackSurfaceProfile(industry?: string): Observable<ApiResponse<AttackSurfaceProfile>> {
+    let params = new HttpParams();
+    if (industry) {
+      params = params.set('industry', industry);
+    }
+    return this.http.get<ApiResponse<AttackSurfaceProfile>>(`${this.base}/attack-surface-profile`, { params });
   }
 }

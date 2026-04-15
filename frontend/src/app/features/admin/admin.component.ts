@@ -3,6 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   ReactiveFormsModule, FormBuilder, Validators, FormGroup,
 } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { NgClass, DecimalPipe, UpperCasePipe, TitleCasePipe, KeyValuePipe, DatePipe, CommonModule } from '@angular/common';
 import { BreachService } from '../../core/services/breach.service';
 import { AdminService } from '../../core/services/admin.service';
@@ -18,7 +19,7 @@ import { UserManagementComponent } from './user-management/user-management.compo
   standalone: true,
   imports: [
     ReactiveFormsModule, RouterLink, NgClass, DecimalPipe, UpperCasePipe, TitleCasePipe, KeyValuePipe, DatePipe,
-    SeverityBadgeComponent, PaginationComponent, UserManagementComponent, CommonModule,
+    SeverityBadgeComponent, PaginationComponent, UserManagementComponent, CommonModule, FormsModule,
   ],
   template: `
     <div class="d-flex justify-content-between align-items-end mb-4">
@@ -119,6 +120,81 @@ import { UserManagementComponent } from './user-management/user-management.compo
                     }
                     <button class="btn btn-primary text-xs-caps py-1 px-2" (click)="startCreate()" style="font-size: 8px;">+ New entry</button>
                   </div>
+                </div>
+                <div class="p-3 border-bottom border-outline-variant border-opacity-10 bg-surface-container-high">
+                  <div class="row g-2">
+                    <div class="col-md-4">
+                      <input
+                        class="form-control bg-surface-container-low border-0 text-xs-caps"
+                        style="font-size: 10px;"
+                        placeholder="Search title/org..."
+                        [(ngModel)]="adminFilters.q"
+                        (input)="onAdminSearchChange()"
+                        (keyup.enter)="applyAdminFilters()"
+                      />
+                    </div>
+                    <div class="col-md-2">
+                      <select
+                        class="form-select bg-surface-container-low border-0 text-xs-caps"
+                        style="font-size: 10px;"
+                        [(ngModel)]="adminFilters.severity"
+                        (change)="applyAdminFilters()"
+                      >
+                        <option value="">All severity</option>
+                        @for (s of severities; track s) { <option [value]="s">{{ s | uppercase }}</option> }
+                      </select>
+                    </div>
+                    <div class="col-md-2">
+                      <select
+                        class="form-select bg-surface-container-low border-0 text-xs-caps"
+                        style="font-size: 10px;"
+                        [(ngModel)]="adminFilters.status"
+                        (change)="applyAdminFilters()"
+                      >
+                        <option value="">All status</option>
+                        @for (s of statuses; track s) { <option [value]="s">{{ s | uppercase }}</option> }
+                      </select>
+                    </div>
+                    <div class="col-md-2">
+                      <input
+                        type="number"
+                        min="0"
+                        max="10"
+                        step="0.1"
+                        class="form-control bg-surface-container-low border-0 text-xs-caps"
+                        style="font-size: 10px;"
+                        placeholder="Min risk"
+                        [(ngModel)]="adminFilters.min_risk"
+                        (change)="applyAdminFilters()"
+                      />
+                    </div>
+                    <div class="col-md-2 d-flex gap-2">
+                      <button class="btn btn-primary text-xs-caps py-1 px-2 w-100" style="font-size: 8px;" (click)="applyAdminFilters()">Query</button>
+                      <button class="btn btn-outline-secondary text-xs-caps py-1 px-2 w-100" style="font-size: 8px;" (click)="resetAdminFilters()">Reset</button>
+                    </div>
+                  </div>
+                  @if (adminFilterChips.length) {
+                    <div class="d-flex flex-wrap gap-2 mt-2 align-items-center">
+                      @for (chip of adminFilterChips; track chip.key) {
+                        <button
+                          class="btn btn-dark bg-surface-container-low border border-outline-variant text-xs-caps py-1 px-2"
+                          style="font-size: 8px;"
+                          (click)="clearAdminFilter(chip.key)"
+                          [attr.aria-label]="'Remove filter ' + chip.label"
+                        >
+                          {{ chip.label }}
+                          <span class="material-symbols-outlined align-middle" style="font-size: 12px;">close</span>
+                        </button>
+                      }
+                      <button
+                        class="btn btn-link text-decoration-none text-on-surface-variant text-xs-caps py-1 px-0"
+                        style="font-size: 8px;"
+                        (click)="resetAdminFilters()"
+                      >
+                        Clear all
+                      </button>
+                    </div>
+                  }
                 </div>
                 <div class="p-0 overflow-auto custom-scrollbar" style="max-height: 600px;">
                   @if (listLoading) {
@@ -329,9 +405,6 @@ import { UserManagementComponent } from './user-management/user-management.compo
     .glow-error { box-shadow: 0 0 15px rgba(248, 113, 113, 0.1); }
     .text-error { color: var(--error) !important; }
     .border-error { border-color: var(--error) !important; }
-    .bg-success-container { background-color: #0a1a10; }
-    .border-success { border-color: #4ade80 !important; }
-    .text-success { color: #4ade80 !important; }
   `],
 })
 export class AdminComponent implements OnInit {
@@ -353,6 +426,18 @@ export class AdminComponent implements OnInit {
   selectedId = '';
   editingId = '';
   selectedIds = new Set<string>();
+  private adminSearchTimer: any;
+  adminFilters: {
+    q: string;
+    severity: string;
+    status: string;
+    min_risk: number | null;
+  } = {
+    q: '',
+    severity: '',
+    status: '',
+    min_risk: null,
+  };
 
   // Audit logs
   auditLogs: AuditLog[] = [];
@@ -409,7 +494,16 @@ export class AdminComponent implements OnInit {
 
   loadBreaches(): void {
     this.listLoading = true;
-    this.breachService.getBreaches({ page: this.page, limit: 10 }).subscribe({
+    this.breachService.getAdvancedSearch({
+      page: this.page,
+      limit: 10,
+      q: this.adminFilters.q || undefined,
+      severities: this.adminFilters.severity ? [this.adminFilters.severity] : undefined,
+      statuses: this.adminFilters.status ? [this.adminFilters.status] : undefined,
+      min_risk: this.adminFilters.min_risk ?? undefined,
+      sort_by: 'created_at',
+      order: 'desc',
+    }).subscribe({
       next: (res: any) => {
         this.breaches = res.data ?? [];
         this.totalPages = res.meta?.total_pages ?? 1;
@@ -425,6 +519,51 @@ export class AdminComponent implements OnInit {
   onPageChange(p: number): void {
     this.page = p;
     this.loadBreaches();
+  }
+
+  applyAdminFilters(): void {
+    this.page = 1;
+    this.loadBreaches();
+  }
+
+  get adminFilterChips(): Array<{ key: 'q' | 'severity' | 'status' | 'min_risk'; label: string }> {
+    const chips: Array<{ key: 'q' | 'severity' | 'status' | 'min_risk'; label: string }> = [];
+    if (this.adminFilters.q.trim()) {
+      chips.push({ key: 'q', label: `Search: ${this.adminFilters.q.trim()}` });
+    }
+    if (this.adminFilters.severity) {
+      chips.push({ key: 'severity', label: `Severity: ${this.adminFilters.severity}` });
+    }
+    if (this.adminFilters.status) {
+      chips.push({ key: 'status', label: `Status: ${this.adminFilters.status}` });
+    }
+    if (this.adminFilters.min_risk !== null && this.adminFilters.min_risk !== undefined) {
+      chips.push({ key: 'min_risk', label: `Min risk: ${this.adminFilters.min_risk}` });
+    }
+    return chips;
+  }
+
+  clearAdminFilter(key: 'q' | 'severity' | 'status' | 'min_risk'): void {
+    if (key === 'q') this.adminFilters.q = '';
+    if (key === 'severity') this.adminFilters.severity = '';
+    if (key === 'status') this.adminFilters.status = '';
+    if (key === 'min_risk') this.adminFilters.min_risk = null;
+    this.applyAdminFilters();
+  }
+
+  onAdminSearchChange(): void {
+    clearTimeout(this.adminSearchTimer);
+    this.adminSearchTimer = setTimeout(() => this.applyAdminFilters(), 300);
+  }
+
+  resetAdminFilters(): void {
+    this.adminFilters = {
+      q: '',
+      severity: '',
+      status: '',
+      min_risk: null,
+    };
+    this.applyAdminFilters();
   }
 
   loadAuditLogs(): void {

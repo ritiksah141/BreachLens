@@ -4,13 +4,17 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   ApiResponse,
+  AdvancedSearchParams,
   Breach,
+  BreachFilterOptions,
   BreachFilterParams,
   BreachListResponse,
   AffectedAccount,
   TimelineEvent,
   RemediationAction,
-  MonitoringAlert
+  MonitoringAlert,
+  SubdocumentQueryFacets,
+  SubdocumentQueryParams,
 } from '../models/models';
 
 @Injectable({ providedIn: 'root' })
@@ -31,6 +35,49 @@ export class BreachService {
       }
     });
     return this.http.get<BreachListResponse>(`${this.base}`, { params: httpParams });
+  }
+
+  getAdvancedSearch(params: AdvancedSearchParams = {}): Observable<BreachListResponse> {
+    let httpParams = new HttpParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === '') {
+        return;
+      }
+      if (Array.isArray(value)) {
+        if (value.length > 0) {
+          httpParams = httpParams.set(key, value.join(','));
+        }
+      } else {
+        httpParams = httpParams.set(key, value.toString());
+      }
+    });
+    return this.http.get<BreachListResponse>(`${this.base}/advanced-search`, { params: httpParams });
+  }
+
+  getFilterOptions(): Observable<ApiResponse<BreachFilterOptions>> {
+    return this.http.get<ApiResponse<BreachFilterOptions>>(`${this.base}/filter-options`);
+  }
+
+  querySubdocuments(
+    params: SubdocumentQueryParams = {}
+  ): Observable<ApiResponse<Breach[]> & { meta?: { facets?: SubdocumentQueryFacets } }> {
+    let httpParams = new HttpParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === '') {
+        return;
+      }
+      if (Array.isArray(value)) {
+        if (value.length > 0) {
+          httpParams = httpParams.set(key, value.join(','));
+        }
+      } else {
+        httpParams = httpParams.set(key, value.toString());
+      }
+    });
+    return this.http.get<ApiResponse<Breach[]> & { meta?: { facets?: SubdocumentQueryFacets } }>(
+      `${this.base}/subdocuments/query`,
+      { params: httpParams }
+    );
   }
 
   getBreach(id: string): Observable<ApiResponse<Breach>> {
@@ -91,8 +138,22 @@ export class BreachService {
     const params = new HttpParams()
       .set('longitude', lng.toString())
       .set('latitude',  lat.toString())
-      .set('max_distance', radius.toString());
+      .set('radius', radius.toString());
     return this.http.get<ApiResponse<any>>(`${this.base}/geo/near`, { params });
+  }
+
+  getWithinBounds(
+    minLng: number,
+    minLat: number,
+    maxLng: number,
+    maxLat: number,
+  ): Observable<ApiResponse<any>> {
+    const params = new HttpParams()
+      .set('min_lng', minLng.toString())
+      .set('min_lat', minLat.toString())
+      .set('max_lng', maxLng.toString())
+      .set('max_lat', maxLat.toString());
+    return this.http.get<ApiResponse<any>>(`${this.base}/geo/within-bounds`, { params });
   }
 
   // ------------------------------------------------------------------

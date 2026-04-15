@@ -17,6 +17,9 @@ from app.models.breach import (
 from app.services.breach_service import BreachService
 from app.utils.response import error_response, success_response
 from app.utils.validators import (
+    ALLOWED_INDUSTRIES,
+    ALLOWED_SEVERITIES,
+    ALLOWED_STATUSES,
     validate_affected_account,
     validate_breach_payload,
     validate_monitoring_alert,
@@ -25,6 +28,7 @@ from app.utils.validators import (
     sanitize_mongo_input,
     sanitize_breach_payload_html,
     is_valid_object_id,
+    is_valid_iso_date,
 )
 
 breaches_bp = Blueprint("breaches", __name__, url_prefix="/api/v1/breaches")
@@ -62,6 +66,26 @@ def _try_optional_jwt() -> None:
         g.current_user_id = None
 
 
+def _parse_csv_param(value: str | None) -> list[str]:
+    """Parse comma-separated query parameter values into a clean list."""
+    if not value:
+        return []
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def _parse_bool_param(name: str) -> bool | None:
+    """Parse optional query bool value from common true/false forms."""
+    raw = request.args.get(name)
+    if raw is None:
+        return None
+    lowered = raw.lower()
+    if lowered in {"true", "1", "yes"}:
+        return True
+    if lowered in {"false", "0", "no"}:
+        return False
+    raise ValueError(name)
+
+
 # ---------------------------------------------------------------------------
 # Core breach routes
 # ---------------------------------------------------------------------------
@@ -80,6 +104,31 @@ def list_breaches():
     sort_by = request.args.get("sort_by", "created_at")
     order = request.args.get("order", "desc")
 
+    allowed_sort_fields = {
+        "breach_date",
+        "risk_score",
+        "affected_records_count",
+        "title",
+        "created_at",
+    }
+    if sort_by not in allowed_sort_fields:
+        return error_response(
+            "'sort_by' must be one of: breach_date, risk_score, affected_records_count, title, created_at.",
+            422,
+        )
+    if order not in {"asc", "desc"}:
+        return error_response("'order' must be either 'asc' or 'desc'.", 422)
+
+    severity = request.args.get("severity")
+    status = request.args.get("status")
+    industry = request.args.get("industry")
+    if severity and severity not in ALLOWED_SEVERITIES:
+        return error_response(f"'severity' must be one of: {ALLOWED_SEVERITIES}.", 422)
+    if status and status not in ALLOWED_STATUSES:
+        return error_response(f"'status' must be one of: {ALLOWED_STATUSES}.", 422)
+    if industry and industry not in ALLOWED_INDUSTRIES:
+        return error_response(f"'industry' must be one of: {ALLOWED_INDUSTRIES}.", 422)
+
     min_risk = request.args.get("min_risk")
     max_risk = request.args.get("max_risk")
     try:
@@ -87,6 +136,13 @@ def list_breaches():
         max_risk = float(max_risk) if max_risk is not None else None
     except (ValueError, TypeError):
         return error_response("'min_risk' and 'max_risk' must be numbers.", 400)
+
+    if min_risk is not None and not (0.0 <= min_risk <= 10.0):
+        return error_response("'min_risk' must be between 0 and 10.", 422)
+    if max_risk is not None and not (0.0 <= max_risk <= 10.0):
+        return error_response("'max_risk' must be between 0 and 10.", 422)
+    if min_risk is not None and max_risk is not None and min_risk > max_risk:
+        return error_response("'min_risk' must be less than or equal to 'max_risk'.", 422)
 
     # Authenticated users see affected_accounts; guests do not
     is_authenticated = getattr(g, "current_user_id", None) is not None
@@ -96,9 +152,9 @@ def list_breaches():
         limit=limit,
         sort_by=sort_by,
         order=order,
-        severity=request.args.get("severity"),
-        status=request.args.get("status"),
-        industry=request.args.get("industry"),
+        severity=severity,
+        status=status,
+        industry=industry,
         search=request.args.get("search"),
         min_risk=min_risk,
         max_risk=max_risk,
@@ -111,6 +167,226 @@ def list_breaches():
             "limit": limit,
             "total": total,
             "total_pages": math.ceil(total / limit) if limit else 1,
+        },
+    )
+
+
+@breaches_bp.get("/advanced-search")
+def advanced_search_breaches():
+    """Advanced multi-filter search with optional facet aggregations."""
+    _try_optional_jwt()
+
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+        limit = min(100, max(1, int(request.args.get("limit", 20))))
+    except (ValueError, TypeError):
+        return error_response("'page' and 'limit' must be integers.", 400)
+
+    sort_by = request.args.get("sort_by", "created_at")
+    order = request.args.get("order", "desc")
+    allowed_sort_fields = {
+        "breach_date",
+        "risk_score",
+        "affected_records_count",
+        "title",
+        "created_at",
+    }
+    if sort_by not in allowed_sort_fields:
+        return error_response(
+            "'sort_by' must be one of: breach_date, risk_score, affected_records_count, title, created_at.",
+            422,
+        )
+    if order not in {"asc", "desc"}:
+        return error_response("'order' must be either 'asc' or 'desc'.", 422)
+
+    severities = _parse_csv_param(request.args.get("severities"))
+    statuses = _parse_csv_param(request.args.get("statuses"))
+    industries = _parse_csv_param(request.args.get("industries"))
+    data_types = _parse_csv_param(request.args.get("data_types"))
+
+    invalid_severities = sorted(set(severities) - set(ALLOWED_SEVERITIES))
+    if invalid_severities:
+        return error_response(
+            f"Invalid 'severities' values: {invalid_severities}.",
+            422,
+        )
+
+    invalid_statuses = sorted(set(statuses) - set(ALLOWED_STATUSES))
+    if invalid_statuses:
+        return error_response(
+            f"Invalid 'statuses' values: {invalid_statuses}.",
+            422,
+        )
+
+    invalid_industries = sorted(set(industries) - set(ALLOWED_INDUSTRIES))
+    if invalid_industries:
+        return error_response(
+            f"Invalid 'industries' values: {invalid_industries}.",
+            422,
+        )
+
+    def _to_float_param(name: str):
+        raw = request.args.get(name)
+        if raw is None:
+            return None
+        try:
+            return float(raw)
+        except (TypeError, ValueError):
+            raise ValueError(name)
+
+    try:
+        min_risk = _to_float_param("min_risk")
+        max_risk = _to_float_param("max_risk")
+        min_records = _to_float_param("min_records")
+        max_records = _to_float_param("max_records")
+    except ValueError as err:
+        return error_response(f"'{str(err)}' must be numeric.", 400)
+
+    if min_risk is not None and not (0.0 <= min_risk <= 10.0):
+        return error_response("'min_risk' must be between 0 and 10.", 422)
+    if max_risk is not None and not (0.0 <= max_risk <= 10.0):
+        return error_response("'max_risk' must be between 0 and 10.", 422)
+    if min_risk is not None and max_risk is not None and min_risk > max_risk:
+        return error_response("'min_risk' must be less than or equal to 'max_risk'.", 422)
+    if min_records is not None and min_records < 0:
+        return error_response("'min_records' must be non-negative.", 422)
+    if max_records is not None and max_records < 0:
+        return error_response("'max_records' must be non-negative.", 422)
+    if min_records is not None and max_records is not None and min_records > max_records:
+        return error_response("'min_records' must be less than or equal to 'max_records'.", 422)
+
+    has_location = request.args.get("has_location")
+    has_location_bool: bool | None = None
+    if has_location is not None:
+        lowered = has_location.lower()
+        if lowered in {"true", "1", "yes"}:
+            has_location_bool = True
+        elif lowered in {"false", "0", "no"}:
+            has_location_bool = False
+        else:
+            return error_response("'has_location' must be true or false.", 422)
+
+    include_facets = (request.args.get("include_facets", "false").lower() in {"true", "1", "yes"})
+
+    from_date = request.args.get("from_date")
+    to_date = request.args.get("to_date")
+    if from_date and not is_valid_iso_date(from_date):
+        return error_response("'from_date' must be an ISO-8601 date string.", 422)
+    if to_date and not is_valid_iso_date(to_date):
+        return error_response("'to_date' must be an ISO-8601 date string.", 422)
+
+    is_authenticated = getattr(g, "current_user_id", None) is not None
+
+    breaches, total, facets = breach_service.advanced_search(
+        page=page,
+        limit=limit,
+        sort_by=sort_by,
+        order=order,
+        query_text=request.args.get("q"),
+        severities=severities,
+        statuses=statuses,
+        industries=industries,
+        data_types=data_types,
+        breach_from=from_date,
+        breach_to=to_date,
+        min_risk=min_risk,
+        max_risk=max_risk,
+        min_records=min_records,
+        max_records=max_records,
+        has_location=has_location_bool,
+        include_accounts=is_authenticated,
+        include_facets=include_facets,
+    )
+
+    return success_response(
+        breaches,
+        meta={
+            "page": page,
+            "limit": limit,
+            "total": total,
+            "total_pages": math.ceil(total / limit) if limit else 1,
+            "facets": facets,
+        },
+    )
+
+
+@breaches_bp.get("/filter-options")
+def breach_filter_options():
+    """Return dynamic filter metadata for frontend dropdowns and sliders."""
+    options = breach_service.get_filter_options()
+    return success_response(options)
+
+
+@breaches_bp.get("/subdocuments/query")
+@require_role("analyst", "admin")
+def query_subdocuments():
+    """Run complex filters over subdocuments and return aggregated insight slices."""
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+        limit = min(100, max(1, int(request.args.get("limit", 20))))
+    except (ValueError, TypeError):
+        return error_response("'page' and 'limit' must be integers.", 400)
+
+    sort_by = request.args.get("sort_by", "risk_score")
+    order = request.args.get("order", "desc")
+    allowed_sort_fields = {"risk_score", "breach_date", "affected_records_count", "created_at"}
+    if sort_by not in allowed_sort_fields:
+        return error_response(
+            "'sort_by' must be one of: risk_score, breach_date, affected_records_count, created_at.",
+            422,
+        )
+    if order not in {"asc", "desc"}:
+        return error_response("'order' must be either 'asc' or 'desc'.", 422)
+
+    timeline_event_types = _parse_csv_param(request.args.get("timeline_event_types"))
+    remediation_statuses = _parse_csv_param(request.args.get("remediation_statuses"))
+    alert_severities = _parse_csv_param(request.args.get("alert_severities"))
+    exposed_data_types = _parse_csv_param(request.args.get("exposed_data_types"))
+
+    for sev in alert_severities:
+        if sev not in {"critical", "high", "medium", "low"}:
+            return error_response("'alert_severities' contains invalid values.", 422)
+
+    for status in remediation_statuses:
+        if status not in {"pending", "in_progress", "completed"}:
+            return error_response("'remediation_statuses' contains invalid values.", 422)
+
+    try:
+        alert_acknowledged = _parse_bool_param("alert_acknowledged")
+        account_notified = _parse_bool_param("account_notified")
+    except ValueError as err:
+        return error_response(f"'{str(err)}' must be true or false.", 422)
+
+    timeline_from = request.args.get("timeline_from")
+    timeline_to = request.args.get("timeline_to")
+    if timeline_from and not is_valid_iso_date(timeline_from):
+        return error_response("'timeline_from' must be an ISO-8601 date string.", 422)
+    if timeline_to and not is_valid_iso_date(timeline_to):
+        return error_response("'timeline_to' must be an ISO-8601 date string.", 422)
+
+    data, total, facets = breach_service.query_subdocuments(
+        page=page,
+        limit=limit,
+        sort_by=sort_by,
+        order=order,
+        timeline_event_types=timeline_event_types,
+        timeline_from=timeline_from,
+        timeline_to=timeline_to,
+        remediation_statuses=remediation_statuses,
+        alert_severities=alert_severities,
+        alert_acknowledged=alert_acknowledged,
+        account_notified=account_notified,
+        exposed_data_types=exposed_data_types,
+    )
+
+    return success_response(
+        data,
+        meta={
+            "page": page,
+            "limit": limit,
+            "total": total,
+            "total_pages": math.ceil(total / limit) if limit else 1,
+            "facets": facets,
         },
     )
 

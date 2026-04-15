@@ -84,3 +84,31 @@ class TestAnalyticsEndpoints:
         ]):
             resp = client.get("/api/v1/analytics/risk-scores?bins=5")
         assert resp.status_code == 200
+
+    def test_attack_surface_profile_requires_auth(self, client):
+        resp = client.get("/api/v1/analytics/attack-surface-profile")
+        assert resp.status_code == 401
+
+    def test_attack_surface_profile_analyst_success(self, client, analyst_headers):
+        with patch("app.routes.analytics.analytics_service.attack_surface_profile", return_value={
+            "overview": {"breach_count": 12, "avg_risk_score": 7.4},
+            "severity_mix": [{"severity": "critical", "count": 5}],
+            "top_data_types": [{"data_type": "email", "count": 9}],
+            "industry_risk_ranking": [{"industry": "finance", "avg_risk_score": 8.1, "breach_count": 4}],
+            "alert_pressure": {"total_alerts": 16, "unacknowledged_alerts": 4, "unacknowledged_rate": 25.0},
+        }):
+            resp = client.get(
+                "/api/v1/analytics/attack-surface-profile?industry=finance",
+                headers=analyst_headers,
+            )
+        assert resp.status_code == 200
+        data = resp.get_json()["data"]
+        assert "overview" in data
+        assert "alert_pressure" in data
+
+    def test_attack_surface_profile_invalid_industry(self, client, analyst_headers):
+        resp = client.get(
+            "/api/v1/analytics/attack-surface-profile?industry=aviation",
+            headers=analyst_headers,
+        )
+        assert resp.status_code == 422

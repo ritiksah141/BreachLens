@@ -14,7 +14,7 @@ export class UserService {
     const params = new HttpParams()
       .set('page', page.toString())
       .set('limit', limit.toString());
-    return this.http.get<ApiResponse<User[]>>(`${this.base}/`, { params });
+    return this.http.get<ApiResponse<User[]>>(`${this.base}`, { params });
   }
 
   getUser(id: string): Observable<ApiResponse<User>> {

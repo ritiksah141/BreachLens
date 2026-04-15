@@ -11,13 +11,19 @@ describe('AuthService', () => {
   let service: AuthService;
   let http: HttpTestingController;
 
+  const makeJwt = (expOffsetSeconds = 3600): string => {
+    const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+    const payload = btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + expOffsetSeconds }));
+    return `${header}.${payload}.signature`;
+  };
+
   beforeEach(() => {
+    localStorage.clear();
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule, RouterTestingModule],
     });
     service = TestBed.inject(AuthService);
     http = TestBed.inject(HttpTestingController);
-    localStorage.clear();
   });
 
   afterEach(() => http.verify());
@@ -38,7 +44,8 @@ describe('AuthService', () => {
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({ email: 'test@test.com', password: 'Test1234' }); // pragma: allowlist secret
 
-    req.flush({ status: 'ok', data: { token: 'mock-jwt-token' } });
+    const token = makeJwt();
+    req.flush({ status: 'ok', data: { token } });
 
     // Profile fetch triggered after login
     const profileReq = http.expectOne(`${environment.apiUrl}/auth/me`);
@@ -48,14 +55,14 @@ describe('AuthService', () => {
     });
 
     expect(service.isAuthenticated()).toBeTrue();
-    expect(service.getToken()).toBe('mock-jwt-token');
-    expect(localStorage.getItem('bl_token')).toBe('mock-jwt-token');
+    expect(service.getToken()).toBe(token);
+    expect(localStorage.getItem('bl_token')).toBe(token);
   });
 
   it('should clear token on logout', () => {
-    // Pre-seed token
-    localStorage.setItem('bl_token', 'some-token');
-    service = TestBed.inject(AuthService);
+    const token = makeJwt();
+    localStorage.setItem('bl_token', token);
+    (service as any)._token.set(token);
 
     service.logout();
 
@@ -70,8 +77,7 @@ describe('AuthService', () => {
       _id: '1', username: 'analyst1', email: 'a@b.com',
       role: 'analyst' as const, admin: false, is_active: true,
     };
-    localStorage.setItem('bl_user', JSON.stringify(mockUser));
-    service = TestBed.inject(AuthService);
+    (service as any)._user.set(mockUser);
 
     expect(service.isAnalyst()).toBeTrue();
     expect(service.isAdmin()).toBeFalse();

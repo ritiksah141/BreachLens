@@ -11,6 +11,7 @@ from app.middleware.auth_middleware import require_auth, require_role
 from app.services.analytics_service import AnalyticsService
 from app.utils.response import success_response, error_response
 from app.extensions import cache
+from app.utils.validators import ALLOWED_INDUSTRIES
 
 analytics_bp = Blueprint("analytics", __name__, url_prefix="/api/v1/analytics")
 analytics_service = AnalyticsService()
@@ -139,4 +140,20 @@ def risk_scores():
 @cache.cached(timeout=300, key_prefix=make_cache_key)
 def summary():
     data = analytics_service.summary()
+    return success_response(data)
+
+
+@analytics_bp.route("/attack-surface-profile", methods=["GET"])
+@require_role("analyst", "admin")
+@cache.cached(timeout=300, key_prefix=make_cache_key)
+def attack_surface_profile():
+    """Faceted analytics profile for moderator-facing advanced query evidence."""
+    industry = request.args.get("industry")
+    if industry and industry not in ALLOWED_INDUSTRIES:
+        return error_response(
+            f"'industry' must be one of: {ALLOWED_INDUSTRIES}.",
+            422,
+        )
+
+    data = analytics_service.attack_surface_profile(industry=industry)
     return success_response(data)

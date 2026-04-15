@@ -206,10 +206,22 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
                   @for (alert of alerts; track alert._id) {
                     <li class="list-group-item bg-transparent border-outline-variant border-opacity-10 p-3">
                       <div class="d-flex justify-content-between mb-2">
-                        <span class="text-on-surface small fw-bold">{{ getAlertMessage(alert) }}</span>
+                        <span class="text-on-surface small fw-bold" *ngIf="editingAlertId !== alert._id">{{ getAlertMessage(alert) }}</span>
+                        <input
+                          *ngIf="editingAlertId === alert._id"
+                          [(ngModel)]="editAlert.details"
+                          class="form-control bg-surface-container border-0 text-xs-caps me-2"
+                          style="font-size: 10px;"
+                        />
                         <div class="d-flex gap-2 align-items-center">
                           @if (auth.isAnalyst()) {
                             <input type="checkbox" [checked]="alert.acknowledged" (change)="toggleAlertAck(alert)" class="form-check-input bg-surface-container border-outline-variant" />
+                            @if (editingAlertId === alert._id) {
+                              <button class="btn btn-primary text-xs-caps py-1 px-2" style="font-size: 8px;" (click)="saveAlertEdit(alert)">Save</button>
+                              <button class="btn btn-outline-secondary text-xs-caps py-1 px-2" style="font-size: 8px;" (click)="cancelAlertEdit()">Cancel</button>
+                            } @else {
+                              <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-1 px-2" style="font-size: 8px;" (click)="startAlertEdit(alert)">Edit</button>
+                            }
                           }
                           <span class="badge text-xs-caps py-1 px-2" [ngClass]="alert.acknowledged ? 'bg-success text-success-container' : 'bg-tertiary-container text-on-tertiary-container'" style="font-size: 7px;">
                             {{ alert.acknowledged ? 'ACK' : 'OPEN' }}
@@ -277,9 +289,23 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
                     <div class="mb-5 position-relative ps-3">
                       <div class="timeline-node"></div>
                       <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div class="text-xs-caps text-primary fw-bold">{{ event.event_type | uppercase }}</div>
+                        <div class="text-xs-caps text-primary fw-bold" *ngIf="editingTimelineId !== event._id">{{ event.event_type | uppercase }}</div>
+                        <input
+                          *ngIf="editingTimelineId === event._id"
+                          [(ngModel)]="editEvent.event_type"
+                          class="form-control bg-surface-container border-0 text-xs-caps me-2"
+                          style="max-width: 220px; font-size: 10px;"
+                        />
                         <div class="d-flex gap-2 align-items-center">
                           <span class="text-xs-caps font-mono opacity-50" style="font-size: 8px;">{{ event.occurred_at | date:'yyyy-MM-dd || HH:mm' }}</span>
+                          @if (auth.isAnalyst()) {
+                            @if (editingTimelineId === event._id) {
+                              <button class="btn btn-primary text-xs-caps py-1 px-2" style="font-size: 8px;" (click)="saveTimelineEdit(event)">Save</button>
+                              <button class="btn btn-outline-secondary text-xs-caps py-1 px-2" style="font-size: 8px;" (click)="cancelTimelineEdit()">Cancel</button>
+                            } @else {
+                              <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-1 px-2" style="font-size: 8px;" (click)="startTimelineEdit(event)">Edit</button>
+                            }
+                          }
                           @if (auth.isAdmin()) {
                             <button class="btn btn-link p-0 text-on-surface-variant hover-text-error border-0" (click)="deleteTimeline(event._id!)">
                               <span class="material-symbols-outlined fs-6">close</span>
@@ -288,7 +314,14 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
                         </div>
                       </div>
                       <div class="p-3 glass-panel rounded-3 border border-outline-variant border-opacity-10">
-                        <p class="text-on-surface-variant small mb-0">{{ event.description }}</p>
+                        <p class="text-on-surface-variant small mb-0" *ngIf="editingTimelineId !== event._id">{{ event.description }}</p>
+                        <textarea
+                          *ngIf="editingTimelineId === event._id"
+                          [(ngModel)]="editEvent.description"
+                          class="form-control bg-surface-container border-0 text-xs-caps"
+                          rows="2"
+                          style="font-size: 10px;"
+                        ></textarea>
                         @if (event.actor) {
                           <div class="mt-2 text-xs-caps opacity-50" style="font-size: 7px;">Operator: {{ event.actor | uppercase }}</div>
                         }
@@ -358,12 +391,18 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
                                   <option value="in_progress">IN PROGRESS</option>
                                   <option value="completed">COMPLETED</option>
                                 </select>
+                                @if (editingRemediationId === action._id) {
+                                  <button class="btn btn-primary text-xs-caps py-1 px-2" style="font-size: 8px;" (click)="saveRemediationEdit(action)">Save</button>
+                                  <button class="btn btn-outline-secondary text-xs-caps py-1 px-2" style="font-size: 8px;" (click)="cancelRemediationEdit()">Cancel</button>
+                                } @else {
+                                  <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-1 px-2" style="font-size: 8px;" (click)="startRemediationEdit(action)">Edit</button>
+                                }
                               }
                               <span
                                 class="badge text-xs-caps py-1 px-2"
                                 [ngClass]="{
                                   'bg-success text-success-container': action.status === 'completed',
-                                  'bg-warning text-dark': action.status === 'in_progress',
+                                  'bg-warning-container text-warning-container': action.status === 'in_progress',
                                   'bg-surface-container-highest text-on-surface-variant': action.status === 'pending'
                                 }"
                                 style="font-size: 7px;"
@@ -378,6 +417,13 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
                           @if (action.assigned_to) {
                             <div class="text-xs-caps text-on-surface-variant opacity-50" style="font-size: 8px;">Assigned to: {{ action.assigned_to | uppercase }}</div>
                           }
+                          <input
+                            *ngIf="editingRemediationId === action._id"
+                            [(ngModel)]="editAction.action"
+                            class="form-control bg-surface-container border-0 text-xs-caps mt-2"
+                            style="font-size: 10px;"
+                            placeholder="Update remediation action..."
+                          />
                         </div>
                       </div>
                     </li>
@@ -419,8 +465,6 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
       box-shadow: 0 0 0 1px rgba(123, 208, 255, 0.35);
     }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
-    .bg-success-container { background-color: #0a1a10; }
-    .text-success-container { color: #4ade80; }
   `],
 })
 export class BreachDetailComponent implements OnInit, OnDestroy {
@@ -452,6 +496,13 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
 
   showAddAccount = false;
   newAccount: Partial<AffectedAccount> = { email: '', username: '', notified: false };
+
+  editingTimelineId = '';
+  editEvent: Partial<TimelineEvent> = {};
+  editingAlertId = '';
+  editAlert: Partial<MonitoringAlert> = {};
+  editingRemediationId = '';
+  editAction: Partial<RemediationAction> = {};
 
   private map: any;
 
@@ -552,6 +603,44 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
     });
   }
 
+  startTimelineEdit(event: TimelineEvent): void {
+    this.editingTimelineId = event._id || '';
+    this.editEvent = {
+      event_type: event.event_type,
+      description: event.description,
+      occurred_at: event.occurred_at,
+      actor: event.actor,
+    };
+  }
+
+  cancelTimelineEdit(): void {
+    this.editingTimelineId = '';
+    this.editEvent = {};
+  }
+
+  saveTimelineEdit(event: TimelineEvent): void {
+    if (!event._id) return;
+    const payload: any = {
+      event_type: this.normalizeEventType(this.editEvent.event_type || event.event_type),
+      description: this.editEvent.description || event.description,
+    };
+    if (this.editEvent.occurred_at) {
+      payload.event_date = this.editEvent.occurred_at;
+    }
+    if (this.editEvent.actor !== undefined) {
+      payload.actor = this.editEvent.actor;
+    }
+
+    this.breachService.updateTimelineEvent(this.id, event._id, payload).subscribe({
+      next: () => {
+        this.cancelTimelineEdit();
+        this.loadSubDocuments();
+        this.notifications.show('Timeline event updated.', 'success', 2200);
+      },
+      error: (err) => this.notifyApiError(err, 'Failed to update timeline event.'),
+    });
+  }
+
   addRemediation(): void {
     const payload: any = {
       action: this.newAction.action,
@@ -593,6 +682,42 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
     });
   }
 
+  startRemediationEdit(action: RemediationAction): void {
+    this.editingRemediationId = action._id || '';
+    this.editAction = {
+      action: action.action,
+      status: action.status,
+      assigned_to: action.assigned_to,
+      due_date: action.due_date,
+    };
+  }
+
+  cancelRemediationEdit(): void {
+    this.editingRemediationId = '';
+    this.editAction = {};
+  }
+
+  saveRemediationEdit(action: RemediationAction): void {
+    if (!action._id) return;
+    const payload: any = {
+      action: this.editAction.action || action.action,
+      status: this.editAction.status || action.status,
+      assigned_to: this.editAction.assigned_to ?? action.assigned_to,
+    };
+    if (this.editAction.due_date) {
+      payload.due_date = this.editAction.due_date;
+    }
+
+    this.breachService.updateRemediation(this.id, action._id, payload).subscribe({
+      next: () => {
+        this.cancelRemediationEdit();
+        this.loadSubDocuments();
+        this.notifications.show('Remediation protocol updated.', 'success', 2200);
+      },
+      error: (err) => this.notifyApiError(err, 'Failed to update remediation protocol.'),
+    });
+  }
+
   addAlert(): void {
     const payload: any = {
       alert_type: this.normalizeAlertType(this.newAlert.alert_type),
@@ -630,6 +755,39 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
         this.notifications.show('Monitoring alert deleted.', 'info', 2200);
       },
       error: (err) => this.notifyApiError(err, 'Failed to delete monitoring alert.'),
+    });
+  }
+
+  startAlertEdit(alert: MonitoringAlert): void {
+    this.editingAlertId = alert._id || '';
+    this.editAlert = {
+      alert_type: alert.alert_type,
+      severity: alert.severity,
+      details: (alert as any).details ?? alert.message,
+      acknowledged: alert.acknowledged,
+    };
+  }
+
+  cancelAlertEdit(): void {
+    this.editingAlertId = '';
+    this.editAlert = {};
+  }
+
+  saveAlertEdit(alert: MonitoringAlert): void {
+    if (!alert._id) return;
+    const payload: any = {
+      details: this.editAlert.details ?? this.getAlertMessage(alert),
+      severity: this.editAlert.severity || alert.severity,
+      acknowledged: this.editAlert.acknowledged ?? alert.acknowledged,
+    };
+
+    this.breachService.updateAlert(this.id, alert._id, payload).subscribe({
+      next: () => {
+        this.cancelAlertEdit();
+        this.loadSubDocuments();
+        this.notifications.show('Monitoring alert updated.', 'success', 2200);
+      },
+      error: (err) => this.notifyApiError(err, 'Failed to update monitoring alert.'),
     });
   }
 

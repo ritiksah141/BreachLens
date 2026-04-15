@@ -308,6 +308,136 @@ class TestListBreaches:
         assert results[0]["risk_score"] == 8.0
 
 
+class TestAdvancedSearchService:
+
+    def test_advanced_search_multifilter(self, svc):
+        svc.create(_payload(title="Finance Incident", severity="critical", industry="finance"), CREATOR)
+        svc.create(_payload(title="Retail Incident", severity="low", industry="retail"), CREATOR)
+
+        results, total, facets = svc.advanced_search(
+            query_text="Incident",
+            severities=["critical"],
+            industries=["finance"],
+            min_risk=0,
+            max_risk=10,
+            include_facets=True,
+        )
+
+        assert total == 1
+        assert len(results) == 1
+        assert results[0]["severity"] == "critical"
+        assert "severity" in facets
+
+    def test_advanced_search_has_location_false(self, svc):
+        svc.create(_payload(title="No Geo Breach", location=None), CREATOR)
+        svc.create(
+            _payload(
+                title="Geo Breach",
+                location={"type": "Point", "coordinates": [-0.1, 51.5]},
+            ),
+            CREATOR,
+        )
+
+        results, total, _ = svc.advanced_search(has_location=False)
+        assert total >= 1
+        assert any(r["title"] == "No Geo Breach" for r in results)
+
+    def test_advanced_search_date_range(self, svc):
+        svc.create(_payload(title="Old Breach", breach_date="2022-01-01"), CREATOR)
+        svc.create(_payload(title="Recent Breach", breach_date="2024-05-01"), CREATOR)
+
+        results, total, _ = svc.advanced_search(
+            breach_from="2024-01-01",
+            breach_to="2024-12-31",
+        )
+        assert total >= 1
+        assert any(r["title"] == "Recent Breach" for r in results)
+
+
+class TestFilterOptionsService:
+
+    def test_filter_options_contains_ranges_and_dimensions(self, svc):
+        svc.create(_payload(severity="critical", status="active", industry="finance", risk_score=9.0), CREATOR)
+        svc.create(_payload(severity="low", status="resolved", industry="retail", risk_score=2.0), CREATOR)
+
+        options = svc.get_filter_options()
+
+        assert "severities" in options
+        assert "statuses" in options
+        assert "industries" in options
+        assert "data_types" in options
+        assert "ranges" in options
+        assert options["ranges"]["max_risk"] >= options["ranges"]["min_risk"]
+        assert options["ranges"]["max_records"] >= options["ranges"]["min_records"]
+
+
+class TestSubdocumentQueryService:
+
+    def test_query_subdocuments_by_timeline_type(self, svc):
+        doc = svc.create(_payload(title="Timeline Filter Breach"), CREATOR)
+        svc.add_timeline_event(
+            str(doc["_id"]),
+            {
+                "event_date": "2024-03-01",
+                "event_type": "discovered",
+                "description": "Incident discovered by SOC team.",
+            },
+        )
+
+        results, total, facets = svc.query_subdocuments(timeline_event_types=["discovered"])
+        assert total >= 1
+        assert any(r["title"] == "Timeline Filter Breach" for r in results)
+        assert "timeline_event_types" in facets
+
+    def test_query_subdocuments_by_alert_and_remediation(self, svc):
+        doc = svc.create(_payload(title="Alert Remediation Breach"), CREATOR)
+        svc.add_remediation_action(
+            str(doc["_id"]),
+            {
+                "action": "Reset all affected credentials",
+                "status": "completed",
+                "due_date": "2024-06-01",
+            },
+        )
+        svc.create_alert(
+            str(doc["_id"]),
+            {
+                "alert_type": "new_exposure",
+                "severity": "high",
+                "details": "New credential dump detected.",
+            },
+        )
+
+        results, total, facets = svc.query_subdocuments(
+            remediation_statuses=["completed"],
+            alert_severities=["high"],
+            alert_acknowledged=False,
+        )
+        assert total >= 1
+        assert any(r["title"] == "Alert Remediation Breach" for r in results)
+        assert "alert_severities" in facets
+
+    def test_query_subdocuments_by_account_notified_and_data_type(self, svc):
+        doc = svc.create(_payload(title="Accounts Filter Breach"), CREATOR)
+        acc, _ = svc.add_affected_account(
+            str(doc["_id"]),
+            {
+                "email": "victim@example.com",
+                "data_exposed": ["email", "password"],
+                "notified": False,
+            },
+        )
+        svc.update_affected_account(str(doc["_id"]), str(acc["_id"]), {"notified": True})
+
+        results, total, facets = svc.query_subdocuments(
+            account_notified=True,
+            exposed_data_types=["password"],
+        )
+        assert total >= 1
+        assert any(r["title"] == "Accounts Filter Breach" for r in results)
+        assert "account_notified_mix" in facets
+
+
 # ===================================================================
 # Exposure Check
 # ===================================================================
@@ -1311,6 +1441,21 @@ class TestAnalyticsSummary:
     def test_resolved_breach_count(self, analytics_svc):
         result = analytics_svc.summary()
         assert result["resolved_breaches"] == 1
+
+
+class TestAnalyticsAttackSurfaceProfile:
+
+    def test_attack_surface_profile_shape(self, analytics_svc):
+        result = analytics_svc.attack_surface_profile()
+        assert "overview" in result
+        assert "severity_mix" in result
+        assert "top_data_types" in result
+        assert "industry_risk_ranking" in result
+        assert "alert_pressure" in result
+
+    def test_attack_surface_profile_industry_filter(self, analytics_svc):
+        result = analytics_svc.attack_surface_profile(industry="finance")
+        assert result["overview"]["breach_count"] >= 1
 
 
 # ===================================================================

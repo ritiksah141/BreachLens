@@ -84,6 +84,21 @@ class TestListBreaches:
             resp = client.get("/api/v1/breaches/?severity=critical")
         assert resp.status_code == 200
 
+    def test_list_breaches_invalid_sort_order_returns_422(self, client):
+        """Invalid order parameter should return 422."""
+        resp = client.get("/api/v1/breaches/?order=down")
+        assert resp.status_code == 422
+
+    def test_list_breaches_invalid_risk_range_returns_422(self, client):
+        """min_risk greater than max_risk should be rejected."""
+        resp = client.get("/api/v1/breaches/?min_risk=9.0&max_risk=2.0")
+        assert resp.status_code == 422
+
+    def test_list_breaches_invalid_severity_returns_422(self, client):
+        """Invalid severity filter should be rejected early."""
+        resp = client.get("/api/v1/breaches/?severity=extreme")
+        assert resp.status_code == 422
+
 
 # ---------------------------------------------------------------------------
 # Create breach
@@ -292,3 +307,120 @@ class TestGeoEndpoints:
             resp = client.get("/api/v1/breaches/geo/geojson")
         assert resp.status_code == 200
         assert resp.get_json()["data"]["type"] == "FeatureCollection"
+
+
+# ---------------------------------------------------------------------------
+# Advanced search endpoint
+# ---------------------------------------------------------------------------
+
+class TestAdvancedSearch:
+
+    def test_advanced_search_success_with_facets(self, client):
+        with patch(
+            "app.routes.breaches.breach_service.advanced_search",
+            return_value=([MOCK_BREACH], 1, {"severity": [{"value": "critical", "count": 1}]}),
+        ) as mock_advanced:
+            resp = client.get(
+                "/api/v1/breaches/advanced-search?"
+                "q=corp&severities=critical,high&industries=technology&"
+                "min_risk=5&max_risk=10&include_facets=true"
+            )
+
+        assert resp.status_code == 200
+        body = resp.get_json()
+        assert body["status"] == "success"
+        assert body["meta"]["total"] == 1
+        assert "facets" in body["meta"]
+        assert mock_advanced.called
+
+    def test_advanced_search_invalid_severity_returns_422(self, client):
+        resp = client.get("/api/v1/breaches/advanced-search?severities=critical,extreme")
+        assert resp.status_code == 422
+
+    def test_advanced_search_invalid_date_returns_422(self, client):
+        resp = client.get("/api/v1/breaches/advanced-search?from_date=2026/02/01")
+        assert resp.status_code == 422
+
+    def test_advanced_search_invalid_has_location_returns_422(self, client):
+        resp = client.get("/api/v1/breaches/advanced-search?has_location=maybe")
+        assert resp.status_code == 422
+
+    def test_advanced_search_invalid_sort_by_returns_422(self, client):
+        resp = client.get("/api/v1/breaches/advanced-search?sort_by=unknown_field")
+        assert resp.status_code == 422
+
+
+class TestFilterOptions:
+
+    def test_filter_options_public(self, client):
+        with patch(
+            "app.routes.breaches.breach_service.get_filter_options",
+            return_value={
+                "severities": ["critical", "high"],
+                "statuses": ["active", "resolved"],
+                "industries": ["finance", "technology"],
+                "data_types": [{"value": "email", "count": 8}],
+                "ranges": {"min_risk": 1.0, "max_risk": 9.5, "min_records": 5, "max_records": 99999},
+            },
+        ):
+            resp = client.get("/api/v1/breaches/filter-options")
+
+        assert resp.status_code == 200
+        body = resp.get_json()
+        assert body["status"] == "success"
+        assert "ranges" in body["data"]
+
+
+class TestSubdocumentQuery:
+
+    def test_subdocument_query_requires_auth(self, client):
+        resp = client.get("/api/v1/breaches/subdocuments/query")
+        assert resp.status_code == 401
+
+    def test_subdocument_query_analyst_success(self, client, analyst_headers):
+        with patch(
+            "app.routes.breaches.breach_service.query_subdocuments",
+            return_value=(
+                [
+                    {
+                        "_id": ObjectId(),
+                        "title": "Complex Subdoc Breach",
+                        "subdoc_counts": {
+                            "affected_accounts": 2,
+                            "timeline": 3,
+                            "remediation": 2,
+                            "monitoring_alerts": 1,
+                        },
+                    }
+                ],
+                1,
+                {"timeline_event_types": [{"value": "discovered", "count": 3}]},
+            ),
+        ):
+            resp = client.get(
+                "/api/v1/breaches/subdocuments/query?"
+                "timeline_event_types=discovered,resolved&"
+                "remediation_statuses=completed&"
+                "alert_severities=high&alert_acknowledged=false&"
+                "account_notified=true&"
+                "timeline_from=2024-01-01&timeline_to=2025-12-31",
+                headers=analyst_headers,
+            )
+        assert resp.status_code == 200
+        body = resp.get_json()
+        assert body["meta"]["total"] == 1
+        assert "facets" in body["meta"]
+
+    def test_subdocument_query_invalid_alert_severity(self, client, analyst_headers):
+        resp = client.get(
+            "/api/v1/breaches/subdocuments/query?alert_severities=extreme",
+            headers=analyst_headers,
+        )
+        assert resp.status_code == 422
+
+    def test_subdocument_query_invalid_bool(self, client, analyst_headers):
+        resp = client.get(
+            "/api/v1/breaches/subdocuments/query?account_notified=maybe",
+            headers=analyst_headers,
+        )
+        assert resp.status_code == 422

@@ -9,6 +9,21 @@
 
 ## 📚 Documentation Files
 
+### **0. CW2_90_EVIDENCE_MATRIX.md** (CW2 Grade Readiness Matrix)
+**Status**: ✅ Active
+
+**Contents:**
+- Rubric-to-evidence mapping for 90% target
+- Verified backend/frontend test and build gates
+- Strict remaining blockers before final 90% claim
+- Final submission gate checklist
+
+**Who should read:**
+- Student before final submission
+- Marker needing quick evidence traceability
+
+---
+
 ### **1. PRD.md** (Product Requirements Document)
 **Lines**: 478 | **Status**: ✅ Complete
 
@@ -252,12 +267,34 @@ Create a new breach record.
 
 ---
 
+### **7. Frontend.md** (Frontend Follow-Up Runbook)
+**Lines**: 200+ | **Status**: ✅ Updated
+
+**Contents:**
+- Frontend implementation follow-up plan aligned with backend upgrades
+- Backend-to-frontend endpoint mapping
+- Delivery phases with definition-of-done gates
+- Testing checklist for frontend quality validation
+- Submission evidence checklist to avoid missed artefacts
+
+**Who should read:**
+- Frontend developers implementing CW2
+- Student preparing final submission
+- Reviewers validating frontend completeness
+
+**Key Focus:**
+- Consume new backend capabilities (advanced-search, filter-options, subdocuments query, attack-surface analytics)
+- Avoid API contract mismatches
+- Ensure no missed rubric-facing frontend features
+
+---
+
 ## 📊 Documentation Statistics
 
 | Metric | Value |
 |--------|-------|
-| **Total Files** | 6 |
-| **Total Lines** | 6,000+ |
+| **Total Files** | 7 |
+| **Total Lines** | 6,200+ |
 | **Diagrams** | 12+ (Mermaid, ASCII) |
 | **Code Examples** | 200+ |
 | **API Endpoints Documented** | 63 |
@@ -302,6 +339,7 @@ Create a new breach record.
 | Follow coding standards | [AGENTS.md](AGENTS.md) |
 | Check production features | [IMPROVEMENTS.md](IMPROVEMENTS.md) |
 | Prepare submission | [SUBMISSION_PRIORITY.md](SUBMISSION_PRIORITY.md) |
+| Execute frontend follow-up | [Frontend.md](Frontend.md) |
 
 ### **Common Questions**
 
