@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard, analystGuard, adminGuard } from './core/guards/auth.guard';
+import { breachResolver } from './core/resolvers/breach.resolver';
 
 export const routes: Routes = [
   {
@@ -22,6 +23,7 @@ export const routes: Routes = [
       import('./features/breaches/breach-detail/breach-detail.component').then(
         (m) => m.BreachDetailComponent
       ),
+    resolve: { breach: breachResolver },
   },
   {
     path: 'map',

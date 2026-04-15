@@ -13,11 +13,11 @@ import { NgClass, CommonModule } from '@angular/common';
   styles: [`
     .text-xs-caps { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; }
 
-    .badge-critical { background-color: rgba(248, 113, 113, 0.1) !important; color: var(--tertiary-container) !important; border-color: var(--tertiary-container) !important; }
-    .badge-high { background-color: rgba(251, 146, 60, 0.1) !important; color: #fb923c !important; border-color: #fb923c !important; }
-    .badge-medium { background-color: rgba(251, 191, 36, 0.1) !important; color: #fbbf24 !important; border-color: #fbbf24 !important; }
-    .badge-low { background-color: rgba(123, 208, 255, 0.1) !important; color: var(--primary) !important; border-color: var(--primary) !important; }
-    .badge-informational { background-color: rgba(136, 146, 155, 0.1) !important; color: var(--on-surface-variant) !important; border-color: var(--outline) !important; }
+    .badge-critical { background-color: var(--severity-critical-bg) !important; color: var(--severity-critical) !important; border-color: var(--severity-critical) !important; }
+    .badge-high { background-color: var(--severity-high-bg) !important; color: var(--severity-high) !important; border-color: var(--severity-high) !important; }
+    .badge-medium { background-color: var(--severity-medium-bg) !important; color: var(--severity-medium) !important; border-color: var(--severity-medium) !important; }
+    .badge-low { background-color: var(--severity-low-bg) !important; color: var(--severity-low) !important; border-color: var(--severity-low) !important; }
+    .badge-informational { background-color: var(--severity-info-bg) !important; color: var(--severity-info) !important; border-color: var(--severity-info) !important; }
   `]
 })
 export class SeverityBadgeComponent {

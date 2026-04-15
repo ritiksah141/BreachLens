@@ -114,7 +114,7 @@ import { FormsModule } from '@angular/forms';
                 <li><a class="dropdown-item text-xs-caps text-on-surface" routerLink="/admin">Admin Control</a></li>
               }
               <li><hr class="dropdown-divider border-outline-variant"></li>
-              <li><button class="dropdown-item text-xs-caps text-danger" (click)="logout()">Terminate Session</button></li>
+              <li><button class="dropdown-item text-xs-caps text-error" (click)="logout()">Terminate Session</button></li>
             } @else {
               <li><a class="dropdown-item text-xs-caps text-on-surface" routerLink="/auth/login">Authorize</a></li>
               <li><a class="dropdown-item text-xs-caps text-on-surface" routerLink="/auth/register">Deploy Operator</a></li>
@@ -150,7 +150,7 @@ import { FormsModule } from '@angular/forms';
     @if (showAppChrome()) {
     <!-- Footer Ticker -->
     <footer class="bg-surface-container-lowest position-fixed bottom-0 start-0 w-100 z-3 border-top border-primary border-opacity-10 shadow-lg d-flex align-items-center px-4 overflow-hidden" style="height: 40px;">
-      <div class="ticker-animation text-xs-caps text-tertiary-container fw-medium">
+      <div class="ticker-animation text-xs-caps text-on-surface-variant fw-medium">
         <span>Live Threat Ticker: 12.04.99.1 active exploit detected in sector 4</span>
         <span class="mx-4 text-primary opacity-50">||</span>
         <span>192.168.1.104 lateral movement prevented</span>
@@ -189,7 +189,7 @@ import { FormsModule } from '@angular/forms';
       align-items: center;
       justify-content: center;
       background: linear-gradient(145deg, var(--surface-container-high), var(--surface-container-low));
-      box-shadow: 0 0 12px rgba(123, 208, 255, 0.14);
+      box-shadow: 0 0 12px color-mix(in srgb, var(--primary) 14%, transparent);
       border: 1px solid var(--outline-variant);
       position: relative;
       overflow: hidden;
@@ -236,7 +236,7 @@ import { FormsModule } from '@angular/forms';
     .brand-chip-b { transform: rotate(7deg) translateY(1px); }
     .brand-wordmark {
       position: relative;
-      text-shadow: 0 0 10px rgba(123, 208, 255, 0.2);
+      text-shadow: 0 0 10px color-mix(in srgb, var(--primary) 20%, transparent);
       letter-spacing: -0.02em;
     }
     .brand-wordmark::after {
@@ -250,7 +250,7 @@ import { FormsModule } from '@angular/forms';
       opacity: 0.65;
     }
     :host-context([data-theme='light']) .brand-logo {
-      box-shadow: 0 0 10px rgba(14, 165, 233, 0.12);
+      box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 12%, transparent);
     }
     :host-context([data-theme='light']) .brand-logo::before {
       opacity: 0.35;
@@ -317,10 +317,10 @@ import { FormsModule } from '@angular/forms';
       padding: 0.5rem 0.55rem;
       background: var(--surface-container-high);
     }
-    .notification-item-info { border-left-color: #38bdf8; }
-    .notification-item-success { border-left-color: #4ade80; }
-    .notification-item-warning { border-left-color: #f59e0b; }
-    .notification-item-error { border-left-color: #f87171; }
+    .notification-item-info { border-left-color: var(--primary); }
+    .notification-item-success { border-left-color: var(--success); }
+    .notification-item-warning { border-left-color: var(--warning); }
+    .notification-item-error { border-left-color: var(--error); }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
     .max-width-1600 { max-width: 1600px; margin: 0 auto; }
     .toast-stack {
@@ -342,10 +342,10 @@ import { FormsModule } from '@angular/forms';
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
       animation: toast-in 180ms ease-out;
     }
-    .app-toast-info { border-left: 3px solid #38bdf8; }
-    .app-toast-success { border-left: 3px solid #4ade80; }
-    .app-toast-warning { border-left: 3px solid #f59e0b; }
-    .app-toast-error { border-left: 3px solid #f87171; }
+    .app-toast-info { border-left: 3px solid var(--primary); }
+    .app-toast-success { border-left: 3px solid var(--success); }
+    .app-toast-warning { border-left: 3px solid var(--warning); }
+    .app-toast-error { border-left: 3px solid var(--error); }
     .toast-message { letter-spacing: 0.08em; }
     @keyframes toast-in {
       from { transform: translateY(-4px); opacity: 0; }

@@ -10,11 +10,13 @@ import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { AnalyticsSummary, AttackSurfaceProfile, SeverityBreakdown, MonthlyTrend, DataTypeFrequency } from '../../core/models/models';
+import { RiskLevelPipe } from '../../shared/pipes/risk-level.pipe';
+import { CompactNumberPipe } from '../../shared/pipes/compact-number.pipe';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, NgClass, DecimalPipe, PercentPipe, CommonModule],
+  imports: [RouterLink, NgClass, DecimalPipe, PercentPipe, CommonModule, RiskLevelPipe, CompactNumberPipe],
   template: `
     <div class="row g-4 mb-4 mt-2">
       <!-- KPI Row -->
@@ -31,7 +33,7 @@ import { AnalyticsSummary, AttackSurfaceProfile, SeverityBreakdown, MonthlyTrend
                 <span class="p-1 bg-primary rounded-circle animate-pulse"></span>
               </div>
               <div class="fs-2 fw-bold text-on-surface font-headline">{{ summary?.total_breaches | number }}</div>
-              <div class="text-xs-caps fw-bold mt-2" [ngClass]="trendDirection === 'up' ? 'text-primary' : (trendDirection === 'down' ? 'text-tertiary' : 'text-on-surface-variant')">
+              <div class="text-xs-caps fw-bold mt-2" [ngClass]="trendDirection === 'up' ? 'text-primary' : (trendDirection === 'down' ? 'text-error' : 'text-on-surface-variant')">
                 <span class="material-symbols-outlined fs-6">{{ trendDirection === 'down' ? 'trending_down' : 'trending_up' }}</span>
                 @if (trendDirection === 'flat') {
                   No month-over-month change
@@ -47,10 +49,10 @@ import { AnalyticsSummary, AttackSurfaceProfile, SeverityBreakdown, MonthlyTrend
             <div class="card p-4 border-0 border-start border-tertiary border-3 glow-error h-100">
               <div class="d-flex justify-content-between align-items-start mb-2">
                 <span class="text-xs-caps text-on-surface-variant">Open Alerts</span>
-                <span class="material-symbols-outlined text-tertiary-container fs-6">warning</span>
+                <span class="material-symbols-outlined text-severity-critical fs-6">warning</span>
               </div>
               <div class="fs-2 fw-bold text-on-surface font-headline">{{ summary?.open_alerts ?? 0 }}</div>
-              <div class="text-xs-caps text-tertiary-container fw-bold mt-2">
+              <div class="text-xs-caps text-severity-critical fw-bold mt-2">
                 <span class="material-symbols-outlined fs-6">bolt</span> {{ summary?.active_breaches ?? 0 }} active breach(es)
               </div>
             </div>
@@ -63,9 +65,9 @@ import { AnalyticsSummary, AttackSurfaceProfile, SeverityBreakdown, MonthlyTrend
                 <span class="text-xs-caps text-on-surface-variant">Average Risk Score</span>
                 <span class="material-symbols-outlined text-secondary fs-6">speed</span>
               </div>
-              <div class="fs-2 fw-bold text-on-surface font-headline">{{ summary?.avg_risk_score | number:'1.1-1' }}</div>
+              <div class="fs-2 fw-bold font-headline" [ngClass]="summary?.avg_risk_score | riskLevel:'class'">{{ summary?.avg_risk_score | number:'1.1-1' }}</div>
               <div class="text-xs-caps text-on-surface-variant mt-2 d-flex align-items-center gap-2">
-                <span class="p-1 bg-secondary rounded-circle"></span> Across {{ summary?.industries_affected ?? 0 }} industries
+                <span class="p-1 bg-secondary rounded-circle"></span> {{ summary?.avg_risk_score | riskLevel }} // {{ summary?.industries_affected ?? 0 }} industries
               </div>
             </div>
           </div>
@@ -289,8 +291,8 @@ import { AnalyticsSummary, AttackSurfaceProfile, SeverityBreakdown, MonthlyTrend
   styles: [`
     .progress-bar { transition: width 1s ease-in-out; }
     .text-xs-caps { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; }
-    .glow-primary { box-shadow: 0 0 15px rgba(0, 167, 224, 0.15); }
-    .glow-error { box-shadow: 0 0 15px rgba(248, 113, 113, 0.15); }
+    .glow-primary { box-shadow: 0 0 15px color-mix(in srgb, var(--primary) 15%, transparent); }
+    .glow-error { box-shadow: 0 0 15px color-mix(in srgb, var(--severity-critical) 15%, transparent); }
     .viz-grid {
       background-image:
         linear-gradient(var(--grid-overlay) 1px, transparent 1px),
@@ -580,7 +582,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         labels: this.severityData.map(d => d.severity),
         datasets: [{
           data: this.severityData.map(d => d.breach_count),
-          backgroundColor: ['#f87171', '#fb923c', '#fbbf24', '#0ea5e9', '#64748b'],
+          backgroundColor: this.getSeverityColors(),
           borderWidth: 0,
           hoverOffset: 10
         }]
@@ -626,7 +628,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         datasets: [{
           label: 'Breaches',
           data: visiblePoints.map((p) => p.value),
-          borderColor: '#0ea5e9',
+          borderColor: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim(),
           borderWidth: 3,
           tension: 0.4,
           fill: true,
@@ -634,12 +636,13 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
             const canvas = context.chart.canvas;
             const ctx = canvas.getContext('2d');
             const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-            gradient.addColorStop(0, 'rgba(14, 165, 233, 0.2)');
-            gradient.addColorStop(1, 'rgba(14, 165, 233, 0)');
+            const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+            gradient.addColorStop(0, primary + '33');
+            gradient.addColorStop(1, primary + '00');
             return gradient;
           },
-          pointBackgroundColor: '#0ea5e9',
-          pointBorderColor: '#fff',
+          pointBackgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim(),
+          pointBorderColor: getComputedStyle(document.documentElement).getPropertyValue('--surface').trim(),
           pointRadius: 0,
           pointHoverRadius: 5
         }]
@@ -699,7 +702,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         labels: this.riskData.map(d => d.label),
         datasets: [{
           data: this.riskData.map(d => d.count),
-          backgroundColor: '#7bd0ff',
+          backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim(),
           borderRadius: 2
         }]
       },
@@ -725,13 +728,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         labels: this.orgData.map(d => d.organisation),
         datasets: [{
           data: this.orgData.map(d => d.count),
-          backgroundColor: [
-            'rgba(248, 113, 113, 0.7)',
-            'rgba(14, 165, 233, 0.7)',
-            'rgba(189, 194, 255, 0.7)',
-            'rgba(251, 191, 36, 0.7)',
-            'rgba(100, 116, 139, 0.7)'
-          ],
+          backgroundColor: this.getOrgChartColors(),
           borderWidth: 0
         }]
       },
@@ -752,7 +749,14 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     const years = Array.from(new Set(this.industryTrendData.map(d => d.year))).sort();
 
     const datasets = industries.map((ind, i) => {
-      const colors = ['#f87171', '#0ea5e9', '#bdc2ff', '#fbbf24', '#4ade80'];
+      const cs = getComputedStyle(document.documentElement);
+      const colors = [
+        cs.getPropertyValue('--severity-critical').trim(),
+        cs.getPropertyValue('--primary').trim(),
+        cs.getPropertyValue('--secondary').trim(),
+        cs.getPropertyValue('--severity-medium').trim(),
+        cs.getPropertyValue('--success').trim()
+      ];
       return {
         label: ind,
         data: years.map(y => {
@@ -794,6 +798,28 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       tooltipText: style.getPropertyValue('--on-surface').trim() || '#0f172a',
       tooltipBorder: outline,
     };
+  }
+
+  private getSeverityColors(): string[] {
+    const cs = getComputedStyle(document.documentElement);
+    return [
+      cs.getPropertyValue('--severity-critical').trim(),
+      cs.getPropertyValue('--severity-high').trim(),
+      cs.getPropertyValue('--severity-medium').trim(),
+      cs.getPropertyValue('--severity-low').trim(),
+      cs.getPropertyValue('--severity-info').trim()
+    ];
+  }
+
+  private getOrgChartColors(): string[] {
+    const cs = getComputedStyle(document.documentElement);
+    return [
+      cs.getPropertyValue('--severity-critical').trim() + 'b3',
+      cs.getPropertyValue('--primary').trim() + 'b3',
+      cs.getPropertyValue('--secondary').trim() + 'b3',
+      cs.getPropertyValue('--severity-medium').trim() + 'b3',
+      cs.getPropertyValue('--severity-info').trim() + 'b3'
+    ];
   }
 
   checkExposure(value: string): void {

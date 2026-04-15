@@ -11,7 +11,7 @@ import { AuthService } from '../../../core/services/auth.service';
     <nav class="navbar navbar-expand-lg bg-surface-container border-bottom border-outline-variant">
       <div class="container-fluid">
         <a class="navbar-brand fw-bold text-on-surface" routerLink="/">
-          <span class="text-danger">⬡</span> BreachLens
+          <span class="text-error">⬡</span> BreachLens
         </a>
         <button
           class="navbar-toggler"
@@ -66,7 +66,7 @@ import { AuthService } from '../../../core/services/auth.service';
                   </li>
                   <li><hr class="dropdown-divider" /></li>
                   <li>
-                    <button class="dropdown-item text-danger" (click)="logout()">
+                    <button class="dropdown-item text-error" (click)="logout()">
                       Logout
                     </button>
                   </li>

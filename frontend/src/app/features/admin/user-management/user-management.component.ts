@@ -106,18 +106,18 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
   `,
   styles: [`
     .text-xs-caps { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; }
-    .custom-terminal-table tr:hover { background-color: rgba(123, 208, 255, 0.03) !important; }
+    .custom-terminal-table tr:hover { background-color: color-mix(in srgb, var(--primary) 3%, transparent) !important; }
     .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
     .text-error { color: var(--error) !important; }
-    .text-success { color: #4ade80 !important; }
-    .bg-success { background-color: #4ade80 !important; }
-    .bg-error-container { background-color: #93000a; }
-    .bg-success-container { background-color: #0a1a10; }
+    .text-success { color: var(--success) !important; }
+    .bg-success { background-color: var(--success) !important; }
+    .bg-error-container { background-color: var(--error-container) !important; }
+    .bg-success-container { background-color: var(--success-container) !important; }
     .border-error { border-color: var(--error) !important; }
-    .border-success { border-color: #4ade80 !important; }
-    .hover-bg-error:hover { background-color: rgba(248, 113, 113, 0.1) !important; }
-    .hover-bg-success:hover { background-color: rgba(74, 222, 128, 0.1) !important; }
+    .border-success { border-color: var(--success) !important; }
+    .hover-bg-error:hover { background-color: color-mix(in srgb, var(--error) 10%, transparent) !important; }
+    .hover-bg-success:hover { background-color: color-mix(in srgb, var(--success) 10%, transparent) !important; }
   `]
 })
 export class UserManagementComponent implements OnInit {

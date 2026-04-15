@@ -2,15 +2,17 @@
 
 > **Cyber Threat Intelligence Platform** - Full-stack application for tracking data breaches, mapping cyber-attacks, and monitoring compromised assets.
 
-[![Tests](https://img.shields.io/badge/Tests-586%20passing-brightgreen.svg)](backend/tests/)
+[![Backend Tests](https://img.shields.io/badge/Backend_Tests-586%20passing-brightgreen.svg)](backend/tests/)
+[![Frontend Tests](https://img.shields.io/badge/Frontend_Tests-247%20passing-brightgreen.svg)](frontend/src/app/)
 [![Coverage](https://img.shields.io/badge/Coverage-88%25-brightgreen.svg)](backend/htmlcov/)
 [![Python](https://img.shields.io/badge/Python-3.14-blue.svg)](https://www.python.org/)
+[![Angular](https://img.shields.io/badge/Angular-17.3-red.svg)](https://angular.dev/)
 [![Flask](https://img.shields.io/badge/Flask-3.0+-green.svg)](https://flask.palletsprojects.com/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-7.0-green.svg)](https://www.mongodb.com/)
 
 **COM661 Full Stack Development - Ulster University**
 **Coursework 1**: Backend API Development ✅
-**Coursework 2**: Frontend Development (Planned)
+**Coursework 2**: Frontend Development ✅
 
 ---
 
@@ -54,7 +56,7 @@ The system is built with a RESTful API backend (Flask + MongoDB) designed for sc
 - ✅ **Advanced Analytics** - 10 aggregation endpoints for risk assessment and trends
 - ✅ **Sub-document Management** - Track accounts, timelines, remediation, and alerts
 - ✅ **Exposure Checking** - Check if email/domain appears in breach data
-- ✅ **Comprehensive Testing** - 586 tests with 88% code coverage
+- ✅ **Comprehensive Testing** - 833 tests across backend (586) and frontend (247)
 
 ### **Security Features**
 - 🔐 JWT token authentication with MongoDB-based blacklist
@@ -86,12 +88,14 @@ The system is built with a RESTful API backend (Flask + MongoDB) designed for sc
 - **Security**: bcrypt, flask-limiter, bleach
 - **Environment**: Python 3.11+
 
-### **Frontend** (Coursework 2 - 📅 Planned)
-- **Framework**: Angular 17+ (planned)
-- **UI Library**: Angular Material (planned)
-- **Mapping**: Leaflet.js for geospatial visualization (planned)
-- **Charts**: Chart.js for analytics dashboards (planned)
-- **State Management**: NgRx or RxJS (planned)
+### **Frontend** (Coursework 2 - ✅ Complete)
+- **Framework**: Angular 17.3 (standalone components, signals)
+- **Language**: TypeScript 5.4
+- **UI**: Bootstrap 5.3 with custom CSS variables (dark/light themes)
+- **Mapping**: Leaflet.js 1.9.4 with GeoJSON, Stadia Maps + OpenStreetMap tiles
+- **Charts**: Chart.js 4.4 (6 chart types, theme-reactive)
+- **State Management**: Angular Signals (signal, computed, effect)
+- **Testing**: Jasmine 5.1 + Karma 6.4 (247 tests)
 
 ### **Development Tools**
 - **API Testing**: Postman (64 requests, 108 test assertions)
@@ -126,8 +130,13 @@ BreachLens/
 │   ├── QA_STRATEGY.md                # Testing strategy
 │   ├── SUBMISSION_CHECKLIST.md       # Coursework checklist
 │   └── README.md                     # Documentation index
-├── frontend/                         # Frontend (Coursework 2)
-│   └── [To be implemented]
+├── frontend/                         # Frontend (Angular 17 SPA)
+│   ├── src/app/                      # Application source
+│   │   ├── core/                     # Guards, interceptors, resolvers, services
+│   │   ├── features/                 # Lazy-loaded feature components (14)
+│   │   └── shared/                   # Pipes, directives, shared components
+│   ├── package.json                  # Node dependencies
+│   └── README.md                     # Frontend documentation
 ├── .pre-commit-config.yaml           # Git hooks configuration
 ├── LICENSE                           # MIT License
 └── README.md                         # This file
@@ -141,6 +150,7 @@ BreachLens/
 
 ### **Prerequisites**
 - Python 3.11 or higher
+- Node.js 18+ and npm
 - MongoDB 7.0 (local installation)
 - Git
 
@@ -187,15 +197,26 @@ python run.py
 # Swagger docs: http://localhost:5001/api/docs
 ```
 
-### **6. Test API**
+### **6. Setup Frontend**
 ```bash
-# Run test suite
-pytest tests/ -v
-
-# Expected: 586 passed, 2 skipped, 14 deselected
+cd ../frontend
+npm install
+npm start
+# App: http://localhost:4200
 ```
 
-### **7. Test with cURL**
+### **7. Test Both**
+```bash
+# Backend tests
+cd backend && pytest tests/ -v
+# Expected: 586 passed, 2 skipped, 14 deselected
+
+# Frontend tests
+cd ../frontend && npx ng test --watch=false --browsers=ChromeHeadless
+# Expected: 247 passed
+```
+
+### **8. Test with cURL**
 ```bash
 # Health check
 curl http://localhost:5001/health
@@ -300,30 +321,36 @@ The backend follows a **layered architecture**:
 
 ## 🎨 Frontend
 
-### **Status**: 📅 Planned for Coursework 2
+### **Status**: ✅ Complete (Coursework 2)
 
-The frontend will be developed as part of **COM661 Coursework 2** and will include:
+Angular 17 single-page application with **14 standalone components**, **247 passing tests**, and full backend integration.
 
-#### **Planned Features**
-- 🖥️ **Angular 17+ Single-Page Application**
-- 🗺️ **Interactive Breach Map** - Geospatial visualization with Leaflet.js
-- 📊 **Analytics Dashboard** - Charts and metrics using Chart.js
-- 🔍 **Advanced Filtering** - Multi-criteria search and filtering
-- 📋 **Breach Management** - CRUD interface for analysts and admins
-- 👤 **User Management** - Admin panel for user and role management
-- 🔐 **Authentication UI** - Login, registration, password reset flows
-- 📱 **Responsive Design** - Mobile-friendly Angular Material components
-- 🔔 **Real-time Alerts** - WebSocket notifications (planned)
+#### **Key Features**
+- 🖥️ **Angular 17 SPA** — Standalone components, signals, computed(), effect(), lazy-loaded routes
+- 🗺️ **Interactive Breach Map** — Leaflet.js with GeoJSON markers, geolocation, severity coloring
+- 📊 **Analytics Dashboard** — 6 Chart.js visualizations (bar, line, doughnut, histogram)
+- 🔍 **Advanced Search** — Multi-criteria filtering, auto-suggestions, subdocument queries
+- 📋 **Breach Management** — Full CRUD with sub-document management (timeline, remediation, alerts, accounts)
+- 👤 **Admin Panel** — User management, role changes, bulk operations, audit trail
+- 🔐 **Authentication** — JWT login/register/reset, functional guards, HTTP interceptor
+- 🎨 **Dark/Light Theme** — System preference detection, CSS variables, theme-reactive maps/charts
+- 📱 **Responsive Design** — Bootstrap 5 grid, mobile-friendly navigation
+- 🔒 **Role-Based UI** — Custom `*appRequireRole` structural directive, 3 route guards
 
-#### **Development Timeline** (Coursework 2)
-- Week 1-2: Angular project setup and routing
-- Week 3-4: Authentication and state management
-- Week 5-6: Breach listing and detail views
-- Week 7-8: Interactive map integration
-- Week 9-10: Analytics dashboard and charts
-- Week 11-12: Admin panel and final testing
+#### **Angular Highlights**
+| Feature | Count |
+|---------|-------|
+| Components | 14 (all standalone) |
+| Services | 7 |
+| Custom Pipes | 3 (TimeAgo, RiskLevel, CompactNumber) |
+| Custom Directives | 2 (CopyClipboard, RequireRole) |
+| Route Guards | 3 (auth, admin, analyst) |
+| Route Resolver | 1 (breach detail pre-fetch) |
+| HTTP Interceptor | 1 (JWT + error handling) |
+| Backend Endpoints Consumed | 65 |
+| Tests | 247 passing |
 
-**Frontend documentation will be added in**: `frontend/README.md` (Coursework 2)
+**Frontend documentation**: [frontend/README.md](frontend/README.md)
 
 ---
 
@@ -338,6 +365,7 @@ Comprehensive documentation is available in the [`docs/`](docs/) directory:
 | [QA_STRATEGY.md](docs/QA_STRATEGY.md) | Testing strategy and quality assurance plan |
 | [SUBMISSION_CHECKLIST.md](docs/SUBMISSION_CHECKLIST.md) | Coursework requirements checklist |
 | [backend/README.md](backend/README.md) | Backend architecture and development guide |
+| [frontend/README.md](frontend/README.md) | Frontend architecture, components, and testing |
 
 **Module-specific READMEs**:
 - [backend/app/README.md](backend/app/README.md) - Application factory and configuration
@@ -356,10 +384,12 @@ Comprehensive documentation is available in the [`docs/`](docs/) directory:
 
 ### **Test Coverage**
 
-The backend has comprehensive test coverage with **586 passing tests** and **88% code coverage**.
+The project has comprehensive test coverage across both backend and frontend: **833 total tests**.
 
-| Test Module | Tests | Coverage |
-|-------------|-------|----------|
+#### **Backend Tests (586 passing, 88% coverage)**
+
+| Test Module | Tests | Focus |
+|-------------|-------|-------|
 | Authentication | 11 | Auth endpoints, JWT validation |
 | Breach CRUD | 21 | Create, read, update, delete operations |
 | Sub-documents | 31 | Accounts, timeline, remediation, alerts |
@@ -372,24 +402,39 @@ The backend has comprehensive test coverage with **586 passing tests** and **88%
 | User Management | ~30 | User profile and management |
 | Performance | 14 | Benchmarks (deselected by default) |
 
+#### **Frontend Tests (247 passing)**
+
+| Test Module | Tests | Focus |
+|-------------|-------|-------|
+| Custom Pipes | 83 | TimeAgo, RiskLevel, CompactNumber |
+| Custom Directives | 25 | CopyClipboard, RequireRole |
+| Services | 33 | Auth, Breach, Notification, Theme |
+| Guards & Interceptors | 19 | Auth guard signals, JWT interceptor |
+| Resolver | 8 | Breach detail pre-fetch |
+| Components | 70 | Profile, Pagination, SeverityBadge, BreachList, Dashboard |
+| Integration | 9 | Service HTTP calls |
+
 ### **Running Tests**
 
 ```bash
-# Activate virtual environment
+# Backend tests
 cd backend
 source ../venv/bin/activate
-
-# Run all tests
 pytest tests/ -v
 
-# Run specific test modules
-pytest tests/test_auth.py -v
-pytest tests/test_breaches.py -v
-pytest tests/test_security.py -v
+# Frontend tests
+cd frontend
+npx ng test --watch=false --browsers=ChromeHeadless
 
-# Generate coverage report
+# Backend coverage report
+cd backend
 pytest tests/ --cov=app --cov-report=html --cov-report=term
 open htmlcov/index.html
+
+# Frontend coverage report
+cd frontend
+npx ng test --watch=false --browsers=ChromeHeadless --code-coverage
+open coverage/breachlens-frontend/index.html
 ```
 
 ### **API Testing with Postman**
@@ -539,13 +584,13 @@ For questions or issues:
 | Component | Status | Completion |
 |-----------|--------|------------|
 | Backend API | ✅ Complete | 100% (Coursework 1) |
+| Frontend SPA | ✅ Complete | 100% (Coursework 2) |
 | API Documentation | ✅ Complete | 100% |
-| Testing | ✅ Complete | 586 tests, 88% coverage |
-| Frontend | 📅 Planned | 0% (Coursework 2) |
-| Deployment | 📅 Planned | TBD |
+| Backend Testing | ✅ Complete | 586 tests, 88% coverage |
+| Frontend Testing | ✅ Complete | 247 tests across 17 spec files |
 
-**Last Updated**: March 2026
-**Version**: v1.0.0 (Backend API)
+**Last Updated**: April 2026
+**Version**: v2.0.0 (Full Stack)
 
 ---
 

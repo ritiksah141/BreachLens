@@ -398,11 +398,11 @@ import { UserManagementComponent } from './user-management/user-management.compo
   `,
   styles: [`
     .text-xs-caps { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; }
-    .active-log-item { background-color: rgba(123, 208, 255, 0.05) !important; border-left: 4px solid var(--primary) !important; padding-left: 12px !important; }
-    .custom-terminal-table tr { border-bottom: 1px solid rgba(62, 72, 80, 0.1); }
+    .active-log-item { background-color: color-mix(in srgb, var(--primary) 5%, transparent) !important; border-left: 4px solid var(--primary) !important; padding-left: 12px !important; }
+    .custom-terminal-table tr { border-bottom: 1px solid var(--outline-variant); }
     .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-    .glow-primary { box-shadow: 0 0 15px rgba(0, 167, 224, 0.1); }
-    .glow-error { box-shadow: 0 0 15px rgba(248, 113, 113, 0.1); }
+    .glow-primary { box-shadow: 0 0 15px color-mix(in srgb, var(--primary) 10%, transparent); }
+    .glow-error { box-shadow: 0 0 15px color-mix(in srgb, var(--error) 10%, transparent); }
     .text-error { color: var(--error) !important; }
     .border-error { border-color: var(--error) !important; }
   `],

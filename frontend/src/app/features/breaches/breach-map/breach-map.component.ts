@@ -52,19 +52,19 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
       <div class="position-absolute bottom-0 start-0 m-3 z-3 glass-panel p-2 rounded-2 border border-outline-variant border-opacity-10">
         <div class="d-flex gap-3 px-2">
           <div class="d-flex align-items-center gap-2">
-            <span class="p-1 rounded-circle bg-error shadow-error"></span>
+            <span class="p-1 rounded-circle bg-severity-critical shadow-critical"></span>
             <span class="text-xs-caps text-on-surface" style="font-size: 8px;">Critical</span>
           </div>
           <div class="d-flex align-items-center gap-2">
-            <span class="p-1 rounded-circle" style="background: #fb923c;"></span>
+            <span class="p-1 rounded-circle bg-severity-high"></span>
             <span class="text-xs-caps text-on-surface" style="font-size: 8px;">High</span>
           </div>
           <div class="d-flex align-items-center gap-2">
-            <span class="p-1 rounded-circle" style="background: #fbbf24;"></span>
+            <span class="p-1 rounded-circle bg-severity-medium"></span>
             <span class="text-xs-caps text-on-surface" style="font-size: 8px;">Medium</span>
           </div>
           <div class="d-flex align-items-center gap-2">
-            <span class="p-1 rounded-circle bg-primary shadow-primary"></span>
+            <span class="p-1 rounded-circle bg-severity-low shadow-low"></span>
             <span class="text-xs-caps text-on-surface" style="font-size: 8px;">Low</span>
           </div>
         </div>
@@ -74,8 +74,8 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
   styles: [`
     .text-xs-caps { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; }
     #global-map { background: var(--background) !important; }
-    .shadow-error { box-shadow: 0 0 10px rgba(248, 113, 113, 0.5); }
-    .shadow-primary { box-shadow: 0 0 10px rgba(123, 208, 255, 0.5); }
+    .shadow-critical { box-shadow: 0 0 10px color-mix(in srgb, var(--severity-critical) 50%, transparent); }
+    .shadow-low { box-shadow: 0 0 10px color-mix(in srgb, var(--severity-low) 50%, transparent); }
 
     ::ng-deep .bl-popup .leaflet-popup-content-wrapper {
       background: var(--surface-container-high) !important;
@@ -132,12 +132,11 @@ export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const isDark = this.themeService.theme() === 'dark';
     const url = isDark
-      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+      ? 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png'
+      : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 
     this.tileLayer = L.tileLayer(url, {
-      attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-      subdomains: 'abcd',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' + (isDark ? ' &copy; <a href="https://stadiamaps.com/">Stadia Maps</a>' : ''),
       maxZoom: 20
     }).addTo(this.map);
   }
@@ -198,12 +197,13 @@ export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
     const L = await import('leaflet' as any);
     if (this.geoJsonLayer) this.map.removeLayer(this.geoJsonLayer);
 
+    const cs = getComputedStyle(document.documentElement);
     const colorMap: any = {
-      critical: '#ffb3b0',
-      high: '#fb923c',
-      medium: '#fbbf24',
-      low: '#7bd0ff',
-      informational: '#88929b'
+      critical: cs.getPropertyValue('--severity-critical').trim(),
+      high: cs.getPropertyValue('--severity-high').trim(),
+      medium: cs.getPropertyValue('--severity-medium').trim(),
+      low: cs.getPropertyValue('--severity-low').trim(),
+      informational: cs.getPropertyValue('--severity-info').trim()
     };
 
     this.geoJsonLayer = L.geoJSON(geoData, {

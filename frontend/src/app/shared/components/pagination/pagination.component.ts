@@ -76,7 +76,7 @@ import { NgClass } from '@angular/common';
     .page-link:hover:not(:disabled) {
       transform: translateY(-1px);
       border-color: var(--primary) !important;
-      box-shadow: 0 0 12px rgba(123, 208, 255, 0.18);
+      box-shadow: 0 0 12px color-mix(in srgb, var(--primary) 18%, transparent);
       color: var(--on-surface) !important;
     }
 
@@ -84,7 +84,7 @@ import { NgClass } from '@angular/common';
       background: var(--primary-container) !important;
       border-color: var(--primary) !important;
       color: var(--on-primary-container) !important;
-      box-shadow: 0 0 14px rgba(123, 208, 255, 0.24);
+      box-shadow: 0 0 14px color-mix(in srgb, var(--primary) 24%, transparent);
     }
 
     .page-item.disabled .page-link,

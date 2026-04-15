@@ -13,6 +13,8 @@ import {
 } from '../../../core/models/models';
 import { SeverityBadgeComponent } from '../../../shared/components/severity-badge/severity-badge.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
+import { CompactNumberPipe } from '../../../shared/pipes/compact-number.pipe';
 
 const SESSION_KEY = 'bl_breach_filters';
 type SearchSuggestion = { title: string; organisation: string };
@@ -20,7 +22,7 @@ type SearchSuggestion = { title: string; organisation: string };
 @Component({
   selector: 'app-breach-list',
   standalone: true,
-  imports: [RouterLink, FormsModule, NgClass, SlicePipe, DecimalPipe, TitleCasePipe, SeverityBadgeComponent, PaginationComponent, CommonModule],
+  imports: [RouterLink, FormsModule, NgClass, SlicePipe, DecimalPipe, TitleCasePipe, SeverityBadgeComponent, PaginationComponent, CommonModule, TimeAgoPipe, CompactNumberPipe],
   template: `
     <div class="d-flex justify-content-between align-items-end mb-4">
       <div>
@@ -269,8 +271,8 @@ type SearchSuggestion = { title: string; organisation: string };
                       </div>
                     </div>
                   </td>
-                  <td class="font-mono text-on-surface-variant small">{{ breach.affected_records_count | number }}</td>
-                  <td class="text-on-surface-variant small">{{ breach.breach_date | slice:0:10 }}</td>
+                  <td class="font-mono text-on-surface-variant small">{{ breach.affected_records_count | compactNumber }}</td>
+                  <td class="text-on-surface-variant small" [title]="breach.breach_date | slice:0:10">{{ breach.breach_date | timeAgo }}</td>
                   <td>
                     <div class="d-flex align-items-center gap-2">
                       <span class="p-1 rounded-circle bg-primary opacity-75" [class.animate-pulse]="breach.status === 'investigating'"></span>
@@ -306,21 +308,21 @@ type SearchSuggestion = { title: string; organisation: string };
   styles: [`
     .text-xs-caps { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; }
     .custom-terminal-table { background-color: transparent !important; }
-    .custom-terminal-table tr { border-bottom: 1px solid rgba(62, 72, 80, 0.2); transition: all 0.2s; }
-    .custom-terminal-table tr:hover { background-color: rgba(123, 208, 255, 0.03) !important; }
+    .custom-terminal-table tr { border-bottom: 1px solid var(--outline-variant); transition: all 0.2s; }
+    .custom-terminal-table tr:hover { background-color: color-mix(in srgb, var(--primary) 3%, transparent) !important; }
     .severity-bar { width: 4px; height: 16px; border-radius: 2px; }
 
-    .bg-critical { background-color: var(--tertiary-container) !important; box-shadow: 0 0 10px rgba(248, 113, 113, 0.4); }
-    .bg-high { background-color: #fb923c !important; }
-    .bg-medium { background-color: #fbbf24 !important; }
-    .bg-low { background-color: var(--primary) !important; }
-    .bg-informational { background-color: var(--on-surface-variant) !important; }
+    .bg-critical { background-color: var(--severity-critical) !important; box-shadow: 0 0 10px color-mix(in srgb, var(--severity-critical) 40%, transparent); }
+    .bg-high { background-color: var(--severity-high) !important; }
+    .bg-medium { background-color: var(--severity-medium) !important; }
+    .bg-low { background-color: var(--severity-low) !important; }
+    .bg-informational { background-color: var(--severity-info) !important; }
 
-    .text-critical { color: var(--tertiary-container) !important; }
-    .text-high { color: #fb923c !important; }
-    .text-medium { color: #fbbf24 !important; }
-    .text-low { color: var(--primary) !important; }
-    .text-informational { color: var(--on-surface-variant) !important; }
+    .text-critical { color: var(--severity-critical) !important; }
+    .text-high { color: var(--severity-high) !important; }
+    .text-medium { color: var(--severity-medium) !important; }
+    .text-low { color: var(--severity-low) !important; }
+    .text-informational { color: var(--severity-info) !important; }
     .suggestion-popover { max-height: 260px; overflow-y: auto; }
 
     .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }

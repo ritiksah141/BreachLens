@@ -132,15 +132,15 @@ import { AuthService } from '../../../core/services/auth.service';
   styles: [`
     .text-xs-caps { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; }
     .profile-shell { padding-bottom: 5rem; }
-    .glow-primary { box-shadow: 0 0 20px rgba(0, 167, 224, 0.15); }
-    .glow-error { box-shadow: 0 0 20px rgba(248, 113, 113, 0.15); }
+    .glow-primary { box-shadow: 0 0 20px color-mix(in srgb, var(--primary) 15%, transparent); }
+    .glow-error { box-shadow: 0 0 20px color-mix(in srgb, var(--error) 15%, transparent); }
 
     .status-dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: #4ade80;
-      box-shadow: 0 0 12px rgba(74, 222, 128, 0.65);
+      background: var(--success);
+      box-shadow: 0 0 12px color-mix(in srgb, var(--success) 65%, transparent);
       animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
 
@@ -156,12 +156,12 @@ import { AuthService } from '../../../core/services/auth.service';
       width: 120px;
       height: 120px;
       border-radius: 50%;
-      border: 1px solid rgba(123, 208, 255, 0.35);
-      background: radial-gradient(circle at 30% 30%, rgba(123, 208, 255, 0.25), rgba(123, 208, 255, 0.08));
+      border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
+      background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--primary) 25%, transparent), color-mix(in srgb, var(--primary) 8%, transparent));
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 0 30px rgba(123, 208, 255, 0.18);
+      box-shadow: 0 0 30px color-mix(in srgb, var(--primary) 18%, transparent);
     }
 
     .identity-initial {
@@ -177,7 +177,7 @@ import { AuthService } from '../../../core/services/auth.service';
       word-break: break-word;
     }
 
-    .role-admin { color: var(--tertiary-container) !important; border-color: var(--tertiary-container) !important; }
+    .role-admin { color: var(--error) !important; border-color: var(--error) !important; }
     .role-analyst { color: var(--primary) !important; border-color: var(--primary) !important; }
     .role-guest { color: var(--on-surface-variant) !important; border-color: var(--on-surface-variant) !important; }
 

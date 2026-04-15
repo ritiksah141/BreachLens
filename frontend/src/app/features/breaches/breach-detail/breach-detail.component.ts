@@ -1,7 +1,7 @@
 import {
-  Component, OnInit, OnDestroy, inject, Input, AfterViewInit, ElementRef, ViewChild
+  Component, OnInit, OnDestroy, inject, Input, AfterViewInit, ElementRef, ViewChild, effect
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { NgClass, DatePipe, DecimalPipe, TitleCasePipe, CommonModule, PercentPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BreachService } from '../../../core/services/breach.service';
@@ -10,19 +10,24 @@ import { ThemeService } from '../../../core/services/theme.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { Breach, TimelineEvent, RemediationAction, MonitoringAlert, AffectedAccount } from '../../../core/models/models';
 import { SeverityBadgeComponent } from '../../../shared/components/severity-badge/severity-badge.component';
+import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
+import { RiskLevelPipe } from '../../../shared/pipes/risk-level.pipe';
+import { CompactNumberPipe } from '../../../shared/pipes/compact-number.pipe';
+import { CopyClipboardDirective } from '../../../shared/directives/copy-clipboard.directive';
+import { RequireRoleDirective } from '../../../shared/directives/require-role.directive';
 
 @Component({
   selector: 'app-breach-detail',
   standalone: true,
-  imports: [RouterLink, NgClass, DatePipe, DecimalPipe, TitleCasePipe, SeverityBadgeComponent, CommonModule, FormsModule, PercentPipe],
+  imports: [RouterLink, NgClass, DatePipe, DecimalPipe, TitleCasePipe, SeverityBadgeComponent, CommonModule, FormsModule, PercentPipe, TimeAgoPipe, RiskLevelPipe, CompactNumberPipe, CopyClipboardDirective, RequireRoleDirective],
   template: `
     <div class="mb-4 d-flex justify-content-between align-items-center mt-2">
       <a routerLink="/breaches" class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-3 shadow-sm d-flex align-items-center gap-2">
         <span class="material-symbols-outlined fs-6">arrow_back</span> Back to breach log
       </a>
       @if (auth.isAnalyst()) {
-        <div class="badge py-2 px-3 glass-panel border border-tertiary border-opacity-25 text-tertiary text-xs-caps glow-error">
-          <span class="p-1 bg-tertiary rounded-circle animate-pulse me-2"></span> Analyst access enabled
+        <div class="badge py-2 px-3 glass-panel border border-error border-opacity-25 text-error text-xs-caps glow-error">
+          <span class="p-1 bg-error rounded-circle animate-pulse me-2"></span> Analyst access enabled
         </div>
       }
     </div>
@@ -56,11 +61,11 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
                   <span class="badge py-2 px-3 glass-panel border border-outline-variant border-opacity-25 text-on-surface-variant text-xs-caps">{{ breach.status | uppercase }}</span>
                   <span class="badge py-2 px-3 glass-panel border border-outline-variant border-opacity-25 text-on-surface-variant text-xs-caps">{{ breach.industry | uppercase }}</span>
                 </div>
-                @if (auth.isAnalyst()) {
+                <ng-container *appRequireRole="['analyst', 'admin']">
                   <a [routerLink]="['/admin']" [queryParams]="{edit: breach._id}" class="btn btn-primary text-xs-caps py-2 px-4 shadow-sm">
                     Edit record
                   </a>
-                }
+                </ng-container>
               </div>
               <h2 class="font-headline fw-extrabold text-on-surface tracking-tight mb-2 fs-1">{{ breach.title }}</h2>
               <p class="text-on-surface-variant lead mb-5" style="max-width: 800px;">{{ breach.description }}</p>
@@ -69,14 +74,15 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
                 <div class="col-6 col-md-3">
                   <div class="p-3 glass-panel rounded-3 border border-outline-variant border-opacity-10 text-center h-100">
                     <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">Records compromised</div>
-                    <div class="fs-4 fw-bold text-on-surface font-headline">{{ breach.affected_records_count | number }}</div>
+                    <div class="fs-4 fw-bold text-on-surface font-headline" [title]="breach.affected_records_count | number">{{ breach.affected_records_count | compactNumber }}</div>
                   </div>
                 </div>
                 <div class="col-6 col-md-3">
                   <div class="p-3 glass-panel rounded-3 border border-outline-variant border-opacity-10 text-center h-100">
                     <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">Risk score</div>
-                    <div class="fs-4 fw-bold font-headline" [ngClass]="riskColor(breach.risk_score)">
+                    <div class="fs-4 fw-bold font-headline" [ngClass]="breach.risk_score | riskLevel:'class'">
                       {{ (breach.risk_score ?? 0) | number:'1.1-1' }}
+                      <span class="d-block text-xs-caps mt-1" style="font-size: 7px;">{{ breach.risk_score | riskLevel }}</span>
                     </div>
                   </div>
                 </div>
@@ -125,7 +131,7 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
           <div class="card border-0 bg-surface-container-low shadow-lg mb-4 overflow-hidden">
             <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center bg-surface-container">
               <span class="text-xs-caps text-on-surface">Intelligence parameters</span>
-              <span class="text-xs-caps text-on-surface-variant" style="font-size: 8px;">ID: {{ (breach._id).slice(-12) | uppercase }}</span>
+              <span class="text-xs-caps text-on-surface-variant" style="font-size: 8px; cursor: pointer;" [appCopyClipboard]="breach._id" title="Click to copy full ID">ID: {{ (breach._id).slice(-12) | uppercase }}</span>
             </div>
             <div class="card-body p-4">
               <div class="d-flex flex-column gap-3">
@@ -450,8 +456,8 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
   `,
   styles: [`
     .text-xs-caps { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; }
-    .glow-primary { box-shadow: 0 0 20px rgba(0, 167, 224, 0.15); }
-    .glow-error { box-shadow: 0 0 20px rgba(248, 113, 113, 0.15); }
+    .glow-primary { box-shadow: 0 0 20px color-mix(in srgb, var(--primary) 15%, transparent); }
+    .glow-error { box-shadow: 0 0 20px color-mix(in srgb, var(--error) 15%, transparent); }
     .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
     .timeline-node {
       position: absolute;
@@ -462,9 +468,19 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
       border-radius: 50%;
       background: var(--primary);
       border: 3px solid var(--surface-container-low);
-      box-shadow: 0 0 0 1px rgba(123, 208, 255, 0.35);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 35%, transparent);
     }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+
+    ::ng-deep .bl-popup .leaflet-popup-content-wrapper {
+      background: var(--surface-container-high) !important;
+      color: var(--on-surface) !important;
+      border: 1px solid var(--outline-variant) !important;
+      border-radius: 8px !important;
+      padding: 0 !important;
+    }
+    ::ng-deep .bl-popup .leaflet-popup-tip { background: var(--surface-container-high) !important; }
+    ::ng-deep .bl-popup .leaflet-popup-content { margin: 12px !important; }
   `],
 })
 export class BreachDetailComponent implements OnInit, OnDestroy {
@@ -474,7 +490,16 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
   private breachService = inject(BreachService);
   private themeService = inject(ThemeService);
   private notifications = inject(NotificationService);
+  private route = inject(ActivatedRoute);
   auth = inject(AuthService);
+
+  private map: any;
+  private tileLayer: any;
+
+  private _themeWatcher = effect(() => {
+    this.themeService.theme();
+    if (this.map) this.updateTileLayer();
+  });
 
   breach: Breach | null = null;
   timeline: TimelineEvent[] = [];
@@ -504,8 +529,6 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
   editingRemediationId = '';
   editAction: Partial<RemediationAction> = {};
 
-  private map: any;
-
   get detectionLag(): number {
     if (!this.breach?.breach_date || !this.breach?.discovered_date) return 0;
     const start = new Date(this.breach.breach_date);
@@ -514,7 +537,24 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.loadBreach();
+    const resolved = this.route.snapshot.data['breach'];
+    if (resolved) {
+      this.applyBreach(resolved);
+    } else {
+      this.loadBreach();
+    }
+  }
+
+  private applyBreach(data: any): void {
+    this.breach = data;
+    this.timeline = this.normalizeTimeline(this.breach?.timeline);
+    this.remediation = Array.isArray(this.breach?.remediation) ? this.breach!.remediation! : [];
+    this.alerts = this.normalizeAlerts((this.breach as any)?.monitoring_alerts);
+    this.loading = false;
+    if (this.auth.isAuthenticated()) {
+      this.loadSubDocuments();
+    }
+    setTimeout(() => this.initMap(), 100);
   }
 
   ngOnDestroy(): void {
@@ -839,14 +879,7 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
 
     this.map = L.map(this.mapContainer.nativeElement).setView([lat, lng], 10);
 
-    const isDark = this.themeService.theme() === 'dark';
-    const tileUrl = isDark
-      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-
-    L.tileLayer(tileUrl, {
-      attribution: '© OpenStreetMap contributors',
-    }).addTo(this.map);
+    this.updateTileLayer();
 
     const color = this.severityMapColor(this.breach.severity);
     const icon = L.divIcon({
@@ -867,6 +900,21 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
       .openPopup();
   }
 
+  private async updateTileLayer() {
+    const L = await import('leaflet' as any);
+    if (this.tileLayer) this.map.removeLayer(this.tileLayer);
+
+    const isDark = this.themeService.theme() === 'dark';
+    const url = isDark
+      ? 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png'
+      : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+    this.tileLayer = L.tileLayer(url, {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' + (isDark ? ' &copy; <a href="https://stadiamaps.com/">Stadia Maps</a>' : ''),
+      maxZoom: 20
+    }).addTo(this.map);
+  }
+
   riskColor(score?: number): string {
     if (!score) return 'text-on-surface-variant opacity-50';
     if (score >= 8) return 'text-error';
@@ -876,8 +924,14 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
   }
 
   severityMapColor(s?: string): string {
-    const map: any = { critical: '#ffb3b0', high: '#fb923c', medium: '#fbbf24', low: '#7bd0ff' };
-    return map[s?.toLowerCase() || ''] || '#88929b';
+    const cs = getComputedStyle(document.documentElement);
+    const map: any = {
+      critical: cs.getPropertyValue('--severity-critical').trim(),
+      high: cs.getPropertyValue('--severity-high').trim(),
+      medium: cs.getPropertyValue('--severity-medium').trim(),
+      low: cs.getPropertyValue('--severity-low').trim()
+    };
+    return map[s?.toLowerCase() || ''] || cs.getPropertyValue('--severity-info').trim();
   }
 
   getAttackVectorLabel(breach: Breach | null): string {

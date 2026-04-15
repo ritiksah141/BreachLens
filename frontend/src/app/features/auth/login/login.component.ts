@@ -152,7 +152,7 @@ import { NotificationService } from '../../../core/services/notification.service
     .text-xs-caps { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; }
     .text-error { color: var(--error) !important; }
     .border-error { border-color: var(--error) !important; }
-    .glow-primary { box-shadow: 0 0 40px rgba(0, 167, 224, 0.15), 0 0 10px rgba(123, 208, 255, 0.05); }
+    .glow-primary { box-shadow: 0 0 40px color-mix(in srgb, var(--primary) 15%, transparent), 0 0 10px color-mix(in srgb, var(--primary) 5%, transparent); }
     .pwd-toggle { cursor: pointer; }
     .action-pill-btn {
       border-radius: 999px;
@@ -183,7 +183,7 @@ import { NotificationService } from '../../../core/services/notification.service
       gap: 5px;
       border: 1px solid var(--outline-variant);
       background: linear-gradient(145deg, var(--surface-container-high), var(--surface-container-low));
-      box-shadow: 0 0 18px rgba(123, 208, 255, 0.12);
+      box-shadow: 0 0 18px color-mix(in srgb, var(--primary) 12%, transparent);
       position: relative;
       overflow: hidden;
     }
@@ -216,7 +216,7 @@ import { NotificationService } from '../../../core/services/notification.service
       color: var(--primary);
       border: 1px solid var(--outline-variant);
       background: var(--surface-container-lowest);
-      text-shadow: 0 0 8px rgba(123, 208, 255, 0.2);
+      text-shadow: 0 0 8px color-mix(in srgb, var(--primary) 20%, transparent);
     }
     .login-brand-chip-icon {
       font-size: 13px;
@@ -226,7 +226,7 @@ import { NotificationService } from '../../../core/services/notification.service
     .login-brand-chip-a { transform: rotate(-8deg) translateY(-1px); }
     .login-brand-chip-b { transform: rotate(8deg) translateY(1px); }
     :host-context([data-theme='light']) .login-brand-mark {
-      box-shadow: 0 0 12px rgba(14, 165, 233, 0.1);
+      box-shadow: 0 0 12px color-mix(in srgb, var(--primary) 10%, transparent);
     }
     :host-context([data-theme='light']) .login-brand-mark::before {
       opacity: 0.32;

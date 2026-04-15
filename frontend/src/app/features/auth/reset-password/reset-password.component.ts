@@ -32,7 +32,7 @@ function isStrongPassword(password: string): boolean {
           </div>
 
           @if (devToken) {
-            <div class="alert bg-tertiary-container bg-opacity-10 border border-outline-variant py-2 small mb-3">
+            <div class="alert bg-surface-container-high border border-outline-variant py-2 small mb-3">
               <div class="text-xs-caps mb-1">Development token</div>
               <code class="text-on-surface">{{ maskDevToken(devToken) }}</code>
             </div>
