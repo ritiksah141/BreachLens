@@ -86,7 +86,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
                       [disabled]="user._id === auth.currentUser()?._id"
                       style="font-size: 8px;"
                     >
-                      {{ user.is_active ? 'TERMINATE_ACCESS' : 'RESTORE_ACCESS' }}
+                      {{ user.is_active ? 'DEACTIVATE' : 'ACTIVATE' }}
                     </button>
                   </td>
                 </tr>

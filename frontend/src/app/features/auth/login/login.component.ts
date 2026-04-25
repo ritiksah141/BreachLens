@@ -34,7 +34,7 @@ import { NotificationService } from '../../../core/services/notification.service
 
           <header class="mb-4">
             <h2 class="font-headline fs-4 fw-bold text-on-surface mb-2">Welcome Back</h2>
-            <p class="text-on-surface-variant small mb-0">Secure authorization required for access.</p>
+            <p class="text-on-surface-variant small mb-0">Please login to access your account.</p>
           </header>
 
           @if (serverError) {

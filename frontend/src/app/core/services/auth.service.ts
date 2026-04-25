@@ -67,7 +67,12 @@ export class AuthService {
             this._token.set(token);
             this._lastSessionExpiryNoticeAt = 0;
             // Fetch user profile after login
-            this.fetchProfile().subscribe();
+            this.fetchProfile().subscribe({
+              next: (u) => {
+                this.notifications.show(`Welcome back, ${u.data.username}.`, 'success', 3000);
+                this.router.navigate(['/dashboard']);
+              }
+            });
           }
         }),
         catchError((err) => throwError(() => err))
@@ -77,7 +82,10 @@ export class AuthService {
   register(payload: RegisterPayload): Observable<ApiResponse<User>> {
     return this.http
       .post<ApiResponse<User>>(`${this.apiUrl}/auth/register`, payload)
-      .pipe(catchError((err) => throwError(() => err)));
+      .pipe(
+        tap(() => this.notifications.show('Your account has been created.', 'success', 4000)),
+        catchError((err) => throwError(() => err))
+      );
   }
 
   requestPasswordReset(email: string): Observable<ApiResponse<{ message: string; reset_token?: string }>> {
@@ -99,26 +107,34 @@ export class AuthService {
   logout(): void {
     const token = this._token();
     if (token) {
-      // Blacklist the token on the server
       this.http.post(`${this.apiUrl}/auth/logout`, {}).subscribe();
     }
     this._clearSession();
-    this.router.navigate(['/']);
+    this.notifications.show('You have been logged out.', 'info', 3000);
+    this.router.navigate(['/dashboard']);
   }
 
   handleSessionExpired(): void {
     const hadSession = Boolean(this._token() || this._user());
-    this._clearSession();
-
     if (!hadSession) return;
 
+    this._clearSession();
+
     const now = Date.now();
-    if (now - this._lastSessionExpiryNoticeAt > 3000) {
+    if (now - this._lastSessionExpiryNoticeAt > 5000) {
       this._lastSessionExpiryNoticeAt = now;
-      this.notifications.show('Your session has expired. Please log in again.', 'warning', 5000);
+      this.notifications.show(
+        'SESSION EXPIRED. LOGIN TO CONTINUE?',
+        'warning',
+        0,
+        {
+          label: 'LOGIN',
+          callback: () => this.router.navigate(['/auth/login'])
+        }
+      );
     }
 
-    this.router.navigate(['/auth/login'], { queryParams: { reason: 'expired' } });
+    this.router.navigate(['/dashboard']);
   }
 
   fetchProfile(): Observable<ApiResponse<User>> {

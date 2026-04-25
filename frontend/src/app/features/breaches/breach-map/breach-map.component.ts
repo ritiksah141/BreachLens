@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, OnDestroy, inject, ElementRef, ViewChild, effect } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, inject, ElementRef, ViewChild, effect, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { BreachService } from '../../../core/services/breach.service';
@@ -11,71 +11,45 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
   standalone: true,
   imports: [CommonModule, SeverityBadgeComponent],
   template: `
-    <div class="d-flex justify-content-between align-items-end mb-4 mt-2">
-      <div>
-        <h2 class="font-headline fw-extrabold text-on-surface tracking-tight page-title">Global Incursion Map</h2>
-        <p class="page-subtitle mb-0">Geospatial threat visualization</p>
-      </div>
-      <div class="d-flex gap-2 align-items-center">
-        <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-3" (click)="useMyLocation()" [disabled]="geoLoading">
-          @if (geoLoading) { <span class="spinner-border spinner-border-sm me-1"></span> }
-          <span class="material-symbols-outlined fs-6 me-1">my_location</span> Near me
+    <div class="map-wrapper" [style.height]="height">
+      <div #mapContainer id="global-map" style="height: 100%; width: 100%; border-radius: 8px; overflow: hidden;"></div>
+
+      <!-- Map Controls Overlay -->
+      <div class="position-absolute top-0 end-0 m-2 z-3 d-flex flex-column gap-2" style="z-index: 1001 !important;">
+        <button class="btn btn-dark bg-surface-container-highest border-0 p-1 shadow-sm rounded-circle"
+                (click)="useMyLocation()" [disabled]="geoLoading" title="Near Me">
+          <span class="material-symbols-outlined fs-6" *ngIf="!geoLoading">my_location</span>
+          <span class="spinner-border spinner-border-sm" *ngIf="geoLoading"></span>
         </button>
-        <select #sevSelect class="form-select bg-surface-container border-0 text-xs-caps py-2"
-                style="width: auto; font-size: 10px;" (change)="filterBySeverity(sevSelect.value)">
-          <option value="">All severities</option>
-          <option value="critical">CRITICAL</option>
-          <option value="high">HIGH</option>
-          <option value="medium">MEDIUM</option>
-          <option value="low">LOW</option>
-        </select>
-        <button class="btn btn-primary text-xs-caps py-2 px-3" (click)="loadGeoJson()">
+        <button class="btn btn-dark bg-surface-container-highest border-0 p-1 shadow-sm rounded-circle"
+                (click)="loadGeoJson()" title="Refresh">
           <span class="material-symbols-outlined fs-6">refresh</span>
         </button>
       </div>
-    </div>
 
-    @if (geoError) {
-      <div class="alert bg-error-container bg-opacity-10 border-error text-error py-2 small mb-3 animate__animated animate__shakeX text-xs-caps">
-        <span class="material-symbols-outlined fs-6 me-2">warning</span> {{ geoError }}
-      </div>
-    }
-
-    <div class="card border-0 bg-surface-container-low position-relative overflow-hidden shadow-lg" style="height: calc(100vh - 220px);">
-      <!-- Subtle Overlay for high-end look -->
-      <div class="position-absolute inset-0 pointer-events-none z-1 opacity-5"
-           style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 30px 30px;"></div>
-
-      <div #mapContainer id="global-map" style="height: 100%; width: 100%;"></div>
-
-      <!-- Bottom Legend Micro-Panel -->
-      <div class="position-absolute bottom-0 start-0 m-3 z-3 glass-panel p-2 rounded-2 border border-outline-variant border-opacity-10">
-        <div class="d-flex gap-3 px-2">
-          <div class="d-flex align-items-center gap-2">
-            <span class="p-1 rounded-circle bg-severity-critical shadow-critical"></span>
-            <span class="text-xs-caps text-on-surface" style="font-size: 8px;">Critical</span>
+      <!-- Bottom Legend -->
+      <div class="position-absolute bottom-0 start-0 m-2 glass-panel p-1 rounded-2 border border-outline-variant border-opacity-20 shadow-lg" style="z-index: 1001 !important;">
+        <div class="d-flex gap-2 px-1 align-items-center">
+          <div class="d-flex align-items-center gap-1">
+            <span class="p-1 rounded-circle bg-severity-critical" style="box-shadow: 0 0 5px var(--severity-critical)"></span>
+            <span class="text-xs-caps text-on-surface" style="font-size: 7px; font-weight: 800;">CRIT</span>
           </div>
-          <div class="d-flex align-items-center gap-2">
-            <span class="p-1 rounded-circle bg-severity-high"></span>
-            <span class="text-xs-caps text-on-surface" style="font-size: 8px;">High</span>
+          <div class="d-flex align-items-center gap-1">
+            <span class="p-1 rounded-circle bg-severity-high" style="box-shadow: 0 0 5px var(--severity-high)"></span>
+            <span class="text-xs-caps text-on-surface" style="font-size: 7px; font-weight: 800;">HIGH</span>
           </div>
-          <div class="d-flex align-items-center gap-2">
-            <span class="p-1 rounded-circle bg-severity-medium"></span>
-            <span class="text-xs-caps text-on-surface" style="font-size: 8px;">Medium</span>
-          </div>
-          <div class="d-flex align-items-center gap-2">
-            <span class="p-1 rounded-circle bg-severity-low shadow-low"></span>
-            <span class="text-xs-caps text-on-surface" style="font-size: 8px;">Low</span>
+          <div class="d-flex align-items-center gap-1">
+            <span class="p-1 rounded-circle bg-severity-low" style="box-shadow: 0 0 5px var(--severity-low)"></span>
+            <span class="text-xs-caps text-on-surface" style="font-size: 7px; font-weight: 800;">LOW</span>
           </div>
         </div>
       </div>
     </div>
   `,
   styles: [`
-    .text-xs-caps { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; }
+    .map-wrapper { position: relative; width: 100%; border-radius: 8px; background: var(--surface-container-low); }
+    .text-xs-caps { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
     #global-map { background: var(--background) !important; }
-    .shadow-critical { box-shadow: 0 0 10px color-mix(in srgb, var(--severity-critical) 50%, transparent); }
-    .shadow-low { box-shadow: 0 0 10px color-mix(in srgb, var(--severity-low) 50%, transparent); }
 
     ::ng-deep .bl-popup .leaflet-popup-content-wrapper {
       background: var(--surface-container-high) !important;
@@ -85,11 +59,12 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
       padding: 0 !important;
     }
     ::ng-deep .bl-popup .leaflet-popup-tip { background: var(--surface-container-high) !important; }
-    ::ng-deep .bl-popup .leaflet-popup-content { margin: 12px !important; }
+    ::ng-deep .bl-popup .leaflet-popup-content { margin: 10px !important; }
   `]
 })
 export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('mapContainer') mapContainer!: ElementRef;
+  @Input() height = '100%';
 
   private breachService = inject(BreachService);
   private themeService = inject(ThemeService);
@@ -120,9 +95,13 @@ export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
   private async initMap() {
     const L = await import('leaflet' as any);
 
-    this.map = L.map(this.mapContainer.nativeElement).setView([20, 0], 2);
-    this.updateTileLayer();
+    this.map = L.map(this.mapContainer.nativeElement, {
+      zoomControl: false // Disable default to reposition it
+    }).setView([20, 0], 2);
 
+    L.control.zoom({ position: 'bottomright' }).addTo(this.map);
+
+    this.updateTileLayer();
     this.loadGeoJson();
   }
 
@@ -133,10 +112,10 @@ export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
     const isDark = this.themeService.theme() === 'dark';
     const url = isDark
       ? 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png'
-      : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+      : 'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png';
 
     this.tileLayer = L.tileLayer(url, {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' + (isDark ? ' &copy; <a href="https://stadiamaps.com/">Stadia Maps</a>' : ''),
+      attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a>',
       maxZoom: 20
     }).addTo(this.map);
   }
@@ -147,48 +126,35 @@ export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
         this.renderMarkers(res.data);
       },
       error: (err) => {
-        this.geoError = err?.error?.message ?? 'Failed to load map telemetry.';
-        this.notifications.show(this.geoError, 'error', 4500);
+        this.notifications.show('Failed to load map data.', 'error');
       }
     });
   }
 
-  filterBySeverity(severity: string) {
-    this.loadGeoJson(severity);
-  }
-
   useMyLocation() {
     if (!navigator.geolocation) {
-      this.geoError = 'Geolocation not supported.';
-      this.notifications.show(this.geoError, 'warning', 3200);
+      this.notifications.show('Geolocation not supported.', 'warning');
       return;
     }
-
     this.geoLoading = true;
-    this.geoError = '';
-
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { longitude, latitude } = pos.coords;
         this.map.setView([latitude, longitude], 10);
-
         this.breachService.getNear(longitude, latitude).subscribe({
           next: (res) => {
             this.renderMarkers(res.data);
             this.geoLoading = false;
-            this.notifications.show('Loaded nearby breaches.', 'success', 2500);
           },
-          error: (err) => {
-            this.geoError = err?.error?.message ?? 'Failed to load local breaches.';
+          error: () => {
             this.geoLoading = false;
-            this.notifications.show(this.geoError, 'error', 4500);
+            this.notifications.show('Failed to load local breaches.', 'error');
           }
         });
       },
       () => {
-        this.geoError = 'Location access denied or unavailable.';
         this.geoLoading = false;
-        this.notifications.show(this.geoError, 'warning', 3500);
+        this.notifications.show('Location access denied.', 'warning');
       }
     );
   }
@@ -210,7 +176,7 @@ export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
       pointToLayer: (feature: any, latlng: any) => {
         const sev = feature.properties.severity?.toLowerCase() || 'medium';
         return L.circleMarker(latlng, {
-          radius: Math.max(6, Math.min(15, (feature.properties.risk_score || 5) * 1.5)),
+          radius: Math.max(6, Math.min(12, (feature.properties.risk_score || 5) * 1.2)),
           fillColor: colorMap[sev],
           color: '#fff',
           weight: 1,
@@ -222,13 +188,13 @@ export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
         const props = feature.properties;
         layer.bindPopup(`
           <div class="text-on-surface">
-            <div class="text-xs-caps fw-bold mb-1" style="font-size: 10px;">${props.title}</div>
-            <div class="small mb-3 d-flex align-items-center gap-2">
-              <span class="badge py-1 px-2 border border-outline-variant border-opacity-25 text-xs-caps" style="font-size: 7px; background: var(--surface-container-low); color: var(--on-surface)">${props.severity?.toUpperCase()}</span>
-              <span class="text-on-surface-variant fw-bold" style="font-size: 8px; text-transform: uppercase;">${props.industry}</span>
-            </div>
-            <button class="btn btn-primary w-100 py-1 text-xs-caps" style="font-size: 8px;" id="popup-btn-${props.id}">DECRYPT_DATA</button>
+          <div class="text-xs-caps fw-bold mb-1" style="font-size: 10px;">${props.title}</div>
+          <div class="small mb-2 d-flex align-items-center gap-2">
+            <span class="badge py-1 px-2 border border-outline-variant border-opacity-25 text-xs-caps" style="font-size: 7px; background: var(--surface-container-low); color: var(--on-surface)">${props.severity?.toUpperCase()}</span>
           </div>
+          <button class="btn btn-primary w-100 py-1 text-xs-caps" style="font-size: 8px;" id="popup-btn-${props.id}">DETAILS</button>
+          </div>
+
         `, { className: 'bl-popup' });
 
         layer.on('popupopen', () => {

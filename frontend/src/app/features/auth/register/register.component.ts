@@ -42,7 +42,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
             </span>
           </div>
           <h1 class="font-headline fw-extrabold text-on-surface tracking-tighter mb-1">BreachLens</h1>
-          <p class="text-xs-caps text-on-surface-variant">Operator Onboarding</p>
+          <p class="text-xs-caps text-on-surface-variant">Sign Up</p>
         </div>
 
         <div class="glass-panel p-4 p-md-5 rounded-4 shadow-lg border border-outline-variant border-opacity-10 position-relative">
@@ -52,7 +52,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
 
           <header class="mb-4">
             <h2 class="font-headline fs-4 fw-bold text-on-surface mb-2">Create Account</h2>
-            <p class="text-on-surface-variant small mb-0">Set up access as a guest or analyst.</p>
+            <p class="text-on-surface-variant small mb-0">Create an account to access more features.</p>
           </header>
 
           @if (serverError) {
@@ -90,7 +90,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
                 <div class="text-error mt-1" style="font-size: 10px;">MINIMUM 3 CHARACTERS</div>
               }
               @if (f['username'].errors?.['pattern'] && f['username'].touched) {
-                <div class="text-error mt-1" style="font-size: 10px;">LETTERS, NUMBERS AND UNDERSCORE ONLY</div>
+                <div class="text-error mt-1" style="font-size: 10px;">LETTERS AND NUMBERS ONLY</div>
               }
             </div>
 
