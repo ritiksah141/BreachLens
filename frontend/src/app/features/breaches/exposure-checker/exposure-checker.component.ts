@@ -26,16 +26,36 @@ import { forkJoin } from 'rxjs';
 
       <!-- Unified Floating Pill Search -->
       <div class="max-width-800 mx-auto mb-5">
+        <!-- Target Mode Toggle -->
+        <div class="d-flex justify-content-center gap-2 mb-3 animate__animated animate__fadeIn">
+          <button
+            class="btn btn-sm text-xs-caps px-3 py-2 rounded-pill transition-all"
+            [ngClass]="searchMode === 'email' ? 'btn-primary text-on-primary shadow-sm' : 'glass-panel border-outline-variant text-on-surface-variant'"
+            (click)="setSearchMode('email')">
+            <span class="material-symbols-outlined fs-6 align-middle me-1">person</span>
+            IDENTITY
+          </button>
+          <button
+            class="btn btn-sm text-xs-caps px-3 py-2 rounded-pill transition-all"
+            [ngClass]="searchMode === 'domain' ? 'btn-primary text-on-primary shadow-sm' : 'glass-panel border-outline-variant text-on-surface-variant'"
+            (click)="setSearchMode('domain')">
+            <span class="material-symbols-outlined fs-6 align-middle me-1">corporate_fare</span>
+            DOMAIN AUDIT
+          </button>
+        </div>
+
         <div class="search-pill-outer animate__animated animate__fadeInDown" [class.is-loading]="loading">
           <div class="d-flex align-items-center w-100 h-100">
-            <span class="material-symbols-outlined text-primary ms-4 me-2 fs-4">search</span>
+            <span class="material-symbols-outlined text-primary ms-4 me-2 fs-4">
+              {{ searchMode === 'email' ? 'search' : 'hub' }}
+            </span>
             <input
               #searchInput
               type="text"
               [(ngModel)]="query"
               (keyup.enter)="performCheck()"
               class="pill-input flex-grow-1 text-on-surface"
-              placeholder="ENTER EMAIL, USERNAME, OR DOMAIN..."
+              [placeholder]="searchMode === 'email' ? 'ENTER EMAIL OR USERNAME...' : 'ENTER CORPORATE DOMAIN (e.g. company.com)...'"
               autocomplete="off"
             >
             <div class="pe-2">
@@ -117,7 +137,9 @@ import { forkJoin } from 'rxjs';
             <div class="glass-panel p-4 shadow-lg h-100 d-flex flex-column justify-content-between border-top border-4"
                  [ngClass]="results.exposed ? 'border-error' : 'border-success'">
               <div>
-                <h2 class="text-xs-caps text-on-surface-variant border-bottom border-outline-variant border-opacity-10 pb-2 mb-4">THREAT STATUS</h2>
+                <h2 class="text-xs-caps text-on-surface-variant border-bottom border-outline-variant border-opacity-10 pb-2 mb-4">
+                  {{ searchMode === 'email' ? 'IDENTITY THREAT STATUS' : 'DOMAIN RISK PROFILE' }}
+                </h2>
                 <div class="p-4 rounded-3 d-flex align-items-center gap-4 shadow-inner bg-surface-container-high border border-outline-variant border-opacity-10">
                   <div class="status-orb" [ngClass]="results.exposed ? 'bg-error animate-pulse' : 'bg-success'"></div>
                   <div>
@@ -316,9 +338,17 @@ export class ExposureCheckerComponent implements OnInit {
   errorMessage = '';
   summary: AnalyticsSummary | null = null;
   criticalCount = 0;
+  searchMode: 'email' | 'domain' = 'email';
 
   ngOnInit(): void {
     this.loadData();
+  }
+
+  setSearchMode(mode: 'email' | 'domain'): void {
+    this.searchMode = mode;
+    this.results = null;
+    this.errorMessage = '';
+    this.focusSearch();
   }
 
   loadData(): void {
@@ -338,7 +368,7 @@ export class ExposureCheckerComponent implements OnInit {
   }
 
   focusSearch(): void {
-    this.searchInput.nativeElement.focus();
+    setTimeout(() => this.searchInput.nativeElement.focus(), 0);
   }
 
   performCheck(): void {
@@ -351,17 +381,19 @@ export class ExposureCheckerComponent implements OnInit {
 
     this.loading = true;
     this.errorMessage = '';
-    const isEmail = this.query.includes('@');
 
-    this.breachService.checkExposure(
-      isEmail ? this.query : undefined,
-      !isEmail ? this.query : undefined
-    ).subscribe({
+    const payload = {
+      email: this.searchMode === 'email' ? this.query : undefined,
+      domain: this.searchMode === 'domain' ? this.query : undefined
+    };
+
+    this.breachService.checkExposure(payload.email, payload.domain).subscribe({
       next: (res) => {
         this.results = res.data;
         this.loading = false;
         if (this.results.exposed) {
-          this.notifications.show(`EXPOSURE CONFIRMED: ${this.results.breach_count} BREACHES`, 'error');
+          const type = this.searchMode === 'email' ? 'IDENTITY' : 'DOMAIN';
+          this.notifications.show(`${type} EXPOSURE CONFIRMED: ${this.results.breach_count} BREACHES`, 'error');
         } else {
           this.notifications.show('QUERY RETURNED CLEAR SIGNAL', 'success');
         }

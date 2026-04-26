@@ -216,23 +216,44 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
               <ul class="list-group list-group-flush">
                 @for (alert of alerts; track alert._id) {
                   <li class="list-group-item bg-transparent border-outline-variant border-opacity-10 p-3 hover-bg-surface-container-high transition-all">
-                    <div class="d-flex justify-content-between mb-2 gap-3">
-                      <span class="text-on-surface small fw-bold">{{ getAlertMessage(alert) }}</span>
-                      <div class="d-flex gap-2 align-items-center flex-shrink-0">
-                        @if (auth.isAnalyst()) {
-                          @if (!alert.acknowledged) {
-                            <button class="btn btn-primary text-on-primary text-xs-caps py-1 px-2 fw-extrabold shadow-lg" style="font-size: 7px; box-shadow: 0 0 10px rgba(123, 208, 255, 0.4);" (click)="toggleAlertAck(alert)">ACKNOWLEDGE</button>
-                          } @else {
-                            <button class="btn btn-dark bg-surface-container-highest border-0 text-on-surface text-xs-caps py-1 px-2" style="font-size: 7px;" (click)="toggleAlertAck(alert)">UNDO</button>
-                          }
-                          <button class="btn-close-tactical" (click)="deleteAlert(alert._id!)"><span class="material-symbols-outlined">close</span></button>
-                        }
-                        <span class="badge text-xs-caps py-1 px-2 shadow-sm" [ngClass]="alert.acknowledged ? 'bg-success bg-opacity-10 text-success border border-success border-opacity-20' : 'bg-severity-critical text-white shadow-sm'" style="font-size: 7px;">
-                          {{ alert.acknowledged ? 'ACKNOWLEDGED' : 'OPEN' }}
-                        </span>
+                    @if (editingAlertId === alert._id) {
+                      <div class="row g-2 animate__animated animate__fadeIn">
+                        <div class="col-12">
+                          <input [(ngModel)]="editAlertData.message" class="form-control bg-surface-container-low border-0 text-on-surface text-xs-caps" style="font-size: 10px;" />
+                        </div>
+                        <div class="col-md-6">
+                          <select [(ngModel)]="editAlertData.alert_type" class="form-select bg-surface-container-low border-0 text-on-surface text-xs-caps" style="font-size: 10px;">
+                            <option value="new_exposure">NEW EXPOSURE</option>
+                            <option value="credential_stuffing">CREDENTIAL STUFFING</option>
+                            <option value="dark_web_mention">DARK WEB MENTION</option>
+                            <option value="domain_squatting">DOMAIN SQUATTING</option>
+                          </select>
+                        </div>
+                        <div class="col-md-6 text-end d-flex gap-2">
+                          <button class="btn btn-primary text-on-primary text-xs-caps py-1 px-2 fw-bold flex-grow-1" (click)="saveEditAlert()" style="font-size: 8px;">SAVE</button>
+                          <button class="btn btn-dark text-on-surface text-xs-caps py-1 px-2 flex-grow-1" (click)="editingAlertId = null" style="font-size: 8px;">CANCEL</button>
+                        </div>
                       </div>
-                    </div>
-                    <div class="text-xs-caps opacity-50 text-on-surface-variant" style="font-size: 7px;">{{ alert.alert_type.split('_').join(' ') | uppercase }} // {{ alert.severity | uppercase }}</div>
+                    } @else {
+                      <div class="d-flex justify-content-between mb-2 gap-3">
+                        <span class="text-on-surface small fw-bold">{{ getAlertMessage(alert) }}</span>
+                        <div class="d-flex gap-2 align-items-center flex-shrink-0">
+                          @if (auth.isAnalyst()) {
+                            @if (!alert.acknowledged) {
+                              <button class="btn btn-primary text-on-primary text-xs-caps py-1 px-2 fw-extrabold shadow-lg" style="font-size: 7px; box-shadow: 0 0 10px rgba(123, 208, 255, 0.4);" (click)="toggleAlertAck(alert)">ACKNOWLEDGE</button>
+                            } @else {
+                              <button class="btn btn-dark bg-surface-container-highest border-0 text-on-surface text-xs-caps py-1 px-2" style="font-size: 7px;" (click)="toggleAlertAck(alert)">UNDO</button>
+                            }
+                            <button class="btn btn-link p-0 text-on-surface-variant" (click)="startEditAlert(alert)"><span class="material-symbols-outlined fs-6">edit</span></button>
+                            <button class="btn-close-tactical" (click)="deleteAlert(alert._id!)"><span class="material-symbols-outlined">close</span></button>
+                          }
+                          <span class="badge text-xs-caps py-1 px-2 shadow-sm" [ngClass]="alert.acknowledged ? 'bg-success bg-opacity-10 text-success border border-success border-opacity-20' : 'bg-severity-critical text-white shadow-sm'" style="font-size: 7px;">
+                            {{ alert.acknowledged ? 'ACKNOWLEDGED' : 'OPEN' }}
+                          </span>
+                        </div>
+                      </div>
+                      <div class="text-xs-caps opacity-50 text-on-surface-variant" style="font-size: 7px;">{{ alert.alert_type.split('_').join(' ') | uppercase }} // {{ alert.severity | uppercase }}</div>
+                    }
                   </li>
                 }
                 @if (alerts.length === 0) {
@@ -274,18 +295,33 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
                   <div class="animate__animated animate__fadeInUp">
                     <div class="text-xs-caps text-primary fw-extrabold mb-2 ps-1" style="font-size: 9px; letter-spacing: 0.15em;">{{ event.event_type.split('_').join(' ') | uppercase }}</div>
                     <div class="glass-panel p-4 shadow-lg border-0 bg-surface-container-low">
-                      <div class="d-flex justify-content-between align-items-center mb-3">
-                         <span class="text-xs-caps font-mono opacity-50 text-on-surface-variant" style="font-size: 8px;">{{ event.occurred_at | date:'yyyy.MM.dd || HH:mm' }}</span>
-                         @if (auth.isAnalyst()) {
-                           <button class="btn-close-tactical" (click)="deleteTimeline(event._id!)"><span class="material-symbols-outlined">close</span></button>
-                         }
-                      </div>
-                      <p class="text-on-surface small mb-4 lead" style="font-size: 0.85rem; line-height: 1.6;">{{ event.description }}</p>
-                      @if (event.actor) {
-                         <div class="mt-3 pt-3 border-top border-outline-variant border-opacity-10 d-flex align-items-center gap-2">
-                            <span class="material-symbols-outlined fs-6 text-primary opacity-75">person_outline</span>
-                            <span class="text-xs-caps opacity-50 text-on-surface-variant" style="font-size: 7px;">OPERATOR: {{ event.actor | uppercase }}</span>
-                         </div>
+                      @if (editingTimelineId === event._id) {
+                        <div class="row g-3">
+                          <div class="col-md-6"><input [(ngModel)]="editEventData.event_type" class="form-control bg-surface-container-high border-0 text-on-surface text-xs-caps" style="font-size: 10px;" /></div>
+                          <div class="col-md-6"><input type="datetime-local" [(ngModel)]="editEventData.occurred_at" class="form-control bg-surface-container-high border-0 text-xs-caps text-on-surface" style="font-size: 10px;" /></div>
+                          <div class="col-12"><textarea [(ngModel)]="editEventData.description" class="form-control bg-surface-container-high border-0 text-on-surface text-xs-caps" rows="2" style="font-size: 10px;"></textarea></div>
+                          <div class="col-12 text-end d-flex gap-2">
+                             <button class="btn btn-primary text-on-primary text-xs-caps py-1 px-3 fw-bold flex-grow-1" (click)="saveEditTimeline()">SAVE CHANGES</button>
+                             <button class="btn btn-dark text-on-surface text-xs-caps py-1 px-3 flex-grow-1" (click)="editingTimelineId = null">CANCEL</button>
+                          </div>
+                        </div>
+                      } @else {
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                           <span class="text-xs-caps font-mono opacity-50 text-on-surface-variant" style="font-size: 8px;">{{ event.occurred_at | date:'yyyy.MM.dd || HH:mm' }}</span>
+                           @if (auth.isAnalyst()) {
+                             <div class="d-flex gap-2">
+                               <button class="btn btn-link p-0 text-on-surface-variant" (click)="startEditTimeline(event)"><span class="material-symbols-outlined fs-6">edit</span></button>
+                               <button class="btn-close-tactical" (click)="deleteTimeline(event._id!)"><span class="material-symbols-outlined">close</span></button>
+                             </div>
+                           }
+                        </div>
+                        <p class="text-on-surface small mb-4 lead" style="font-size: 0.85rem; line-height: 1.6;">{{ event.description }}</p>
+                        @if (event.actor) {
+                           <div class="mt-3 pt-3 border-top border-outline-variant border-opacity-10 d-flex align-items-center gap-2">
+                              <span class="material-symbols-outlined fs-6 text-primary opacity-75">person_outline</span>
+                              <span class="text-xs-caps opacity-50 text-on-surface-variant" style="font-size: 7px;">OPERATOR: {{ event.actor | uppercase }}</span>
+                           </div>
+                        }
                       }
                     </div>
                   </div>
@@ -329,26 +365,38 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
                   <div class="animate__animated animate__fadeInUp">
                     <div class="text-xs-caps text-primary fw-extrabold mb-2 ps-1" style="font-size: 9px; letter-spacing: 0.15em;">PROTOCOL ENTRY</div>
                     <div class="glass-panel p-4 shadow-lg border-0 d-flex justify-content-between align-items-center bg-surface-container-low">
-                      <div class="flex-grow-1 pe-4">
-                        <div class="fw-bold text-on-surface small mb-1">{{ action.action }}</div>
-                        <div class="text-xs-caps opacity-50 text-on-surface-variant d-flex align-items-center gap-2" style="font-size: 8px;">
-                           <span class="material-symbols-outlined fs-6" style="font-size: 12px;">account_circle</span>
-                           {{ action.assigned_to ? (action.assigned_to | uppercase) : 'UNASSIGNED' }}
+                      @if (editingRemediationId === action._id) {
+                        <div class="row g-2 w-100">
+                          <div class="col-md-6"><input [(ngModel)]="editRemediationData.action" class="form-control bg-surface-container-high border-0 text-on-surface text-xs-caps" style="font-size: 9px;" /></div>
+                          <div class="col-md-4"><input [(ngModel)]="editRemediationData.assigned_to" class="form-control bg-surface-container-high border-0 text-on-surface text-xs-caps" placeholder="OPERATOR" style="font-size: 9px;" /></div>
+                          <div class="col-md-2 d-flex gap-2">
+                            <button class="btn btn-primary text-on-primary text-xs-caps py-1 px-2 fw-bold flex-grow-1" (click)="saveEditRemediation()" style="font-size: 8px;">SAVE</button>
+                            <button class="btn btn-dark text-on-surface text-xs-caps py-1 px-2 flex-grow-1" (click)="editingRemediationId = null" style="font-size: 8px;">X</button>
+                          </div>
                         </div>
-                      </div>
-                      <div class="d-flex gap-3 align-items-center">
-                        @if (auth.isAnalyst()) {
-                          <select [ngModel]="action.status" (change)="updateRemediationStatus(action, $event)" class="form-select bg-surface-container-low border-0 text-on-surface text-xs-caps py-0 px-2 shadow-sm" style="font-size: 8px; height: 26px; width: auto; min-width: 100px;">
-                            <option value="pending">PENDING</option><option value="in_progress">IN PROGRESS</option><option value="completed">COMPLETED</option>
-                          </select>
-                          <button class="btn-close-tactical" (click)="deleteRemediation(action._id!)"><span class="material-symbols-outlined">close</span></button>
-                        }
-                        <span class="badge text-xs-caps py-2 px-3 border shadow-sm" [ngClass]="{
-                          'bg-success bg-opacity-10 text-success border-success border-opacity-25': action.status === 'completed',
-                          'bg-warning bg-opacity-10 text-warning border-warning border-opacity-25': action.status === 'in_progress',
-                          'bg-surface-container-highest text-on-surface-variant border-outline-variant': action.status === 'pending'
-                        }" style="font-size: 7px; min-width: 80px; text-align: center;">{{ action.status | uppercase }}</span>
-                      </div>
+                      } @else {
+                        <div class="flex-grow-1 pe-4">
+                          <div class="fw-bold text-on-surface small mb-1">{{ action.action }}</div>
+                          <div class="text-xs-caps opacity-50 text-on-surface-variant d-flex align-items-center gap-2" style="font-size: 8px;">
+                             <span class="material-symbols-outlined fs-6" style="font-size: 12px;">account_circle</span>
+                             {{ action.assigned_to ? (action.assigned_to | uppercase) : 'UNASSIGNED' }}
+                          </div>
+                        </div>
+                        <div class="d-flex gap-3 align-items-center">
+                          @if (auth.isAnalyst()) {
+                            <button class="btn btn-link p-0 text-on-surface-variant" (click)="startEditRemediation(action)"><span class="material-symbols-outlined fs-6">edit</span></button>
+                            <select [ngModel]="action.status" (change)="updateRemediationStatus(action, $event)" class="form-select bg-surface-container-low border-0 text-on-surface text-xs-caps py-0 px-2 shadow-sm" style="font-size: 8px; height: 26px; width: auto; min-width: 100px;">
+                              <option value="pending">PENDING</option><option value="in_progress">IN PROGRESS</option><option value="completed">COMPLETED</option>
+                            </select>
+                            <button class="btn-close-tactical" (click)="deleteRemediation(action._id!)"><span class="material-symbols-outlined">close</span></button>
+                          }
+                          <span class="badge text-xs-caps py-2 px-3 border shadow-sm" [ngClass]="{
+                            'bg-success bg-opacity-10 text-success border-success border-opacity-25': action.status === 'completed',
+                            'bg-warning bg-opacity-10 text-warning border-warning border-opacity-25': action.status === 'in_progress',
+                            'bg-surface-container-highest text-on-surface-variant border-outline-variant': action.status === 'pending'
+                          }" style="font-size: 7px; min-width: 80px; text-align: center;">{{ action.status.split('_').join(' ') | uppercase }}</span>
+                        </div>
+                      }
                     </div>
                   </div>
                 }
@@ -400,10 +448,18 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
 
   showAddTimeline = false;
   newEvent: Partial<TimelineEvent> = { event_type: '', description: '', occurred_at: new Date().toISOString().slice(0, 16) };
+  editingTimelineId: string | null = null;
+  editEventData: Partial<TimelineEvent> = {};
+
   showAddRemediation = false;
   newAction: Partial<RemediationAction> = { action: '', status: 'pending', assigned_to: '' };
+  editingRemediationId: string | null = null;
+  editRemediationData: Partial<RemediationAction> = {};
+
   showAddAlert = false;
   newAlert: Partial<MonitoringAlert> = { message: '', alert_type: 'new_exposure', severity: 'medium', acknowledged: false };
+  editingAlertId: string | null = null;
+  editAlertData: Partial<MonitoringAlert> = {};
 
   get detectionLag(): number {
     if (!this.breach?.breach_date || !this.breach?.discovered_date) return 0;
@@ -507,6 +563,59 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
         this.notifications.show('Timeline event removed.', 'info', 2500);
       },
       error: (err) => this.notifyApiError(err, 'Failed to remove event')
+    });
+  }
+
+  startEditTimeline(event: TimelineEvent): void {
+    this.editingTimelineId = event._id!;
+    this.editEventData = { ...event, occurred_at: new Date(event.occurred_at!).toISOString().slice(0, 16) };
+  }
+
+  saveEditTimeline(): void {
+    this.breachService.updateTimelineEvent(this.id, this.editingTimelineId!, this.editEventData).subscribe({
+      next: () => {
+        this.loadSubDocuments();
+        this.editingTimelineId = null;
+        this.notifications.show('Timeline event updated.', 'success', 2500);
+      },
+      error: (err) => this.notifyApiError(err, 'Failed to update event')
+    });
+  }
+
+  startEditRemediation(action: RemediationAction): void {
+    this.editingRemediationId = action._id!;
+    this.editRemediationData = { ...action };
+  }
+
+  saveEditRemediation(): void {
+    this.breachService.updateRemediation(this.id, this.editingRemediationId!, this.editRemediationData).subscribe({
+      next: () => {
+        this.loadSubDocuments();
+        this.editingRemediationId = null;
+        this.notifications.show('Remediation protocol updated.', 'success', 2500);
+      },
+      error: (err) => this.notifyApiError(err, 'Failed to update protocol')
+    });
+  }
+
+  startEditAlert(alert: MonitoringAlert): void {
+    this.editingAlertId = alert._id!;
+    this.editAlertData = { ...alert, message: this.getAlertMessage(alert) };
+  }
+
+  saveEditAlert(): void {
+    const payload = {
+      alert_type: this.editAlertData.alert_type,
+      severity: this.editAlertData.severity,
+      details: this.editAlertData.message
+    };
+    this.breachService.updateAlert(this.id, this.editingAlertId!, payload).subscribe({
+      next: () => {
+        this.loadSubDocuments();
+        this.editingAlertId = null;
+        this.notifications.show('Monitoring alert updated.', 'success', 2500);
+      },
+      error: (err) => this.notifyApiError(err, 'Failed to update alert')
     });
   }
 

@@ -77,6 +77,18 @@ def update_user(user_id: str):
     if "password" in data:
         if g.current_user_id != user_id:
             return error_response("You can only change your own password.", 403)
+
+        # Security: Require current password verification
+        current_password = data.get("current_password")
+        if not current_password:
+            return error_response("Current password is required to set a new password.", 400)
+
+        user_doc = user_service.get_by_id(user_id)
+        if not user_doc or not bcrypt.checkpw(
+            current_password.encode("utf-8"), user_doc["password_hash"].encode("utf-8")
+        ):
+            return error_response("Current password verification failed.", 401)
+
         if not _PASSWORD_RE.match(data["password"]):
             return error_response(
                 "Password must be at least 8 characters and include one uppercase letter and one digit.",

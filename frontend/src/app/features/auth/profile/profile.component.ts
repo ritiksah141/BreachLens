@@ -1,12 +1,15 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgClass, DatePipe, UpperCasePipe, CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
+import { UserService } from '../../../core/services/user.service';
+import { NotificationService } from '../../../core/services/notification.service';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [RouterLink, NgClass, DatePipe, UpperCasePipe, CommonModule],
+  imports: [RouterLink, NgClass, DatePipe, UpperCasePipe, CommonModule, FormsModule],
   template: `
     <div class="profile-shell mt-2">
       <!-- Profile Header -->
@@ -16,7 +19,7 @@ import { AuthService } from '../../../core/services/auth.service';
           <p class="page-subtitle mb-0 opacity-75">Identity and Clearance Parameters</p>
         </div>
         <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-3 shadow-sm" (click)="auth.logout()">
-          <span class="material-symbols-outlined fs-6 me-1">power_settings_new</span> Terminate Session
+          <span class="material-symbols-outlined fs-6 me-1">power_settings_new</span>  Logout
         </button>
       </div>
 
@@ -49,9 +52,11 @@ import { AuthService } from '../../../core/services/auth.service';
 
       <div class="row g-4">
         <div class="col-lg-4">
-          <div class="glass-panel border-0 shadow-lg profile-identity-card position-relative overflow-hidden h-100">
+          <div class="glass-panel border-0 shadow-lg profile-identity-card position-relative overflow-hidden h-100 d-flex flex-column">
             <div class="position-absolute inset-0 profile-grid-overlay"></div>
-            <div class="card-body p-4 p-xl-5 text-center position-relative z-1">
+
+            <!-- User Identity Info -->
+            <div class="card-body p-4 p-xl-5 text-center position-relative z-1 flex-grow-0">
               <div class="identity-orb mx-auto mb-4">
                 <span class="identity-initial">{{ initials }}</span>
               </div>
@@ -67,60 +72,111 @@ import { AuthService } from '../../../core/services/auth.service';
                 IDENTITY VERIFIED // AES-256 ENCRYPTED
               </div>
             </div>
+
+            <!-- Integrated SECURITY SETTINGS -->
+            <div class="mt-auto p-4 bg-surface-container-low border-top border-error border-4 position-relative z-1">
+               <div class="d-flex align-items-center gap-2 mb-4">
+                  <span class="material-symbols-outlined text-error fs-5">security</span>
+                  <h5 class="text-xs-caps text-error fw-bold mb-0">SECURITY PROTOCOLS</h5>
+               </div>
+               <form (ngSubmit)="updatePassword()">
+                  <div class="mb-3">
+                     <label class="text-xs-caps text-on-surface-variant mb-2 d-block" style="font-size: 7px;">CURRENT PASSWORD</label>
+                     <input type="password" name="currentPassword" [(ngModel)]="currentPassword" class="form-control bg-surface-container-high border-0 text-on-surface text-xs-caps" style="font-size: 10px;" placeholder="VERIFY IDENTITY">
+                  </div>
+                  <div class="mb-3">
+                     <label class="text-xs-caps text-on-surface-variant mb-2 d-block" style="font-size: 7px;">NEW OPERATOR PASSWORD</label>
+                     <input type="password" name="newPassword" [(ngModel)]="newPassword" class="form-control bg-surface-container-high border-0 text-on-surface text-xs-caps" style="font-size: 10px;" placeholder="8+ CHARS, UPPER, DIGIT">
+                  </div>
+                  <div class="mb-4">
+                     <label class="text-xs-caps text-on-surface-variant mb-2 d-block" style="font-size: 7px;">CONFIRM NEW PASSWORD</label>
+                     <input type="password" name="confirmPassword" [(ngModel)]="confirmPassword" class="form-control bg-surface-container-high border-0 text-on-surface text-xs-caps" style="font-size: 10px;" placeholder="REPEAT PASSWORD">
+                  </div>
+                  <button type="submit" class="btn btn-error w-100 py-2 text-xs-caps fw-bold text-white shadow-sm" style="background-color: var(--error);" [disabled]="loading || !newPassword || !currentPassword">
+                     ROTATE CREDENTIALS
+                  </button>
+               </form>
+            </div>
           </div>
         </div>
 
         <div class="col-lg-8">
-          <div class="glass-panel shadow-lg overflow-hidden h-100">
+          <div class="glass-panel shadow-lg h-100 d-flex flex-column border-0">
             <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center bg-surface-container-low">
-              <span class="text-xs-caps text-on-surface fw-bold">Operator Information</span>
-              <span class="text-xs-caps text-on-surface-variant" style="font-size: 8px;">USER ID: {{ (user?._id ?? '0x000').slice(-8) | uppercase }}</span>
+              <div class="d-flex align-items-center gap-2">
+                 <span class="material-symbols-outlined text-primary fs-5">fingerprint</span>
+                 <span class="text-xs-caps text-on-surface fw-bold">OPERATIONAL PARAMETERS</span>
+              </div>
+              <span class="text-xs-caps text-on-surface-variant font-mono" style="font-size: 8px;">REF: {{ (user?._id ?? '0x000').slice(-12) | uppercase }}</span>
             </div>
 
             <div class="card-body p-4 p-xl-5">
               <div class="row g-4">
+                <!-- Identifier -->
                 <div class="col-md-6">
-                  <div class="p-3 border-start border-primary border-opacity-25 bg-surface-container-high rounded-end shadow-sm">
-                    <div class="text-xs-caps text-on-surface-variant mb-1" style="font-size: 8px;">Unique Identifier</div>
-                    <div class="text-on-surface font-mono small profile-value">{{ user?._id || 'N/A' }}</div>
+                  <div class="tactical-info-card p-3 rounded-3 border border-outline-variant border-opacity-10 bg-surface-container-high h-100">
+                    <div class="text-xs-caps text-primary mb-2" style="font-size: 8px;">UNIQUE IDENTIFIER</div>
+                    <div class="text-on-surface font-mono small text-break">{{ user?._id || 'N/A' }}</div>
+                    <div class="mt-2 pt-2 border-top border-outline-variant border-opacity-5 text-xs-caps opacity-50" style="font-size: 7px;">SYSTEM_GUID_VERIFIED</div>
                   </div>
                 </div>
+                <!-- Role -->
                 <div class="col-md-6">
-                  <div class="p-3 border-start border-primary border-opacity-25 bg-surface-container-high rounded-end shadow-sm">
-                    <div class="text-xs-caps text-on-surface-variant mb-1" style="font-size: 8px;">System Role</div>
-                    <div class="text-on-surface fw-bold text-uppercase">{{ user?.role || 'guest' }}</div>
+                  <div class="tactical-info-card p-3 rounded-3 border border-outline-variant border-opacity-10 bg-surface-container-high h-100">
+                    <div class="text-xs-caps text-primary mb-2" style="font-size: 8px;">SECURITY CLEARANCE</div>
+                    <div class="d-flex align-items-center gap-2">
+                       <span class="material-symbols-outlined fs-5" [ngClass]="roleToneClass()">{{ user?.role === 'admin' ? 'admin_panel_settings' : 'verified_user' }}</span>
+                       <div class="text-on-surface fw-bold font-headline fs-5">{{ user?.role?.toUpperCase() || 'GUEST' }}</div>
+                    </div>
+                    <div class="mt-2 pt-2 border-top border-outline-variant border-opacity-5 text-xs-caps opacity-50" style="font-size: 7px;">AUTHORIZATION_LEVEL: {{ clearanceLabel }}</div>
                   </div>
                 </div>
+                <!-- Email -->
                 <div class="col-md-6">
-                  <div class="p-3 border-start border-primary border-opacity-25 bg-surface-container-high rounded-end shadow-sm">
-                    <div class="text-xs-caps text-on-surface-variant mb-1" style="font-size: 8px;">Email Address</div>
-                    <div class="text-on-surface font-mono small profile-value">{{ user?.email || 'N/A' }}</div>
+                  <div class="tactical-info-card p-3 rounded-3 border border-outline-variant border-opacity-10 bg-surface-container-high h-100">
+                    <div class="text-xs-caps text-primary mb-2" style="font-size: 8px;">COMMUNICATION CHANNEL</div>
+                    <div class="text-on-surface font-mono small d-flex align-items-center gap-2">
+                       <span class="material-symbols-outlined fs-6 opacity-50">alternate_email</span>
+                       {{ user?.email || 'N/A' }}
+                    </div>
+                    <div class="mt-2 pt-2 border-top border-outline-variant border-opacity-5 text-xs-caps opacity-50" style="font-size: 7px;">ENCRYPTED_SMTP_ACTIVE</div>
                   </div>
                 </div>
+                <!-- Init Date -->
                 <div class="col-md-6">
-                  <div class="p-3 border-start border-primary border-opacity-25 bg-surface-container-high rounded-end shadow-sm">
-                    <div class="text-xs-caps text-on-surface-variant mb-1" style="font-size: 8px;">Initialization Date</div>
+                  <div class="tactical-info-card p-3 rounded-3 border border-outline-variant border-opacity-10 bg-surface-container-high h-100">
+                    <div class="text-xs-caps text-primary mb-2" style="font-size: 8px;">INITIALIZATION DATE</div>
                     <div class="text-on-surface font-mono small">{{ user?.created_at | date:'yyyy-MM-dd HH:mm:ss' }}</div>
+                    <div class="mt-2 pt-2 border-top border-outline-variant border-opacity-5 text-xs-caps opacity-50" style="font-size: 7px;">EPOCH_LOG_REGISTERED</div>
                   </div>
                 </div>
               </div>
 
               <div class="mt-5">
-                <h4 class="text-xs-caps text-on-surface mb-3">System Access Points</h4>
-                <div class="d-flex flex-wrap gap-3">
-                  <a routerLink="/breaches" class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-4 shadow-sm flex-grow-1">
-                    <span class="material-symbols-outlined fs-6 me-2">history</span>
-                    Investigation Logs
-                  </a>
-                  <a routerLink="/" class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-4 shadow-sm flex-grow-1">
-                    <span class="material-symbols-outlined fs-6 me-2">dashboard</span>
-                    Dashboard
-                  </a>
-                  @if (auth.isAdmin()) {
-                    <a routerLink="/admin" class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-4 shadow-sm flex-grow-1">
-                      <span class="material-symbols-outlined fs-6 me-2">admin_panel_settings</span>
-                      Command Center
+                <h4 class="text-xs-caps text-on-surface mb-3 d-flex align-items-center gap-2">
+                   <span class="material-symbols-outlined fs-5">shortcut</span>
+                   SYSTEM ACCESS NODES
+                </h4>
+                <div class="row g-3">
+                  <div class="col-sm-4">
+                    <a routerLink="/breaches" class="btn btn-dark w-100 bg-surface-container-highest border-0 text-xs-caps py-3 shadow-sm d-flex flex-column align-items-center gap-2 card-interactive">
+                      <span class="material-symbols-outlined fs-4">history</span>
+                      <span>Investigation Logs</span>
                     </a>
+                  </div>
+                  <div class="col-sm-4">
+                    <a routerLink="/" class="btn btn-dark w-100 bg-surface-container-highest border-0 text-xs-caps py-3 shadow-sm d-flex flex-column align-items-center gap-2 card-interactive">
+                      <span class="material-symbols-outlined fs-4">dashboard</span>
+                      <span>Analytics Dashboard</span>
+                    </a>
+                  </div>
+                  @if (auth.isAdmin()) {
+                    <div class="col-sm-4">
+                      <a routerLink="/admin" class="btn btn-dark w-100 bg-surface-container-highest border-0 text-xs-caps py-3 shadow-sm d-flex flex-column align-items-center gap-2 card-interactive border-start border-primary border-2">
+                        <span class="material-symbols-outlined fs-4 text-primary">admin_panel_settings</span>
+                        <span>Command Center</span>
+                      </a>
+                    </div>
                   }
                 </div>
               </div>
@@ -128,8 +184,11 @@ import { AuthService } from '../../../core/services/auth.service';
 
             <div class="bg-surface-container-low px-4 py-3 border-top border-outline-variant border-opacity-10 mt-auto">
               <div class="d-flex justify-content-between align-items-center opacity-75 flex-wrap gap-2">
-                <span class="text-xs-caps" style="font-size: 8px;">PROTOCOL: AES-256-GCM</span>
-                <span class="text-xs-caps text-success" style="font-size: 8px;">SECURE CONNECTION ESTABLISHED</span>
+                <div class="d-flex align-items-center gap-2">
+                   <span class="material-symbols-outlined fs-6 text-success animate-pulse">check_circle</span>
+                   <span class="text-xs-caps text-success" style="font-size: 8px;">ENCRYPTION STATUS: AES-256-GCM ACTIVE</span>
+                </div>
+                <span class="text-xs-caps font-mono" style="font-size: 8px;">INTEGRITY HASH: {{ (user?._id ?? 'SHA').slice(0, 16) | uppercase }}</span>
               </div>
             </div>
           </div>
@@ -194,6 +253,13 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class ProfileComponent implements OnInit {
   auth = inject(AuthService);
+  private userService = inject(UserService);
+  private notifications = inject(NotificationService);
+
+  newPassword = '';
+  confirmPassword = '';
+  currentPassword = '';
+  loading = false;
 
   get user() {
     return this.auth.currentUser();
@@ -221,5 +287,42 @@ export class ProfileComponent implements OnInit {
     if (this.user?.role === 'admin') return 'role-admin';
     if (this.user?.role === 'analyst') return 'role-analyst';
     return 'role-guest';
+  }
+
+  updatePassword(): void {
+    if (!this.newPassword || !this.currentPassword) return;
+    if (this.newPassword === this.currentPassword) {
+      this.notifications.show('NEW PASSWORD MUST BE DIFFERENT', 'warning');
+      return;
+    }
+    if (this.newPassword !== this.confirmPassword) {
+      this.notifications.show('PASSWORDS DO NOT MATCH', 'error');
+      return;
+    }
+
+    const reg = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!reg.test(this.newPassword)) {
+      this.notifications.show('PASSWORD COMPLEXITY REQUIREMENTS NOT MET', 'error');
+      return;
+    }
+
+    this.loading = true;
+    this.userService.updateUser(this.user!._id, {
+      password: this.newPassword,
+      current_password: this.currentPassword
+    }).subscribe({
+      next: () => {
+        this.notifications.show('OPERATOR CREDENTIALS ROTATED SUCCESSFULLY', 'success');
+        this.newPassword = '';
+        this.confirmPassword = '';
+        this.currentPassword = '';
+        this.loading = false;
+      },
+      error: (err) => {
+        this.loading = false;
+        const msg = err?.error?.message ?? 'SECURITY UPDATE FAILED';
+        this.notifications.show(msg, 'error');
+      }
+    });
   }
 }

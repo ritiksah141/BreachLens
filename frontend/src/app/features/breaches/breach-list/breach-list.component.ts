@@ -34,7 +34,7 @@ type SearchSuggestion = { title: string; organisation: string };
         <div class="text-xs-caps text-primary mb-1" style="font-size: 8px;">INTELLIGENCE COUNT</div>
         <div class="font-headline fw-bold text-on-surface fs-4 metric-emphasis">{{ total | number }}</div>
       </div>
-    </div>
+      </div>
 
     <!-- Enhanced Filter Bar -->
     <div class="glass-panel p-4 mb-4 border-0 shadow-lg">
@@ -108,13 +108,34 @@ type SearchSuggestion = { title: string; organisation: string };
         <!-- Action Buttons -->
         <div class="col-lg-3 col-md-6 d-flex gap-2">
           <button class="btn btn-primary text-on-primary flex-grow-1 fw-bold" style="height: 38px;" (click)="applyFilters()">
-            APPLY FILTERS
+            APPLY
           </button>
           <button class="btn btn-dark bg-surface-container-highest border-0 text-on-surface flex-grow-1" style="height: 38px;" (click)="resetFilters()">
             RESET
           </button>
         </div>
       </div>
+
+      <!-- Facet Recommendations Row -->
+      @if (facets && !filters.industry && !filters.severity && !filters.status && !loading) {
+        <div class="mt-3 d-flex flex-wrap gap-2 animate__animated animate__fadeIn border-top border-outline-variant border-opacity-10 pt-3">
+          <span class="text-xs-caps text-on-surface-variant me-2 align-self-center" style="font-size: 7px; letter-spacing: 0.1em;">TRENDING VECTORS:</span>
+          @for (ind of facets.industry | slice:0:3; track ind.value) {
+            <button class="btn btn-link p-0 text-decoration-none" (click)="filters.industry = ind.value; applyFilters()">
+              <span class="badge py-1 px-2 glass-panel border border-primary border-opacity-25 text-primary text-xs-caps" style="font-size: 7px;">
+                {{ ind.value.split('_').join(' ') | uppercase }} ({{ ind.count }})
+              </span>
+            </button>
+          }
+          @for (sev of facets.severity | slice:0:2; track sev.value) {
+            <button class="btn btn-link p-0 text-decoration-none" (click)="filters.severity = sev.value; applyFilters()">
+               <span class="badge py-1 px-2 glass-panel border border-outline-variant border-opacity-25 text-on-surface-variant text-xs-caps" style="font-size: 7px;">
+                 {{ sev.value | uppercase }}
+               </span>
+            </button>
+          }
+        </div>
+      }
 
       <!-- Advanced Filter Row -->
       <div class="mt-4 pt-3 border-top border-outline-variant border-opacity-10">
@@ -299,6 +320,7 @@ export class BreachListComponent implements OnInit {
   totalPages = 1;
   loading = false;
   error = '';
+  facets: { industry: any[]; severity: any[]; status: any[]; top_data_types: any[] } | null = null;
 
   filters: BreachFilterParams = {
     page: 1,
@@ -366,7 +388,7 @@ export class BreachListComponent implements OnInit {
       industries: this.filters.industry ? [this.filters.industry] : undefined,
       min_risk: this.filters.min_risk,
       max_risk: this.filters.max_risk,
-      include_facets: false,
+      include_facets: true,
     };
 
     this.breachService.getAdvancedSearch(params).subscribe({
@@ -374,6 +396,7 @@ export class BreachListComponent implements OnInit {
         this.breaches = res.data ?? [];
         this.total = res.meta?.total ?? 0;
         this.totalPages = res.meta?.total_pages ?? 1;
+        this.facets = res.meta?.facets;
         this.loading = false;
       },
       error: (err) => {

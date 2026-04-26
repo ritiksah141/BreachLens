@@ -103,11 +103,58 @@ import { UserManagementComponent } from './user-management/user-management.compo
                 [ngClass]="activeTab === 'audit' ? 'btn-primary text-on-primary shadow-sm' : 'btn-link text-on-surface-variant text-decoration-none'"
           (click)="loadAuditLogs(); activeTab = 'audit'">AUDIT TRAIL</button>
         <button class="btn text-xs-caps py-2 px-4 rounded-pill transition-all flex-grow-1"
+                [ngClass]="activeTab === 'health' ? 'btn-primary text-on-primary shadow-sm' : 'btn-link text-on-surface-variant text-decoration-none'"
+                (click)="loadHealthData(); activeTab = 'health'">HEALTH</button>
+        <button class="btn text-xs-caps py-2 px-4 rounded-pill transition-all flex-grow-1"
                 [ngClass]="activeTab === 'users' ? 'btn-primary text-on-primary shadow-sm' : 'btn-link text-on-surface-variant text-decoration-none'"
                 (click)="activeTab = 'users'">OPERATORS</button>
       </div>
 
       @switch (activeTab) {
+        @case ('health') {
+          <div class="animate__animated animate__fadeIn">
+             <div class="row g-4">
+                <div class="col-md-6">
+                   <div class="glass-panel p-4 shadow-lg border-0 h-100">
+                      <h5 class="text-xs-caps text-primary mb-4">SYSTEM READINESS</h5>
+                      @if (healthReady) {
+                         <div class="d-flex flex-column gap-3">
+                            <div class="p-3 bg-surface-container-high rounded d-flex justify-content-between align-items-center">
+                               <span class="text-xs-caps opacity-75">DATABASE CONNECTION</span>
+                               <span class="badge" [ngClass]="healthReady.checks.database === 'ok' ? 'bg-success' : 'bg-error'">{{ healthReady.checks.database | uppercase }}</span>
+                            </div>
+                            <div class="p-3 bg-surface-container-high rounded d-flex justify-content-between align-items-center">
+                               <span class="text-xs-caps opacity-75">OVERALL STATUS</span>
+                               <span class="badge" [ngClass]="healthReady.status === 'ok' ? 'bg-success' : 'bg-error'">{{ healthReady.status | uppercase }}</span>
+                            </div>
+                         </div>
+                      }
+                   </div>
+                </div>
+                <div class="col-md-6">
+                   <div class="glass-panel p-4 shadow-lg border-0 h-100">
+                      <h5 class="text-xs-caps text-secondary mb-4">API METADATA</h5>
+                      @if (healthInfo) {
+                         <div class="d-flex flex-column gap-2">
+                            <div class="d-flex justify-content-between border-bottom border-outline-variant border-opacity-10 pb-2">
+                               <span class="text-xs-caps opacity-50">APPLICATION</span>
+                               <span class="text-on-surface fw-bold small">{{ healthInfo.application }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between border-bottom border-outline-variant border-opacity-10 pb-2">
+                               <span class="text-xs-caps opacity-50">PYTHON VERSION</span>
+                               <span class="text-on-surface font-mono small">{{ healthInfo.python_version }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between border-bottom border-outline-variant border-opacity-10 pb-2">
+                               <span class="text-xs-caps opacity-50">UPTIME</span>
+                               <span class="text-on-surface fw-bold small">{{ healthInfo.uptime_seconds }} SECONDS</span>
+                            </div>
+                         </div>
+                      }
+                   </div>
+                </div>
+             </div>
+          </div>
+        }
         @case ('manage') {
           <div class="row g-4 animate__animated animate__fadeIn align-items-stretch">
             <!-- Table Side -->
@@ -431,6 +478,9 @@ export class AdminComponent implements OnInit {
   auditPage = 1;
   auditTotalPages = 1;
 
+  healthReady: any = null;
+  healthInfo: any = null;
+
   // Form State
   breachForm: FormGroup;
   editingId: string | null = null;
@@ -748,6 +798,16 @@ export class AdminComponent implements OnInit {
   onAuditPageChange(p: number): void {
     this.auditPage = p;
     this.loadAuditLogs();
+  }
+
+  loadHealthData(): void {
+    this.adminService.getHealthReady().subscribe({
+      next: (res) => this.healthReady = res,
+      error: (err) => this.healthReady = err.error
+    });
+    this.adminService.getHealthInfo().subscribe({
+      next: (res) => this.healthInfo = res
+    });
   }
 
   severityColor(s: string): string {

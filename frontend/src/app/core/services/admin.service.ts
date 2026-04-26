@@ -60,4 +60,12 @@ export class AdminService {
       .set('limit', limit.toString());
     return this.http.get<ApiResponse<any[]>>(`${this.adminBase}/audit-logs`, { params });
   }
+
+  getHealthReady(): Observable<any> {
+    return this.http.get<any>(`${environment.apiUrl}/health/ready`);
+  }
+
+  getHealthInfo(): Observable<any> {
+    return this.http.get<any>(`${environment.apiUrl}/health/info`);
+  }
 }

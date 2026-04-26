@@ -38,6 +38,13 @@ import { AuthService } from '../../../core/services/auth.service';
                 Global Map
               </a>
             </li>
+            @if (auth.isAnalyst()) {
+              <li class="nav-item">
+                <a class="nav-link text-on-surface-variant" routerLink="/analytics" routerLinkActive="active">
+                  Analytics
+                </a>
+              </li>
+            }
             @if (auth.isAdmin()) {
               <li class="nav-item">
                 <a class="nav-link text-on-surface-variant" routerLink="/admin" routerLinkActive="active">

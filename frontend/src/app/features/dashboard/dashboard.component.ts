@@ -91,7 +91,7 @@ import { FormsModule } from '@angular/forms';
              <div class="d-flex flex-column gap-3">
                 <div *ngFor="let dt of attackSurface.top_data_types | slice:0:3; let i = index">
                    <div class="d-flex justify-content-between mb-1">
-                      <span class="text-xs-caps opacity-75" style="font-size: 8px;">{{ dt.data_type | uppercase }}</span>
+                      <span class="text-xs-caps opacity-75" style="font-size: 8px;">{{ dt.data_type.split('_').join(' ') | uppercase }}</span>
                       <span class="text-xs-caps fw-bold" [ngClass]="getVaryingColorClass(i)" style="font-size: 8px;">{{ dt.count }} RECORDS</span>
                    </div>
                    <div class="progress bg-white bg-opacity-5" style="height: 2px;">

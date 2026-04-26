@@ -21,7 +21,7 @@ export class UserService {
     return this.http.get<ApiResponse<User>>(`${this.base}/${id}`);
   }
 
-  updateUser(id: string, payload: Partial<User> & { password?: string }): Observable<ApiResponse<User>> {
+  updateUser(id: string, payload: Partial<User> & { password?: string, current_password?: string }): Observable<ApiResponse<User>> {
     return this.http.patch<ApiResponse<User>>(`${this.base}/${id}`, payload);
   }
 

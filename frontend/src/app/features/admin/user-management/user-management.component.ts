@@ -13,7 +13,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
   template: `
     <div class="card border-0 bg-surface-container-low shadow-lg overflow-hidden">
       <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center">
-        <span class="text-xs-caps text-on-surface">Operator_Management_Console</span>
+        <span class="text-xs-caps text-on-surface">Operator Management Console</span>
         @if (loading) {
           <div class="spinner-border spinner-border-sm text-primary"></div>
         }
@@ -35,7 +35,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
             <thead>
               <tr class="bg-surface-container-low">
                 <th class="ps-4 text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Identifier</th>
-                <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Access_Level</th>
+                <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Access Level</th>
                 <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Connectivity</th>
                 <th class="pe-4 text-end text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Operations</th>
               </tr>
@@ -65,9 +65,9 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
                       [disabled]="user._id === auth.currentUser()?._id"
                       style="font-size: 9px; width: auto;"
                     >
-                      <option value="guest">GUEST_ACCESS</option>
-                      <option value="analyst">ANALYST_LEVEL</option>
-                      <option value="admin">ROOT_ADMIN</option>
+                      <option value="guest">GUEST ACCESS</option>
+                      <option value="analyst">ANALYST LEVEL</option>
+                      <option value="admin">ROOT ADMIN</option>
                     </select>
                   </td>
                   <td>

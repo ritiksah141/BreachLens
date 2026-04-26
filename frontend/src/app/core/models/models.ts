@@ -133,8 +133,8 @@ export interface User {
 // -----------------------------------------------------------------------
 
 export interface SeverityBreakdown {
-  severity: string;       // backend projects severity: "$_id"
-  breach_count: number;   // backend uses breach_count not count
+  severity: string;
+  breach_count: number;
   total_records: number;
 }
 
@@ -145,13 +145,14 @@ export interface MonthlyTrend {
 }
 
 export interface RiskByIndustry {
-  industry: string;        // backend projects industry: "$_id"
-  avg_risk_score: number;  // backend uses avg_risk_score not avg_risk
+  industry: string;
+  avg_risk_score: number;
   breach_count: number;
+  total_records_exposed: number;
 }
 
 export interface DataTypeFrequency {
-  data_type: string;  // backend projects data_type: "$_id"
+  data_type: string;
   count: number;
 }
 

@@ -48,6 +48,12 @@ import { FormsModule } from '@angular/forms';
               <span class="material-symbols-outlined">query_stats</span>
               <span class="nav-label">Exposure Intel</span>
             </a>
+            @if (auth.isAnalyst()) {
+              <a class="nav-item" routerLink="/analytics" routerLinkActive="active">
+                <span class="material-symbols-outlined">analytics</span>
+                <span class="nav-label">Analytics</span>
+              </a>
+            }
             @if (auth.isAdmin()) {
               <a class="nav-item" routerLink="/admin" routerLinkActive="active">
                 <span class="material-symbols-outlined">admin_panel_settings</span>

@@ -17,13 +17,18 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
       <!-- Map Controls Overlay -->
       <div class="position-absolute top-0 end-0 m-2 z-3 d-flex flex-column gap-2" style="z-index: 1001 !important;">
         <button class="btn btn-dark bg-surface-container-highest border-0 p-1 shadow-sm rounded-circle"
+                (click)="toggleViewportSync()" [class.text-primary]="viewportSync" title="Sync with Viewport">
+          <span class="material-symbols-outlined fs-6">sync_alt</span>
+        </button>
+        <button class="btn btn-dark bg-surface-container-highest border-0 p-1 shadow-sm rounded-circle"
                 (click)="useMyLocation()" [disabled]="geoLoading" title="Near Me">
           <span class="material-symbols-outlined fs-6" *ngIf="!geoLoading">my_location</span>
           <span class="spinner-border spinner-border-sm" *ngIf="geoLoading"></span>
         </button>
         <button class="btn btn-dark bg-surface-container-highest border-0 p-1 shadow-sm rounded-circle"
-                (click)="loadGeoJson()" title="Refresh">
-          <span class="material-symbols-outlined fs-6">refresh</span>
+                (click)="refreshMap()" [disabled]="geoLoading" title="Refresh">
+          <span class="material-symbols-outlined fs-6" *ngIf="!geoLoading">refresh</span>
+          <span class="spinner-border spinner-border-sm" *ngIf="geoLoading"></span>
         </button>
       </div>
 
@@ -76,6 +81,7 @@ export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
 
   geoLoading = false;
   geoError = '';
+  viewportSync = false;
 
   private _themeWatcher = effect(() => {
     this.themeService.theme();
@@ -101,8 +107,46 @@ export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
 
     L.control.zoom({ position: 'bottomright' }).addTo(this.map);
 
+    this.map.on('moveend', () => {
+      if (this.viewportSync) this.loadByViewport();
+    });
+
     this.updateTileLayer();
     this.loadGeoJson();
+  }
+
+  toggleViewportSync() {
+    this.viewportSync = !this.viewportSync;
+    if (this.viewportSync) {
+      this.notifications.show('VIEWPORT AUTO-SYNC ENABLED', 'info');
+      this.loadByViewport();
+    } else {
+      this.notifications.show('VIEWPORT AUTO-SYNC DISABLED', 'info');
+      this.loadGeoJson(); // Reset to global
+    }
+  }
+
+  loadByViewport() {
+    if (!this.map) return;
+    this.geoLoading = true;
+    const bounds = this.map.getBounds();
+
+    // Normalize coordinates to stay within valid geographic ranges (-180 to 180, -90 to 90)
+    const minLng = Math.max(-180, bounds.getWest());
+    const minLat = Math.max(-90, bounds.getSouth());
+    const maxLng = Math.min(180, bounds.getEast());
+    const maxLat = Math.min(90, bounds.getNorth());
+
+    this.breachService.getWithinBounds(minLng, minLat, maxLng, maxLat).subscribe({
+      next: (res) => {
+        this.renderMarkers(res.data);
+        this.geoLoading = false;
+      },
+      error: () => {
+        this.geoLoading = false;
+        this.notifications.show('Viewport sync failed.', 'error');
+      }
+    });
   }
 
   private async updateTileLayer() {
@@ -120,12 +164,24 @@ export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
     }).addTo(this.map);
   }
 
+  refreshMap() {
+    if (this.viewportSync) {
+      this.loadByViewport();
+    } else {
+      this.loadGeoJson();
+    }
+    this.notifications.show('MAP DATA SYNCHRONIZED', 'success', 1500);
+  }
+
   loadGeoJson(severity?: string) {
+    this.geoLoading = true;
     this.breachService.getGeoJson(severity).subscribe({
       next: (res) => {
         this.renderMarkers(res.data);
+        this.geoLoading = false;
       },
       error: (err) => {
+        this.geoLoading = false;
         this.notifications.show('Failed to load map data.', 'error');
       }
     });

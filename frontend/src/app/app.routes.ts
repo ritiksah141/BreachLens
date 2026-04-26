@@ -33,6 +33,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'analytics',
+    canActivate: [authGuard, analystGuard],
+    loadComponent: () =>
+      import('./features/analytics/analytics.component').then(
+        (m) => m.AnalyticsComponent
+      ),
+  },
+  {
     path: 'admin',
     canActivate: [adminGuard],
     loadComponent: () =>
