@@ -18,7 +18,7 @@ import { NotificationService } from '../../../core/services/notification.service
           <h2 class="font-headline fw-extrabold text-on-surface tracking-tight page-title mb-1">Operator Profile</h2>
           <p class="page-subtitle mb-0 opacity-75">Identity and Clearance Parameters</p>
         </div>
-        <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-3 shadow-sm" (click)="auth.logout()">
+        <button class="btn btn-error text-white text-xs-caps py-2 px-3 shadow-sm fw-bold" style="background-color: var(--error);" (click)="auth.logout()">
           <span class="material-symbols-outlined fs-6 me-1">power_settings_new</span>  Logout
         </button>
       </div>

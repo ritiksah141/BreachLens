@@ -142,6 +142,7 @@ class BreachService:
         status: Optional[str] = None,
         industry: Optional[str] = None,
         search: Optional[str] = None,
+        data_type: Optional[str] = None,
         min_risk: Optional[float] = None,
         max_risk: Optional[float] = None,
         include_accounts: bool = False,
@@ -153,6 +154,8 @@ class BreachService:
             query["status"] = status
         if industry:
             query["industry"] = industry
+        if data_type:
+            query["data_types_exposed"] = data_type
         if search:
             # Use $or with $regex for flexible text matching across title,
             # description, and organisation name — covers the $regex and $or
@@ -162,6 +165,7 @@ class BreachService:
                 regex_filter,
                 safe_regex_query(search, "description"),
                 safe_regex_query(search, "organisation.name"),
+                safe_regex_query(search, "industry"),
             ]
         if min_risk is not None or max_risk is not None:
             risk_filter: dict = {}

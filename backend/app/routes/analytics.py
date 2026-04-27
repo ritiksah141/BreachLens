@@ -82,7 +82,7 @@ def monthly_trend():
 
 @analytics_bp.route("/top-organisations", methods=["GET"])
 @require_role("analyst", "admin")
-@cache.cached(timeout=300, key_prefix=make_cache_key)
+@cache.cached(timeout=1, key_prefix=make_cache_key)
 def top_organisations():
     try:
         limit = int(request.args.get("limit", 10))

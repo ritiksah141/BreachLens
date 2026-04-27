@@ -79,14 +79,14 @@ type SearchSuggestion = { title: string; organisation: string };
         <!-- Filter Selects -->
         <div class="col-lg-2 col-md-3">
           <label class="text-xs-caps text-on-surface-variant mb-2 d-block" style="font-size: 8px;">SEVERITY</label>
-          <select class="form-select bg-surface-container-high border-0 text-on-surface" style="font-size: 11px; height: 38px;" [(ngModel)]="filters.severity" (change)="applyFilters()">
+          <select class="form-select" style="font-size: 11px; height: 38px;" [(ngModel)]="filters.severity" (change)="applyFilters()">
             <option value="">ALL LEVELS</option>
             @for (s of severities; track s) { <option [value]="s">{{ s | uppercase }}</option> }
           </select>
         </div>
         <div class="col-lg-2 col-md-3">
           <label class="text-xs-caps text-on-surface-variant mb-2 d-block" style="font-size: 8px;">SECTOR</label>
-          <select class="form-select bg-surface-container-high border-0 text-on-surface" style="font-size: 11px; height: 38px;" [(ngModel)]="filters.industry" (change)="applyFilters()">
+          <select class="form-select" style="font-size: 11px; height: 38px;" [(ngModel)]="filters.industry" (change)="applyFilters()">
             <option value="">ALL SECTORS</option>
             @for (i of industries; track i) { <option [value]="i">{{ i | uppercase }}</option> }
           </select>
@@ -94,7 +94,7 @@ type SearchSuggestion = { title: string; organisation: string };
         <div class="col-lg-2 col-md-6">
           <label class="text-xs-caps text-on-surface-variant mb-2 d-block" style="font-size: 8px;">SORT BY</label>
           <div class="d-flex gap-2">
-            <select class="form-select bg-surface-container-high border-0 text-on-surface" style="font-size: 11px; height: 38px;" [(ngModel)]="filters.sort_by" (change)="applyFilters()">
+            <select class="form-select" style="font-size: 11px; height: 38px;" [(ngModel)]="filters.sort_by" (change)="applyFilters()">
               <option value="created_at">DATE ADDED</option>
               <option value="risk_score">RISK SCORE</option>
               <option value="affected_records_count">RECORDS</option>
@@ -143,11 +143,11 @@ type SearchSuggestion = { title: string; organisation: string };
           <div class="col-md-6 d-flex gap-4">
             <div class="d-flex align-items-center gap-2">
               <span class="text-xs-caps text-on-surface opacity-50" style="font-size: 8px;">MIN RISK</span>
-              <input type="number" min="0" max="10" step="0.1" class="form-control bg-surface-container-high border-0 text-on-surface text-center shadow-inner" style="width: 70px; font-size: 11px; height: 32px;" [(ngModel)]="filters.min_risk" (change)="applyFilters()">
+              <input type="number" min="0" max="10" step="0.1" class="form-control text-center shadow-inner" style="width: 70px; font-size: 11px; height: 32px;" [(ngModel)]="filters.min_risk" (change)="applyFilters()">
             </div>
             <div class="d-flex align-items-center gap-2">
               <span class="text-xs-caps text-on-surface opacity-50" style="font-size: 8px;">MAX RISK</span>
-              <input type="number" min="0" max="10" step="0.1" class="form-control bg-surface-container-high border-0 text-on-surface text-center shadow-inner" style="width: 70px; font-size: 11px; height: 32px;" [(ngModel)]="filters.max_risk" (change)="applyFilters()">
+              <input type="number" min="0" max="10" step="0.1" class="form-control text-center shadow-inner" style="width: 70px; font-size: 11px; height: 32px;" [(ngModel)]="filters.max_risk" (change)="applyFilters()">
             </div>
           </div>
           <div class="col-md-6 d-flex justify-content-end">
@@ -329,6 +329,7 @@ export class BreachListComponent implements OnInit {
     severity: '',
     status: '',
     industry: '',
+    data_type: '',
     sort_by: 'created_at',
     order: 'desc',
   };
@@ -367,6 +368,10 @@ export class BreachListComponent implements OnInit {
         this.filters.search = params['q'];
         this.filters.page = 1;
       }
+      if (params['data_type']) {
+        this.filters.data_type = params['data_type'];
+        this.filters.page = 1;
+      }
       this.loadBreaches();
     });
   }
@@ -383,6 +388,7 @@ export class BreachListComponent implements OnInit {
       sort_by: this.filters.sort_by as AdvancedSearchParams['sort_by'],
       order: this.filters.order,
       q: this.filters.search,
+      data_types: this.filters.data_type ? [this.filters.data_type] : undefined,
       severities: this.filters.severity ? [this.filters.severity] : undefined,
       statuses: this.filters.status ? [this.filters.status] : undefined,
       industries: this.filters.industry ? [this.filters.industry] : undefined,
@@ -529,7 +535,7 @@ export class BreachListComponent implements OnInit {
   resetFilters(): void {
     this.filters = {
       page: 1, limit: 12, search: '', severity: '',
-      status: '', industry: '', sort_by: 'created_at', order: 'desc',
+      status: '', industry: '', data_type: '', sort_by: 'created_at', order: 'desc',
       min_risk: undefined, max_risk: undefined
     };
     this.loadBreaches();
@@ -589,6 +595,7 @@ export class BreachListComponent implements OnInit {
   get activeFilterChips(): Array<{ key: string; label: string }> {
     const chips: Array<{ key: string; label: string }> = [];
     if (this.filters.search) chips.push({ key: 'search', label: `Search: ${this.filters.search}` });
+    if (this.filters.data_type) chips.push({ key: 'data_type', label: `Type: ${this.filters.data_type.split('_').join(' ')}` });
     if (this.filters.severity) chips.push({ key: 'severity', label: `Severity: ${this.filters.severity}` });
     if (this.filters.industry) chips.push({ key: 'industry', label: `Sector: ${this.filters.industry}` });
     if (this.filters.status) chips.push({ key: 'status', label: `Status: ${this.filters.status}` });
@@ -598,7 +605,7 @@ export class BreachListComponent implements OnInit {
   }
 
   clearFilter(key: string): void {
-    (this.filters as any)[key] = key === 'search' || key === 'severity' || key === 'industry' || key === 'status' ? '' : undefined;
+    (this.filters as any)[key] = key === 'search' || key === 'severity' || key === 'industry' || key === 'status' || key === 'data_type' ? '' : undefined;
     this.applyFilters();
   }
 

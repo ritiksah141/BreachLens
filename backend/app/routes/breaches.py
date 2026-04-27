@@ -156,6 +156,7 @@ def list_breaches():
         status=status,
         industry=industry,
         search=request.args.get("search"),
+        data_type=request.args.get("data_type"),
         min_risk=min_risk,
         max_risk=max_risk,
         include_accounts=is_authenticated,
@@ -203,6 +204,10 @@ def advanced_search_breaches():
     statuses = _parse_csv_param(request.args.get("statuses"))
     industries = _parse_csv_param(request.args.get("industries"))
     data_types = _parse_csv_param(request.args.get("data_types"))
+    # Allow single data_type param as fallback/alternative for dashboard integration
+    dt_single = request.args.get("data_type")
+    if dt_single and dt_single not in data_types:
+        data_types.append(dt_single)
 
     invalid_severities = sorted(set(severities) - set(ALLOWED_SEVERITIES))
     if invalid_severities:

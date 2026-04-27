@@ -103,8 +103,15 @@ class AnalyticsService:
     def top_organisations(self, limit: int = 10) -> list[dict]:
         """Top N organisations by total affected record count."""
         pipeline = [
+            # Fallback to title if organisation.name is missing
+            {"$project": {
+                "org_name": {"$ifNull": ["$organisation.name", "$title"]},
+                "affected_records_count": 1,
+                "risk_score": 1
+            }},
+            {"$match": {"org_name": {"$ne": None}}},
             {"$group": {
-                "_id": "$organisation.name",
+                "_id": "$org_name",
                 "total_records_exposed": {"$sum": "$affected_records_count"},
                 "breach_count": {"$sum": 1},
                 "avg_risk_score": {"$avg": "$risk_score"},

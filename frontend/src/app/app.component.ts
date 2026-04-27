@@ -26,7 +26,7 @@ import { FormsModule } from '@angular/forms';
                 </span>
               </span>
               <span class="brand-wordmark fs-5 fw-bold text-primary font-headline">BreachLens</span>
-              <span class="nav-tooltip" style="left: 65px; top: 50%; transform: translateY(-50%) translateX(-10px);">HOME</span>
+              <span class="nav-tooltip" style="left: 65px; top: 50%; transform: translateY(-50%) translateX(-10px);">BreachLens</span>
             </a>
           </div>
 

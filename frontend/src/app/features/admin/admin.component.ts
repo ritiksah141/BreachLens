@@ -177,29 +177,29 @@ import { UserManagementComponent } from './user-management/user-management.compo
                   <div class="row g-2 align-items-end">
                     <div class="col-md-3">
                       <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 7px;">QUERY</label>
-                      <input class="form-control bg-surface-container-low border-0 text-on-surface text-xs-caps" style="font-size: 10px; height: 32px;" placeholder="Title or source..." [(ngModel)]="adminFilters.q" (input)="onAdminSearchChange()" (keyup.enter)="applyAdminFilters()" />
+                      <input class="form-control glass-panel border border-outline-variant border-opacity-25 text-on-surface text-xs-caps" style="font-size: 10px; height: 32px;" placeholder="Title or source..." [(ngModel)]="adminFilters.q" (input)="onAdminSearchChange()" (keyup.enter)="applyAdminFilters()" />
                     </div>
                     <div class="col-md-2">
                       <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 7px;">LEVEL</label>
-                      <select class="form-select bg-surface-container-low border-0 text-on-surface text-xs-caps" style="font-size: 10px; height: 32px;" [(ngModel)]="adminFilters.severity" (change)="applyAdminFilters()">
+                      <select class="form-select glass-panel border border-outline-variant border-opacity-25 text-on-surface text-xs-caps" style="font-size: 10px; height: 32px;" [(ngModel)]="adminFilters.severity" (change)="applyAdminFilters()">
                         <option value="">ALL SEVERITY</option>
                         @for (s of severities; track s) { <option [value]="s">{{ s | uppercase }}</option> }
                       </select>
                     </div>
                     <div class="col-md-2">
                       <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 7px;">STATUS</label>
-                      <select class="form-select bg-surface-container-low border-0 text-on-surface text-xs-caps" style="font-size: 10px; height: 32px;" [(ngModel)]="adminFilters.status" (change)="applyAdminFilters()">
+                      <select class="form-select glass-panel border border-outline-variant border-opacity-25 text-on-surface text-xs-caps" style="font-size: 10px; height: 32px;" [(ngModel)]="adminFilters.status" (change)="applyAdminFilters()">
                         <option value="">ALL STATUS</option>
                         @for (s of statuses; track s) { <option [value]="s">{{ s | uppercase }}</option> }
                       </select>
                     </div>
                     <div class="col-md-2">
                       <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 7px;">MIN RISK</label>
-                      <input type="number" min="0" max="10" step="0.1" class="form-control bg-surface-container-low border-0 text-on-surface text-xs-caps text-center" style="font-size: 10px; height: 32px;" placeholder="0.0" [(ngModel)]="adminFilters.min_risk" (change)="applyAdminFilters()" />
+                      <input type="number" min="0" max="10" step="0.1" class="form-control text-center" style="font-size: 10px; height: 32px;" placeholder="0.0" [(ngModel)]="adminFilters.min_risk" (change)="applyAdminFilters()" />
                     </div>
                     <div class="col-md-3 d-flex gap-2">
-                      <button class="btn btn-primary text-on-primary text-xs-caps py-1 flex-grow-1 fw-bold" style="font-size: 8px; height: 32px;" (click)="applyAdminFilters()">QUERY</button>
-                      <button class="btn btn-dark bg-surface-container-highest border-0 text-on-surface text-xs-caps py-1 flex-grow-1 fw-bold" style="font-size: 8px; height: 32px;" (click)="resetAdminFilters()">RESET</button>
+                      <button class="btn btn-primary flex-grow-1" style="height: 32px;" (click)="applyAdminFilters()">QUERY</button>
+                      <button class="btn btn-dark flex-grow-1" style="height: 32px;" (click)="resetAdminFilters()">RESET</button>
                     </div>
                   </div>
                   <!-- Filter Chips -->

@@ -174,7 +174,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private async renderOrgsChart() {
-    if (!this.orgsChartRef) return;
+    if (!this.orgsChartRef || !this.orgsData.length) return;
     const Chart = await this.getChart();
     const style = getComputedStyle(document.documentElement);
     this.charts[0]?.destroy();
@@ -184,9 +184,13 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const ctx = this.orgsChartRef.nativeElement.getContext('2d');
     const gradient = ctx?.createLinearGradient(0, 0, 400, 0);
+
+    const colorError = style.getPropertyValue('--error').trim() || '#ef4444';
+    const colorCritical = style.getPropertyValue('--severity-critical').trim() || '#dc2626';
+
     if (gradient) {
-      gradient.addColorStop(0, style.getPropertyValue('--error').trim());
-      gradient.addColorStop(1, style.getPropertyValue('--error-container').trim());
+      gradient.addColorStop(0, colorError);
+      gradient.addColorStop(1, colorCritical);
     }
 
     this.charts[0] = new Chart(this.orgsChartRef.nativeElement, {
@@ -196,7 +200,7 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
         datasets: [{
           label: 'Records Exposed',
           data: counts,
-          backgroundColor: gradient || style.getPropertyValue('--error').trim(),
+          backgroundColor: gradient || colorError,
           borderRadius: 4,
           borderWidth: 0
         }]
@@ -208,18 +212,18 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
           legend: { display: false },
           tooltip: {
             backgroundColor: 'rgba(0,0,0,0.9)',
-            titleFont: { family: 'JetBrains Mono', size: 10 },
+            titleFont: { family: 'Inter', size: 10 },
             bodyFont: { family: 'Inter', size: 11 },
           }
         },
         scales: {
           x: {
             grid: { color: 'rgba(255,255,255,0.05)' },
-            ticks: { color: style.getPropertyValue('--on-surface-variant'), font: { size: 9 } }
+            ticks: { color: style.getPropertyValue('--on-surface-variant') || '#94a3b8', font: { size: 9 } }
           },
           y: {
             grid: { display: false },
-            ticks: { color: style.getPropertyValue('--on-surface-variant'), font: { size: 10, family: 'Inter' } }
+            ticks: { color: style.getPropertyValue('--on-surface-variant') || '#94a3b8', font: { size: 10, family: 'Inter' } }
           }
         }
       }
@@ -241,8 +245,11 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const ctx = this.riskChartRef.nativeElement.getContext('2d');
     const gradient = ctx?.createLinearGradient(0, 0, 0, 400);
+    const colorWarning = style.getPropertyValue('--warning').trim() || '#f59e0b';
+    const colorSurfaceVariant = style.getPropertyValue('--on-surface-variant').trim() || '#94a3b8';
+
     if (gradient) {
-      gradient.addColorStop(0, style.getPropertyValue('--warning').trim() + '44');
+      gradient.addColorStop(0, colorWarning + '44');
       gradient.addColorStop(1, 'transparent');
     }
 
@@ -253,12 +260,12 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
         datasets: [{
           label: 'Incidents',
           data: counts,
-          borderColor: style.getPropertyValue('--warning').trim(),
+          borderColor: colorWarning,
           backgroundColor: gradient || 'transparent',
           borderWidth: 2,
           fill: true,
           tension: 0.4,
-          pointBackgroundColor: style.getPropertyValue('--warning').trim(),
+          pointBackgroundColor: colorWarning,
           pointRadius: 2
         }]
       },
@@ -272,8 +279,8 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
           }
         },
         scales: {
-          x: { grid: { display: false }, ticks: { color: style.getPropertyValue('--on-surface-variant'), font: { size: 9 } } },
-          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: style.getPropertyValue('--on-surface-variant'), font: { size: 9 } } }
+          x: { grid: { display: false }, ticks: { color: colorSurfaceVariant, font: { size: 9 } } },
+          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: colorSurfaceVariant, font: { size: 9 } } }
         }
       }
     });
@@ -289,13 +296,28 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
     const years = [...new Set(this.industryYearData.map(d => d.year))].sort();
     const industries = [...new Set(this.industryYearData.map(d => d.industry))];
 
-    const colors = [
-       style.getPropertyValue('--primary').trim(),
-       style.getPropertyValue('--secondary').trim(),
-       style.getPropertyValue('--tertiary').trim() || '#7bd0ff',
-       style.getPropertyValue('--warning').trim(),
-       style.getPropertyValue('--success').trim(),
-       style.getPropertyValue('--error').trim(),
+    // High-contrast, theme-aware palette for industries
+    const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+
+    // Professional qualitative palette
+    const colorPalette = isDark ? [
+      '#60a5fa', // blue 400
+      '#34d399', // emerald 400
+      '#fbbf24', // amber 400
+      '#f87171', // red 400
+      '#a78bfa', // violet 400
+      '#22d3ee', // cyan 400
+      '#f472b6', // pink 400
+      '#fb923c', // orange 400
+    ] : [
+      '#2563eb', // blue 600
+      '#059669', // emerald 600
+      '#d97706', // amber 600
+      '#dc2626', // red 600
+      '#7c3aed', // violet 600
+      '#0891b2', // cyan 600
+      '#db2777', // pink 600
+      '#ea580c', // orange 600
     ];
 
     const datasets = industries.map((ind, i) => {
@@ -306,13 +328,17 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
        return {
           label: ind.split('_').join(' ').toUpperCase(),
           data: dataPoints,
-          backgroundColor: colors[i % colors.length],
+          backgroundColor: colorPalette[i % colorPalette.length],
           borderColor: 'transparent',
           borderWidth: 0,
           borderRadius: 2,
           stack: 'Stack 0',
        };
     });
+
+    const colorOnSurface = style.getPropertyValue('--on-surface').trim() || (isDark ? '#f1f5f9' : '#0f172a');
+    const colorOnSurfaceVariant = style.getPropertyValue('--on-surface-variant').trim() || (isDark ? '#94a3b8' : '#475569');
+    const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
 
     this.charts[2] = new Chart(this.industryYearChartRef.nativeElement, {
       type: 'bar',
@@ -327,22 +353,36 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
             position: 'top',
             align: 'end',
             labels: {
-              color: style.getPropertyValue('--on-surface'),
-              font: { size: 8, family: 'Inter', weight: 'bold' },
+              color: colorOnSurface,
+              font: { size: 9, family: 'Inter', weight: 600 },
               usePointStyle: true,
-              pointStyle: 'circle',
+              pointStyle: 'rectRounded',
               padding: 15
             }
           },
           tooltip: {
-            backgroundColor: 'rgba(0,0,0,0.9)',
-            padding: 10,
-            cornerRadius: 4
+            backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+            titleColor: isDark ? '#fff' : '#0f172a',
+            bodyColor: isDark ? '#cbd5e1' : '#475569',
+            borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+            borderWidth: 1,
+            padding: 12,
+            cornerRadius: 8,
+            titleFont: { size: 12, weight: 'bold' },
+            bodyFont: { size: 11 }
           }
         },
         scales: {
-          x: { stacked: true, grid: { display: false }, ticks: { color: style.getPropertyValue('--on-surface-variant'), font: { size: 9 } } },
-          y: { stacked: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: style.getPropertyValue('--on-surface-variant'), font: { size: 9 } } }
+          x: {
+            stacked: true,
+            grid: { display: false },
+            ticks: { color: colorOnSurfaceVariant, font: { size: 10 } }
+          },
+          y: {
+            stacked: true,
+            grid: { color: gridColor },
+            ticks: { color: colorOnSurfaceVariant, font: { size: 10 } }
+          }
         }
       }
     });

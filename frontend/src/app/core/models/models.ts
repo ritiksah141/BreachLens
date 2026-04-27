@@ -207,6 +207,7 @@ export interface BreachFilterParams {
   severity?: string;
   status?: string;
   industry?: string;
+  data_type?: string;
   sort_by?: string;
   order?: 'asc' | 'desc';
   min_risk?: number;

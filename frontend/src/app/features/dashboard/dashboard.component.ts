@@ -129,7 +129,7 @@ import { FormsModule } from '@angular/forms';
         <!-- Mini Trend (Simplified for Floating) -->
         <div class="glass-panel p-4 shadow-lg d-flex flex-column" [style.height]="selectedMonth !== null ? 'auto' : '180px'" style="transition: height 0.3s ease;">
           <div class="d-flex justify-content-between align-items-center mb-2">
-            <h5 class="text-xs-caps m-0 text-on-surface" style="font-size: 8px;">Propagation ({{ displayYear }})</h5>
+            <h5 class="text-xs-caps m-0 text-on-surface" style="font-size: 8px;">Propagation </h5>
             <div class="d-flex gap-2 align-items-center">
                <span class="text-xs-caps text-on-surface opacity-50" style="font-size: 6px;">YEAR</span>
                <select class="bg-transparent border-0 text-xs-caps text-primary p-0 fw-bold" style="font-size: 8px; cursor: pointer;" [(ngModel)]="selectedYear" (change)="onYearChange()">
@@ -307,7 +307,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   filterByDataType(type: string): void {
-    this.router.navigate(['/breaches'], { queryParams: { q: type } });
+    this.router.navigate(['/breaches'], { queryParams: { data_type: type } });
     this.notifications.show(`FILTERING BY: ${type.split('_').join(' ').toUpperCase()}`, 'info', 2000);
   }
 
