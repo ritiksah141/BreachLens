@@ -80,11 +80,13 @@
   --primary-container: #f1f5f9;
   --on-primary-container: #0f172a;
 
-  --secondary: #faf0e6;       /* Linen */
-  --on-secondary: #0f172a;
+  --secondary: #475569;       /* Slate 600 - High Contrast Secondary */
+  --on-secondary: #ffffff;
 
-  --tertiary: #fffff0;        /* Ivory */
+  --tertiary: #faf0e6;        /* Linen - Subtle Surface Highlight */
   --on-tertiary: #0f172a;
+
+  --surface-ivory: #fffff0;   /* Ivory surface */
 
   --tooltip-bg: #f8f8ff;      /* Ghost White */
   --tooltip-color: #0f172a;

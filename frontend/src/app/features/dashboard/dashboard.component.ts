@@ -31,8 +31,8 @@ import { FormsModule } from '@angular/forms';
         <div class="floating-kpi-card border-start border-primary border-4">
           <div class="text-xs-caps text-on-surface-variant mb-1" style="font-size: 7px;">Total Breaches</div>
           <div class="fs-4 fw-bold text-primary font-headline">{{ summary?.total_breaches | number }}</div>
-          <div class="text-xs-caps mt-1 animate-pulse" style="font-size: 6px;">
-            <span class="p-1 bg-success rounded-circle me-1" style="width: 4px; height: 4px; display: inline-block;"></span>
+          <div class="text-xs-caps mt-1 animate-pulse d-flex align-items-center gap-1" style="font-size: 6px;">
+            <span class="bg-success rounded-circle" style="width: 4px; height: 4px; display: block;"></span>
             <span class="text-success fw-bold">LIVE FEED</span>
           </div>
         </div>

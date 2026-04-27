@@ -18,11 +18,12 @@ const USER_KEY = 'bl_user';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly apiUrl = environment.apiUrl;
-  private _lastSessionExpiryNoticeAt = 0;
+  private _expiryTimer: any = null;
 
   // Reactive state — signals
   private _token = signal<string | null>(localStorage.getItem(TOKEN_KEY));
   private _user = signal<User | null>(this._loadUser());
+  readonly showSessionModal = signal(false);
 
   readonly isAuthenticated = computed(() => !!this._getValidToken(this._token()));
   readonly currentUser = computed(() => this._user());
@@ -38,6 +39,10 @@ export class AuthService {
     private notifications: NotificationService
   ) {
     this._purgeExpiredSession();
+    const currentToken = this._token();
+    if (currentToken && !this._isTokenExpired(currentToken)) {
+      this._scheduleSessionExpiry(currentToken);
+    }
   }
 
   // ------------------------------------------------------------------
@@ -47,7 +52,7 @@ export class AuthService {
   getToken(): string | null {
     const token = this._getValidToken(this._token());
     if (!token && this._token()) {
-      this._clearSession();
+      this.handleSessionExpired();
     }
     return token;
   }
@@ -65,7 +70,7 @@ export class AuthService {
           if (token) {
             localStorage.setItem(TOKEN_KEY, token);
             this._token.set(token);
-            this._lastSessionExpiryNoticeAt = 0;
+            this._scheduleSessionExpiry(token);
             // Return the profile fetch observable
             return this.fetchProfile();
           } else {
@@ -107,6 +112,7 @@ export class AuthService {
       this.http.post(`${this.apiUrl}/auth/logout`, {}).subscribe();
     }
     this._clearSession();
+    this.notifications.clearHistory();
     this.notifications.show('You have been logged out.', 'info', 3000);
     this.router.navigate(['/dashboard']);
   }
@@ -116,20 +122,8 @@ export class AuthService {
     if (!hadSession) return;
 
     this._clearSession();
-
-    const now = Date.now();
-    if (now - this._lastSessionExpiryNoticeAt > 5000) {
-      this._lastSessionExpiryNoticeAt = now;
-      this.notifications.show(
-        'SESSION EXPIRED. LOGIN TO CONTINUE?',
-        'warning',
-        0,
-        {
-          label: 'LOGIN',
-          callback: () => this.router.navigate(['/auth/login'])
-        }
-      );
-    }
+    this.notifications.clearHistory();
+    this.showSessionModal.set(true);
 
     this.router.navigate(['/dashboard']);
   }
@@ -186,14 +180,47 @@ export class AuthService {
   private _purgeExpiredSession(): void {
     const token = this._token();
     if (token && this._isTokenExpired(token)) {
-      this._clearSession();
+      this.handleSessionExpired();
     }
   }
 
   private _clearSession(): void {
+    if (this._expiryTimer) {
+      clearTimeout(this._expiryTimer);
+      this._expiryTimer = null;
+    }
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     this._token.set(null);
     this._user.set(null);
+  }
+
+  private _scheduleSessionExpiry(token: string): void {
+    if (this._expiryTimer) {
+      clearTimeout(this._expiryTimer);
+      this._expiryTimer = null;
+    }
+
+    try {
+      const payload = token.split('.')[1];
+      if (!payload) return;
+
+      const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
+      const decoded = atob(padded);
+      const parsed = JSON.parse(decoded);
+
+      const exp = Number(parsed?.exp);
+      if (!Number.isFinite(exp)) return;
+
+      const timeUntilExpiry = (exp * 1000) - Date.now();
+      if (timeUntilExpiry > 0) {
+        this._expiryTimer = setTimeout(() => {
+          this.handleSessionExpired();
+        }, timeUntilExpiry + 500);
+      }
+    } catch {
+      // Ignore
+    }
   }
 }

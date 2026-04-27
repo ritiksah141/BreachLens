@@ -32,7 +32,10 @@ import { UserManagementComponent } from './user-management/user-management.compo
         <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-3 shadow-sm text-on-surface" style="font-size: 8px;" (click)="refreshStats()">
           <span class="material-symbols-outlined fs-6 me-1">refresh</span> SYNC DATA
         </button>
-        <span class="badge py-2 px-3 glass-panel border border-primary border-opacity-25 text-primary text-xs-caps shadow-sm" style="font-size: 8px;">{{ (auth.currentUser()?.role || 'operator') | uppercase }} ACCESS</span>
+        <span class="badge py-2 px-3 glass-panel border border-primary border-opacity-25 text-primary text-xs-caps shadow-sm" style="font-size: 8px;">
+          <span class="material-symbols-outlined fs-6 align-middle me-1">terminal</span>
+          {{ (auth.currentUser()?.role || 'operator') | uppercase }} ACCESS
+        </span>
       </div>
     </div>
 

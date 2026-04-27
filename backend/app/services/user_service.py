@@ -135,6 +135,21 @@ class UserService:
 
         return result, None
 
+    def set_role(self, user_id: str, new_role: str) -> Optional[dict]:
+        """Directly set a user's role (for non-admin demotion scenarios)."""
+        try:
+            oid = ObjectId(user_id)
+        except (InvalidId, TypeError):
+            return None
+
+        result = self.col.find_one_and_update(
+            {"_id": oid},
+            {"$set": {"role": new_role, "updated_at": datetime.utcnow()}},
+            projection={"password_hash": 0},
+            return_document=True
+        )
+        return result
+
     def deactivate_admin_atomically(self, user_id: str) -> tuple[Optional[dict], Optional[str]]:
         """
         Atomically deactivate a user (admin or non-admin).

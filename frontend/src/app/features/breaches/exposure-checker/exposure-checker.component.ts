@@ -23,10 +23,11 @@ import { forkJoin } from 'rxjs';
           <p class="text-xs-caps mb-0 text-on-surface-variant opacity-75" style="font-size: 7px; letter-spacing: 0.1em;">Cross-reference identity and domain vectors against global breach repositories.</p>
         </div>
         <div class="d-flex align-items-center gap-3">
-           <span class="badge py-2 px-3 text-xs-caps shadow-sm d-flex align-items-center gap-2"
-                 style="background: var(--surface-container-highest); border: 1px solid var(--primary); color: var(--primary); font-size: 8px;">
-              <span class="material-symbols-outlined fs-6">radar</span>
-              READY TO SCAN
+           <span class="badge py-2 px-3 glass-panel border border-primary border-opacity-25 text-primary text-xs-caps shadow-sm d-flex align-items-center gap-2"
+                 style="font-size: 8px;">
+              <span class="status-dot-xs" [ngClass]="(summary && !errorMessage) ? 'bg-success' : 'bg-error'"></span>
+              <span class="material-symbols-outlined fs-6">manage_search</span>
+              {{ errorMessage ? 'SCANNER ERROR' : 'READY TO SCAN' }}
            </span>
         </div>
       </div>
@@ -36,7 +37,7 @@ import { forkJoin } from 'rxjs';
         <!-- Target Mode Toggle -->
         <div class="d-flex justify-content-center gap-2 mb-4 animate__animated animate__fadeIn">
           <button
-            class="btn btn-sm text-xs-caps px-4 py-2 rounded-pill transition-all"
+            class="btn btn-sm text-xs-caps px-4 py-2 rounded-pill transition-all fw-bold"
             style="font-size: 7px;"
             [ngClass]="searchMode === 'email' ? 'glass-panel border-primary text-primary shadow-sm opacity-100' : 'glass-panel border-outline-variant text-on-surface opacity-50'"
             (click)="setSearchMode('email')">
@@ -44,7 +45,7 @@ import { forkJoin } from 'rxjs';
             IDENTITY SCAN
           </button>
           <button
-            class="btn btn-sm text-xs-caps px-4 py-2 rounded-pill transition-all"
+            class="btn btn-sm text-xs-caps px-4 py-2 rounded-pill transition-all fw-bold"
             style="font-size: 7px;"
             [ngClass]="searchMode === 'domain' ? 'glass-panel border-primary text-primary shadow-sm opacity-100' : 'glass-panel border-outline-variant text-on-surface opacity-50'"
             (click)="setSearchMode('domain')">
@@ -64,9 +65,10 @@ import { forkJoin } from 'rxjs';
                 type="text"
                 [(ngModel)]="query"
                 (keyup.enter)="performCheck()"
-                class="pill-input flex-grow-1 text-on-surface"
+                class="pill-input flex-grow-1 text-on-surface fw-bold"
                 [placeholder]="searchMode === 'email' ? 'Enter email address or operator username...' : 'Enter target domain (e.g. corporation.com)...'"
                 autocomplete="off"
+                style="font-size: 13px;"
               >
             </div>
             <!-- Scanning Line Animation -->
@@ -92,38 +94,38 @@ import { forkJoin } from 'rxjs';
         <div class="row g-4 animate__animated animate__fadeInUp">
           <div class="col-md-4" (click)="focusSearch()">
             <div class="glass-panel p-4 h-100 shadow-lg text-center card-interactive border-0 d-flex flex-column align-items-center">
-              <span class="p-3 rounded-circle bg-primary bg-opacity-10 text-primary mb-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                <span class="material-symbols-outlined fs-2">shield_person</span>
-              </span>
+              <div class="identity-orb-sm mb-3">
+                <span class="material-symbols-outlined fs-2 text-primary">shield_person</span>
+              </div>
               <h3 class="text-xs-caps text-on-surface fw-bold mb-3" style="font-size: 8px;">Identity Intel</h3>
               <div class="fs-4 fw-bold font-headline text-on-surface mb-1">
                 {{ (summary?.total_breaches || 0) | number }}
               </div>
-              <p class="text-xs-caps text-on-surface-variant opacity-75 mb-0" style="font-size: 7px;">VERIFIED BREACH EVENTS INDEXED</p>
+              <p class="text-xs-caps text-on-surface-variant opacity-75 mb-0 fw-bold" style="font-size: 7px;">VERIFIED BREACH EVENTS</p>
             </div>
           </div>
           <div class="col-md-4" (click)="focusSearch()">
             <div class="glass-panel p-4 h-100 shadow-lg text-center card-interactive border-0 d-flex flex-column align-items-center">
-              <span class="p-3 rounded-circle bg-secondary bg-opacity-10 text-secondary mb-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                <span class="material-symbols-outlined fs-2">travel_explore</span>
-              </span>
+              <div class="identity-orb-sm secondary mb-3">
+                <span class="material-symbols-outlined fs-2 text-secondary">travel_explore</span>
+              </div>
               <h3 class="text-xs-caps text-on-surface fw-bold mb-3" style="font-size: 8px;">Dark Web Records</h3>
               <div class="fs-4 fw-bold font-headline text-on-surface mb-1">
                 {{ (summary?.total_records_exposed || 0) | compactNumber }}
               </div>
-              <p class="text-xs-caps text-on-surface-variant opacity-75 mb-0" style="font-size: 7px;">DATA POINTS HARVESTED</p>
+              <p class="text-xs-caps text-on-surface-variant opacity-75 mb-0 fw-bold" style="font-size: 7px;">DATA POINTS HARVESTED</p>
             </div>
           </div>
           <div class="col-md-4" (click)="focusSearch()">
             <div class="glass-panel p-4 h-100 shadow-lg text-center card-interactive border-0 d-flex flex-column align-items-center">
-              <span class="p-3 rounded-circle bg-error bg-opacity-10 text-error mb-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                <span class="material-symbols-outlined fs-2">biotech</span>
-              </span>
+              <div class="identity-orb-sm error mb-3">
+                <span class="material-symbols-outlined fs-2 text-error">biotech</span>
+              </div>
               <h3 class="text-xs-caps text-on-surface fw-bold mb-3" style="font-size: 8px;">Critical Vectors</h3>
               <div class="fs-4 fw-bold font-headline text-error mb-1">
                 {{ criticalCount | number }}
               </div>
-              <p class="text-xs-caps text-on-surface-variant opacity-75 mb-0" style="font-size: 7px;">HIGH-THREAT BREACH INCURSIONS</p>
+              <p class="text-xs-caps text-on-surface-variant opacity-75 mb-0 fw-bold" style="font-size: 7px;">HIGH-THREAT INCURSIONS</p>
             </div>
           </div>
         </div>
@@ -135,7 +137,7 @@ import { forkJoin } from 'rxjs';
           <div class="glass-panel p-4 border-error border-start border-4 shadow-lg text-center">
             <span class="material-symbols-outlined fs-2 text-error mb-2">warning</span>
             <div class="text-xs-caps fw-bold text-error mb-1" style="font-size: 8px;">{{ errorMessage }}</div>
-            <div class="text-xs-caps opacity-50 text-on-surface-variant" style="font-size: 7px;">VERIFY INPUT FORMAT AND RE-INITIATE SCANNING PROTOCOLS</div>
+            <div class="text-xs-caps opacity-50 text-on-surface-variant fw-bold" style="font-size: 7px;">VERIFY INPUT FORMAT AND RE-INITIATE SCANNING PROTOCOLS</div>
           </div>
         </div>
       }
@@ -156,7 +158,7 @@ import { forkJoin } from 'rxjs';
                     <div class="fs-4 fw-bold font-headline" [ngClass]="results.exposed ? 'text-error' : 'text-success'">
                       {{ results.exposed ? 'EXPOSURE DETECTED' : 'CLEAR SIGNAL' }}
                     </div>
-                    <div class="text-xs-caps text-on-surface opacity-100" style="font-size: 8px;">
+                    <div class="text-xs-caps text-on-surface opacity-100 fw-bold" style="font-size: 8px;">
                       {{ results.exposed ? results.breach_count + ' BREACHES FOUND' : 'NO KNOWN INCURSIONS' }}
                     </div>
                   </div>
@@ -166,7 +168,7 @@ import { forkJoin } from 'rxjs';
                 <button class="btn btn-error w-100 py-3 text-xs-caps shadow-sm text-white fw-bold" *ngIf="results.exposed" style="background-color: var(--error); font-size: 9px;">
                   SECURE IDENTITY
                 </button>
-                <div class="text-center text-xs-caps opacity-100 py-3 text-on-surface" *ngIf="!results.exposed" style="font-size: 7px;">
+                <div class="text-center text-xs-caps opacity-100 py-3 text-on-surface fw-bold" *ngIf="!results.exposed" style="font-size: 7px;">
                   IDENTITY STATUS: NOMINAL
                 </div>
               </div>
@@ -189,9 +191,9 @@ import { forkJoin } from 'rxjs';
                   <tbody>
                     @for (b of results.breaches; track b._id; let i = $index) {
                       <tr class="bg-transparent border-bottom border-outline-variant border-opacity-5 transition-all hover-bg-surface-container-high cursor-pointer" [routerLink]="['/breaches', b._id]">
-                        <td class="font-mono small py-3 ps-3 opacity-100" style="font-size: 10px;">{{ b.created_at | date:'yyyy.MM.dd' }}</td>
+                        <td class="font-mono small py-3 ps-3 opacity-100 fw-bold" style="font-size: 10px;">{{ b.created_at | date:'yyyy.MM.dd' }}</td>
                         <td class="fw-bold small py-3" style="font-size: 11px;">{{ getOrgName(b) | uppercase }}</td>
-                        <td class="text-xs-caps opacity-75 py-3" style="font-size: 7px;">{{ b.industry | uppercase }}</td>
+                        <td class="text-xs-caps opacity-75 py-3 fw-bold" style="font-size: 7px;">{{ b.industry | uppercase }}</td>
                         <td class="text-end py-3 pe-3">
                           <div class="d-flex align-items-center justify-content-end gap-2">
                              <span class="p-1 rounded-circle shadow-sm" [ngClass]="'bg-' + getSevColor(b.severity)" style="width: 5px; height: 5px;"></span>
@@ -226,21 +228,21 @@ import { forkJoin } from 'rxjs';
                   <span class="material-symbols-outlined text-primary">lock_reset</span>
                   <div>
                     <div class="text-xs-caps fw-bold text-primary mb-1" style="font-size: 7px;">ROTATE CORE CREDENTIALS</div>
-                    <div class="text-xs-caps text-on-surface opacity-75" style="font-size: 7px;">Immediate forced password reset across all linked domains.</div>
+                    <div class="text-xs-caps text-on-surface opacity-75 fw-bold" style="font-size: 7px;">Immediate forced password reset across all linked domains.</div>
                   </div>
                 </li>
                 <li class="d-flex gap-3">
                   <span class="material-symbols-outlined text-secondary">shield_locked</span>
                   <div>
                     <div class="text-xs-caps fw-bold text-secondary mb-1" style="font-size: 7px;">ENABLE HARDWARE MFA</div>
-                    <div class="text-xs-caps text-on-surface opacity-75" style="font-size: 7px;">Elevate authentication protocols to physical token requirements.</div>
+                    <div class="text-xs-caps text-on-surface opacity-75 fw-bold" style="font-size: 7px;">Elevate authentication protocols to physical token requirements.</div>
                   </div>
                 </li>
                 <li class="d-flex gap-3">
                   <span class="material-symbols-outlined text-warning">security_update_good</span>
                   <div>
                     <div class="text-xs-caps fw-bold text-warning mb-1" style="font-size: 7px;">AUDIT LINKED ACCOUNTS</div>
-                    <div class="text-xs-caps text-on-surface opacity-75" style="font-size: 7px;">Review cross-domain authorization grants for unauthorized persistence.</div>
+                    <div class="text-xs-caps text-on-surface opacity-75 fw-bold" style="font-size: 7px;">Review cross-domain authorization grants for unauthorized persistence.</div>
                   </div>
                 </li>
               </ul>
@@ -277,8 +279,6 @@ import { forkJoin } from 'rxjs';
       border: none;
       outline: none;
       color: var(--on-surface) !important;
-      font-size: 0.95rem;
-      font-weight: 500;
       padding: 0 1rem;
       width: 100%;
     }
@@ -286,7 +286,6 @@ import { forkJoin } from 'rxjs';
     .pill-input::placeholder {
       color: var(--on-surface-variant);
       opacity: 0.5;
-      font-size: 0.85rem;
     }
 
     .card-interactive {
@@ -295,12 +294,41 @@ import { forkJoin } from 'rxjs';
     }
     .card-interactive:hover {
       transform: translateY(-8px);
-      background-color: var(--surface-container-highest) !important;
-      border-color: var(--primary) !important;
-      border-opacity: 0.3 !important;
+      background-color: var(--surface-container-high) !important;
+      border: 1px solid var(--primary) !important;
+    }
+
+    .identity-orb-sm {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--primary) 15%, transparent), transparent);
+      border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+      box-shadow: 0 0 20px color-mix(in srgb, var(--primary) 12%, transparent);
+      transition: all 0.3s ease;
+    }
+    .identity-orb-sm.secondary {
+      background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--secondary) 15%, transparent), transparent);
+      border: 1px solid color-mix(in srgb, var(--secondary) 25%, transparent);
+      box-shadow: 0 0 20px color-mix(in srgb, var(--secondary) 12%, transparent);
+    }
+    .identity-orb-sm.error {
+      background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--error) 15%, transparent), transparent);
+      border: 1px solid color-mix(in srgb, var(--error) 25%, transparent);
+      box-shadow: 0 0 20px color-mix(in srgb, var(--error) 12%, transparent);
     }
 
     .status-orb { width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 15px currentColor; }
+
+    .status-dot-xs {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      box-shadow: 0 0 8px currentColor;
+    }
 
     .scanning-line {
       position: absolute; bottom: 0; left: 0; height: 2px;
@@ -370,7 +398,9 @@ export class ExposureCheckerComponent implements OnInit {
   }
 
   focusSearch(): void {
-    setTimeout(() => this.searchInput.nativeElement.focus(), 0);
+    if (this.searchInput) {
+      setTimeout(() => this.searchInput.nativeElement.focus(), 0);
+    }
   }
 
   performCheck(): void {

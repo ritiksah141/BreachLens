@@ -20,7 +20,7 @@ import { CompactNumberPipe } from '../../shared/pipes/compact-number.pipe';
       <div class="d-flex align-items-center gap-3">
          <span class="badge py-2 px-3 text-xs-caps shadow-sm d-flex align-items-center gap-2"
                style="background: var(--surface-container-highest); border: 1px solid var(--primary); color: var(--primary); font-size: 8px;">
-            <span class="material-symbols-outlined fs-6">analytics</span>
+            <span class="material-symbols-outlined fs-6">monitoring</span>
             LIVE METRICS
          </span>
       </div>

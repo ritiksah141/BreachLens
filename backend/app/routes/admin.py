@@ -104,7 +104,7 @@ def change_user_role(user_id: str):
         if error:
             return error_response(error, 400)
     else:
-        updated = user_service.update_user(user_id, {"role": role})
+        updated = user_service.set_role(user_id, role)
         if not updated:
             return error_response("User not found.", 404)
 
