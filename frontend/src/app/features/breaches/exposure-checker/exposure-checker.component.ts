@@ -408,11 +408,9 @@ export class ExposureCheckerComponent implements OnInit {
   }
 
   getSevColor(sev: string): string {
-    const s = sev?.toLowerCase();
-    if (s === 'critical') return 'error';
-    if (s === 'high') return 'warning';
-    if (s === 'low') return 'primary';
-    return 'on-surface-variant';
+    const s = sev?.toLowerCase() || 'info';
+    if (s === 'informational' || s === 'info') return 'severity-info';
+    return `severity-${s}`;
   }
 
   getOrgName(b: Breach): string {

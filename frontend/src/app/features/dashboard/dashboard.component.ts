@@ -2,7 +2,7 @@ import {
   Component, OnInit, OnDestroy, inject,
   ElementRef, ViewChild, AfterViewInit, effect
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { NgClass, DecimalPipe, PercentPipe, CommonModule, DatePipe } from '@angular/common';
 import { AnalyticsService } from '../../core/services/analytics.service';
 import { BreachService } from '../../core/services/breach.service';
@@ -20,168 +20,154 @@ import { FormsModule } from '@angular/forms';
   standalone: true,
   imports: [RouterLink, NgClass, DecimalPipe, PercentPipe, CommonModule, RiskLevelPipe, CompactNumberPipe, BreachMapComponent, DatePipe, FormsModule],
   template: `
-    <div class="row g-4 mb-4 mt-2">
-      <!-- KPI Row -->
-      <div class="col-md-3">
-        <div class="glass-panel p-4 shadow-lg h-100 border-start border-primary border-4">
-          <div class="text-xs-caps text-on-surface-variant mb-1">Total Breaches</div>
-          <div class="fs-2 fw-bold text-primary font-headline">{{ summary?.total_breaches | number }}</div>
-          <div class="text-xs-caps mt-2 animate-pulse" style="font-size: 8px;">
-            <span class="p-1 bg-success rounded-circle me-1" style="width: 6px; height: 6px; display: inline-block;"></span>
-            <span class="text-success fw-bold">LIVE FEED ACTIVE</span>
+    <div class="dashboard-grid">
+      <!-- Background Map -->
+      <div class="map-container-panel overflow-hidden" style="border-radius: 1rem;">
+        <app-breach-map height="100%" />
+      </div>
+
+      <!-- Floating KPI Row -->
+      <div class="floating-kpi-container">
+        <div class="floating-kpi-card border-start border-primary border-4">
+          <div class="text-xs-caps text-on-surface-variant mb-1" style="font-size: 7px;">Total Breaches</div>
+          <div class="fs-4 fw-bold text-primary font-headline">{{ summary?.total_breaches | number }}</div>
+          <div class="text-xs-caps mt-1 animate-pulse" style="font-size: 6px;">
+            <span class="p-1 bg-success rounded-circle me-1" style="width: 4px; height: 4px; display: inline-block;"></span>
+            <span class="text-success fw-bold">LIVE FEED</span>
           </div>
         </div>
-      </div>
-      <div class="col-md-3">
-        <div class="glass-panel p-4 shadow-lg h-100 border-start border-error border-4">
-          <div class="text-xs-caps text-on-surface-variant mb-1">Open Alerts</div>
-          <div class="fs-2 fw-bold text-error font-headline">{{ summary?.open_alerts ?? 0 }}</div>
-          <div class="text-xs-caps text-error mt-2 fw-bold" style="font-size: 8px;">IMMEDIATE ACTION REQUIRED</div>
+
+        <div class="floating-kpi-card border-start border-error border-4">
+          <div class="text-xs-caps text-on-surface-variant mb-1" style="font-size: 7px;">Open Alerts</div>
+          <div class="fs-4 fw-bold text-error font-headline">{{ summary?.open_alerts ?? 0 }}</div>
+          <div class="text-xs-caps text-error mt-1 fw-bold" style="font-size: 6px;">ACTION REQUIRED</div>
         </div>
-      </div>
-      <div class="col-md-3">
-        <div class="glass-panel p-4 shadow-lg h-100 border-start border-warning border-4">
-          <div class="text-xs-caps text-on-surface-variant mb-1">Avg Risk Index</div>
-          <div class="fs-2 fw-bold font-headline" [ngClass]="summary?.avg_risk_score | riskLevel:'class'">
+
+        <div class="floating-kpi-card border-start border-warning border-4">
+          <div class="text-xs-caps text-on-surface-variant mb-1" style="font-size: 7px;">Avg Risk</div>
+          <div class="fs-4 fw-bold font-headline" [ngClass]="summary?.avg_risk_score | riskLevel:'class'">
             {{ summary?.avg_risk_score | number:'1.1-1' }}
           </div>
-          <div class="text-xs-caps mt-2" style="font-size: 8px;">{{ summary?.avg_risk_score | riskLevel }}</div>
+          <div class="text-xs-caps mt-1" style="font-size: 6px;">{{ summary?.avg_risk_score | riskLevel }}</div>
         </div>
-      </div>
-      <div class="col-md-3">
-        <div class="glass-panel p-4 shadow-lg h-100 border-start border-success border-4">
-          <div class="text-xs-caps text-on-surface-variant mb-1">Operational Health</div>
-          <div class="fs-2 fw-bold text-success font-headline">99.8%</div>
-          <div class="text-xs-caps mt-2 opacity-50" style="font-size: 8px;">ENCRYPTION NOMINAL</div>
-        </div>
-      </div>
 
-      <!-- Main Map Panel -->
-      <div class="col-lg-8">
-        <div class="glass-panel p-3 shadow-lg d-flex flex-column" style="height: 480px;">
-          <div class="d-flex justify-content-between align-items-center mb-3 px-2 flex-shrink-0">
-            <h5 class="text-xs-caps m-0">Global Incursion Telemetry</h5>
-            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 py-1 px-2 text-xs-caps" style="font-size: 8px;">2D GRID ACTIVE</span>
-          </div>
-          <div class="flex-grow-1 position-relative overflow-hidden" style="border-radius: 1rem;">
-            <app-breach-map height="100%" />
-          </div>
+        <div class="floating-kpi-card border-start border-success border-4 d-none d-xl-block">
+          <div class="text-xs-caps text-on-surface-variant mb-1" style="font-size: 7px;">Systems</div>
+          <div class="fs-4 fw-bold text-success font-headline">NOMINAL</div>
+          <div class="text-xs-caps mt-1 opacity-50" style="font-size: 6px;">HEALTH: 99.8%</div>
         </div>
       </div>
 
-      <!-- Analytics Side Panel -->
-      <div class="col-lg-4 d-flex flex-column gap-4">
-        <!-- Severity Breakdown -->
-        <div class="glass-panel p-4 shadow-lg" style="height: 230px;">
-          <h5 class="text-xs-caps mb-3">Severity Breakdown</h5>
-          <div class="h-100 pb-4">
-            <canvas #severityChart></canvas>
+      <!-- Right Analytics Stack -->
+      <div class="floating-analytics-panel">
+        <!-- Severity -->
+        <div class="glass-panel p-4 shadow-lg d-flex flex-column" style="height: 220px;">
+          <h5 class="text-xs-caps mb-3 text-on-surface" style="font-size: 8px;">Severity Breakdown</h5>
+          <div class="d-flex align-items-center gap-3 flex-grow-1">
+             <div style="width: 100px; height: 100px; flex-shrink: 0;">
+                <canvas #severityChart></canvas>
+             </div>
+             <div class="flex-grow-1 d-flex flex-column gap-1">
+                @for (item of severityData; track item.severity) {
+                   <div class="d-flex justify-content-between align-items-center cursor-pointer hover-bg-surface-container-highest rounded px-1" (click)="filterBySeverity(item.severity)">
+                      <div class="d-flex align-items-center gap-2">
+                         <span class="p-1 rounded-circle shadow-sm" [ngClass]="'bg-' + getSevColor(item.severity)" style="width: 6px; height: 6px;"></span>
+                         <span class="text-xs-caps text-on-surface opacity-75" style="font-size: 7px;">{{ item.severity | uppercase }}</span>
+                      </div>
+                      <span class="text-on-surface font-mono fw-bold" style="font-size: 9px;">{{ item.breach_count | number }}</span>
+                   </div>
+                }
+             </div>
           </div>
         </div>
 
-        <!-- Dynamic Panel -->
-        <div class="glass-panel p-4 shadow-lg flex-grow-1 overflow-hidden d-flex flex-column" style="height: 226px;">
-          <h5 class="text-xs-caps mb-3 d-flex justify-content-between flex-shrink-0">
-            <span>{{ isAnalyst ? 'Attack Surface Profile' : 'Live Incursion Feed' }}</span>
-            <span class="p-1 bg-success rounded-circle animate-pulse" style="width: 8px; height: 8px; display: inline-block;"></span>
+        <!-- Dynamic Panel (Attack Surface / Recent) -->
+        <div class="glass-panel p-4 shadow-lg flex-grow-1 overflow-hidden d-flex flex-column">
+          <h5 class="text-xs-caps mb-3 d-flex justify-content-between flex-shrink-0 text-on-surface" style="font-size: 8px;">
+            <span>{{ isAnalyst ? 'Attack Surface' : 'Live Incursions' }}</span>
+            <span class="p-1 bg-success rounded-circle animate-pulse" style="width: 6px; height: 6px;"></span>
           </h5>
 
-          <!-- Analyst View -->
-          <div *ngIf="isAnalyst && attackSurface" class="flex-grow-1 overflow-auto custom-scrollbar pe-1">
-             <div class="d-flex flex-column gap-3">
-                <div *ngFor="let dt of attackSurface.top_data_types | slice:0:3; let i = index">
-                   <div class="d-flex justify-content-between mb-1">
-                      <span class="text-xs-caps opacity-75" style="font-size: 8px;">{{ dt.data_type.split('_').join(' ') | uppercase }}</span>
-                      <span class="text-xs-caps fw-bold" [ngClass]="getVaryingColorClass(i)" style="font-size: 8px;">{{ dt.count }} RECORDS</span>
-                   </div>
-                   <div class="progress bg-white bg-opacity-5" style="height: 2px;">
-                      <div class="progress-bar" [ngClass]="getVaryingBgClass(i)" [style.width.%]="(dt.count / attackSurface.overview.breach_count) * 100"></div>
-                   </div>
-                </div>
-                <!-- UNACKNOWLEDGED ALERTS UI BOX -->
-                <div class="mt-2 p-2 border border-warning border-opacity-30 bg-warning bg-opacity-10 rounded text-center">
-                   <div class="text-xs-caps text-warning mb-1" style="font-size: 9px; font-weight: 800; letter-spacing: 0.1em;">UNACKNOWLEDGED ALERTS</div>
-                   <div class="fs-4 fw-bold text-warning font-headline">{{ attackSurface.alert_pressure.unacknowledged_alerts }}</div>
-                </div>
-             </div>
-          </div>
-
-          <!-- Guest/Fallback View -->
-          <div *ngIf="!isAnalyst || !attackSurface" class="flex-grow-1 overflow-auto custom-scrollbar">
-             <div class="list-group list-group-flush">
-                <div *ngFor="let b of recentBreaches; let i = index" class="list-group-item bg-transparent border-outline-variant border-opacity-10 px-0 py-2 border-0" [routerLink]="['/breaches', b._id]" style="cursor: pointer;">
-                   <div class="d-flex justify-content-between align-items-start">
-                      <div class="fw-bold" [ngClass]="i % 2 === 0 ? 'text-on-surface' : 'text-secondary'" style="font-size: 10px;">{{ b.title | slice:0:30 }}{{ b.title.length > 30 ? '...' : '' }}</div>
-                      <span class="text-xs-caps" [ngClass]="'text-' + getSevColor(b.severity)" style="font-size: 7px;">{{ b.severity | uppercase }}</span>
-                   </div>
-                   <div class="text-xs-caps opacity-50" style="font-size: 7px;">{{ getOrgName(b) | uppercase }} // {{ b.breach_date | date:'yyyy.MM' }}</div>
-                </div>
-             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Trend Row -->
-      <div class="col-12">
-        <div class="glass-panel p-4 shadow-lg overflow-hidden" [style.height]="selectedMonth !== null ? 'auto' : '360px'">
-          <div class="row h-100">
-            <!-- Chart Side -->
-            <div [ngClass]="selectedMonth !== null ? 'col-lg-8 border-end border-outline-variant border-opacity-10' : 'col-12'">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="text-xs-caps m-0">Monthly Propagation Index ({{ displayYear }})</h5>
-                <div class="d-flex align-items-center gap-3">
-                  <span class="text-xs-caps opacity-50 d-none d-sm-inline" style="font-size: 8px;">CLICK BAR FOR INTEL</span>
-                  <div class="d-flex align-items-center gap-2">
-                    <span class="text-xs-caps opacity-50" style="font-size: 8px;">YEAR</span>
-                    <select class="form-select form-select-sm bg-surface-container border-outline-variant border-opacity-25 text-xs-caps"
-                            style="width: auto; font-size: 10px; height: 28px;"
-                            [(ngModel)]="selectedYear" (change)="onYearChange()">
-                      <option *ngFor="let y of availableYears" [value]="y">{{ y }}</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-              <div style="height: 250px;">
-                <canvas #trendChart></canvas>
-              </div>
-            </div>
-
-            <!-- List Side (Conditional) -->
-            <div class="col-lg-4 animate__animated animate__fadeInRight" *ngIf="selectedMonth !== null">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="text-xs-caps m-0 text-primary">{{ monthNames[selectedMonth] }} Intelligence</h5>
-                <button class="btn-close-tactical" (click)="selectedMonth = null">
-                  <span class="material-symbols-outlined">close</span>
-                </button>
-              </div>
-
-              <div class="overflow-auto custom-scrollbar" style="max-height: 280px;">
-                @if (monthLoading) {
-                  <div class="text-center py-5"><div class="spinner-border spinner-border-sm text-primary"></div></div>
-                } @else {
-                  <div class="list-group list-group-flush">
-                    @for (b of monthBreaches; track b._id) {
-                      <div class="list-group-item bg-transparent border-outline-variant border-opacity-10 px-0 py-2" [routerLink]="['/breaches', b._id]" style="cursor: pointer;">
-                        <div class="fw-bold text-on-surface" style="font-size: 10px;">{{ b.title }}</div>
-                        <div class="d-flex justify-content-between align-items-center mt-1">
-                          <span class="text-xs-caps opacity-50" style="font-size: 7px;">{{ getOrgName(b) | uppercase }}</span>
-                          <span class="badge text-xs-caps" [ngClass]="'bg-' + getSevColor(b.severity)" style="font-size: 6px; padding: 2px 4px;">{{ b.severity | uppercase }}</span>
-                        </div>
+          <div class="flex-grow-1 overflow-auto custom-scrollbar-hidden pe-1">
+            <!-- Analyst View -->
+            @if (isAnalyst && attackSurface) {
+              <div class="d-flex flex-column gap-2">
+                @for (dt of attackSurface.top_data_types | slice:0:4; track dt.data_type; let i = $index) {
+                   <div class="p-2 rounded bg-surface-container-high border border-outline-variant border-opacity-10 shadow-sm transition-all hover-glow cursor-pointer"
+                        (click)="filterByDataType(dt.data_type)">
+                      <div class="d-flex justify-content-between mb-1">
+                         <span class="text-xs-caps text-on-surface opacity-75" style="font-size: 7px;">{{ dt.data_type.split('_').join(' ') | uppercase }}</span>
+                         <span class="text-xs-caps fw-bold" [ngClass]="getVaryingColorClass(i)" style="font-size: 7px;">{{ dt.count | compactNumber }}</span>
                       </div>
-                    }
-                    @if (monthBreaches.length === 0) {
-                      <div class="text-center py-4 opacity-25 text-xs-caps" style="font-size: 9px;">NO DATA CAPTURED FOR THIS PERIOD</div>
-                    }
+                      <div class="progress bg-white bg-opacity-5" style="height: 2px;">
+                         <div class="progress-bar" [ngClass]="getVaryingBgClass(i)" [style.width.%]="(dt.count / attackSurface.overview.total_records_exposed) * 100"></div>
+                      </div>
+                   </div>
+                }
+                <div class="mt-1 p-3 border border-warning border-opacity-50 bg-warning bg-opacity-10 rounded text-center shadow-sm cursor-pointer card-interactive"
+                     (click)="navigateToAlerts()">
+                   <div class="text-xs-caps text-warning mb-1 fw-extrabold" style="font-size: 8px; letter-spacing: 0.15em;">UNACKNOWLEDGED ALERTS</div>
+                   <div class="fs-4 fw-bold text-warning font-headline" style="text-shadow: 0 0 10px rgba(251, 191, 36, 0.3);">{{ attackSurface.alert_pressure.unacknowledged_alerts }}</div>
+                </div>
+              </div>
+            } @else {
+              <div class="d-flex flex-column gap-2">
+                @for (b of recentBreaches; track b._id; let i = $index) {
+                  <div class="p-2 rounded bg-surface-container-high border border-outline-variant border-opacity-10 shadow-sm transition-all hover-glow cursor-pointer" [routerLink]="['/breaches', b._id]">
+                     <div class="d-flex justify-content-between align-items-start mb-1">
+                        <div class="fw-bold text-on-surface text-truncate pe-2" style="font-size: 9px;">{{ b.title }}</div>
+                        <span class="text-xs-caps fw-bold" [ngClass]="'text-' + getSevColor(b.severity)" style="font-size: 6px;">{{ b.severity | uppercase }}</span>
+                     </div>
+                     <div class="text-xs-caps text-on-surface opacity-50" style="font-size: 6px;">REF: {{ getOrgName(b) | uppercase }}</div>
                   </div>
                 }
               </div>
-              <div class="mt-3 pt-2 border-top border-outline-variant border-opacity-10">
-                <a routerLink="/breaches" class="text-xs-caps text-primary text-decoration-none d-flex align-items-center gap-2" style="font-size: 8px;">
-                  ACCESS FULL REPOSITORY <span class="material-symbols-outlined fs-6">arrow_forward</span>
-                </a>
-              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Mini Trend (Simplified for Floating) -->
+        <div class="glass-panel p-4 shadow-lg d-flex flex-column" [style.height]="selectedMonth !== null ? 'auto' : '180px'" style="transition: height 0.3s ease;">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="text-xs-caps m-0 text-on-surface" style="font-size: 8px;">Propagation ({{ displayYear }})</h5>
+            <div class="d-flex gap-2 align-items-center">
+               <span class="text-xs-caps text-on-surface opacity-50" style="font-size: 6px;">YEAR</span>
+               <select class="bg-transparent border-0 text-xs-caps text-primary p-0 fw-bold" style="font-size: 8px; cursor: pointer;" [(ngModel)]="selectedYear" (change)="onYearChange()">
+                  @for (y of availableYears; track y) { <option [value]="y">{{ y }}</option> }
+               </select>
             </div>
           </div>
+          <div [style.height]="selectedMonth !== null ? '120px' : '100px'">
+            <canvas #trendChart></canvas>
+          </div>
+
+          <!-- Integrated Monthly Details -->
+          @if (selectedMonth !== null) {
+            <div class="mt-3 pt-3 border-top border-outline-variant border-opacity-10 animate__animated animate__fadeIn">
+               <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="text-xs-caps text-primary fw-bold" style="font-size: 8px;">{{ monthNames[selectedMonth] }} INTEL</span>
+                  <button class="btn btn-link p-0 text-on-surface" (click)="selectedMonth = null" style="opacity: 0.5;"><span class="material-symbols-outlined fs-6" style="font-size: 14px;">close</span></button>
+               </div>
+
+               <div class="overflow-auto custom-scrollbar" style="max-height: 200px;">
+                  @if (monthLoading) {
+                    <div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></div>
+                  } @else {
+                    <div class="list-group list-group-flush">
+                      @for (b of monthBreaches; track b._id) {
+                        <div class="list-group-item bg-transparent border-0 px-0 py-2" [routerLink]="['/breaches', b._id]" style="cursor: pointer;">
+                          <div class="fw-bold text-on-surface small" style="font-size: 9px; line-height: 1.2;">{{ b.title }}</div>
+                          <div class="text-xs-caps text-on-surface opacity-50" style="font-size: 6px;">{{ getOrgName(b) | uppercase }}</div>
+                        </div>
+                      }
+                      @if (monthBreaches.length === 0) {
+                        <div class="text-center py-3 text-on-surface opacity-25 text-xs-caps" style="font-size: 7px;">NO DATA</div>
+                      }
+                    </div>
+                  }
+               </div>
+            </div>
+          }
         </div>
       </div>
     </div>
@@ -190,7 +176,17 @@ import { FormsModule } from '@angular/forms';
     :host { display: block; }
     .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
-    .custom-scrollbar::-webkit-scrollbar { width: 3px; }
+
+    .custom-scrollbar-hidden::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar-hidden::-webkit-scrollbar-thumb { background: transparent; border-radius: 10px; }
+    .custom-scrollbar-hidden:hover::-webkit-scrollbar-thumb { background: var(--outline-variant); }
+
+    .hover-glow:hover {
+       background-color: var(--surface-container-highest) !important;
+       border-color: var(--primary) !important;
+       border-opacity: 0.3 !important;
+       transform: translateX(4px);
+    }
   `]
 })
 export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -201,6 +197,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private breachService = inject(BreachService);
   private notifications = inject(NotificationService);
   private themeService = inject(ThemeService);
+  private router = inject(Router);
   auth = inject(AuthService);
 
   summary: AnalyticsSummary | null = null;
@@ -309,6 +306,24 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     this.loadMonthlyTrend(Number(this.selectedYear));
   }
 
+  filterByDataType(type: string): void {
+    this.router.navigate(['/breaches'], { queryParams: { q: type } });
+    this.notifications.show(`FILTERING BY: ${type.split('_').join(' ').toUpperCase()}`, 'info', 2000);
+  }
+
+  filterBySeverity(sev: string): void {
+    this.router.navigate(['/breaches'], { queryParams: { severity: sev } });
+    this.notifications.show(`FILTERING BY SEVERITY: ${sev.toUpperCase()}`, 'info', 2000);
+  }
+
+  navigateToAlerts(): void {
+    if (this.auth.isAdmin()) {
+      this.router.navigate(['/admin'], { queryParams: { tab: 'manage', status: 'active' } });
+    } else {
+      this.router.navigate(['/breaches'], { queryParams: { status: 'active' } });
+    }
+  }
+
   private fetchMonthDetails(monthIndex: number): void {
     this.selectedMonth = monthIndex;
     this.monthLoading = true;
@@ -357,13 +372,14 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         labels: this.severityData.map(d => d.severity),
         datasets: [{
           data: this.severityData.map(d => d.breach_count),
-          backgroundColor: [
-            style.getPropertyValue('--severity-critical').trim(),
-            style.getPropertyValue('--severity-high').trim(),
-            style.getPropertyValue('--severity-medium').trim(),
-            style.getPropertyValue('--severity-low').trim(),
-            style.getPropertyValue('--severity-info').trim()
-          ],
+          backgroundColor: this.severityData.map(d => {
+            const s = d.severity?.toLowerCase();
+            if (s === 'critical') return style.getPropertyValue('--severity-critical').trim();
+            if (s === 'high') return style.getPropertyValue('--severity-high').trim();
+            if (s === 'medium') return style.getPropertyValue('--severity-medium').trim();
+            if (s === 'low') return style.getPropertyValue('--severity-low').trim();
+            return style.getPropertyValue('--severity-info').trim();
+          }),
           borderWidth: 0
         }]
       },
@@ -443,11 +459,9 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getSevColor(sev: string): string {
-    const s = sev?.toLowerCase();
-    if (s === 'critical') return 'error';
-    if (s === 'high') return 'warning';
-    if (s === 'low') return 'primary';
-    return 'on-surface-variant';
+    const s = sev?.toLowerCase() || 'info';
+    if (s === 'informational' || s === 'info') return 'severity-info';
+    return `severity-${s}`;
   }
 
   getOrgName(b: Breach): string {

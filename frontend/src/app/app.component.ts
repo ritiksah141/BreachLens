@@ -14,15 +14,9 @@ import { FormsModule } from '@angular/forms';
     <div class="app-container bg-surface">
       @if (showAppChrome()) {
         <!-- Floating Sidebar -->
-        <aside class="sidebar glass-panel shadow-lg" [class.collapsed]="isCollapsed()">
-          <div class="sidebar-toggle" (click)="toggleSidebar()">
-            <span class="material-symbols-outlined">
-              {{ isCollapsed() ? 'chevron_right' : 'chevron_left' }}
-            </span>
-          </div>
-
-          <div class="sidebar-header p-4 d-flex align-items-center gap-3 overflow-hidden">
-            <a class="brand-lockup text-decoration-none" routerLink="/" aria-label="BreachLens home">
+        <aside class="sidebar glass-panel shadow-lg">
+          <div class="sidebar-header p-4 d-md-flex d-none align-items-center justify-content-center" style="position: relative;">
+            <a class="brand-lockup text-decoration-none nav-item" routerLink="/" aria-label="BreachLens home" style="width: auto; height: auto; margin: 0;">
               <span class="brand-logo" aria-hidden="true">
                 <span class="brand-chip brand-chip-a">
                   <span class="material-symbols-outlined brand-chip-icon">security</span>
@@ -31,51 +25,52 @@ import { FormsModule } from '@angular/forms';
                   <span class="material-symbols-outlined brand-chip-icon">visibility</span>
                 </span>
               </span>
-              <span class="brand-wordmark fs-5 fw-bold text-primary font-headline nav-label" *ngIf="!isCollapsed()">BreachLens</span>
+              <span class="brand-wordmark fs-5 fw-bold text-primary font-headline">BreachLens</span>
+              <span class="nav-tooltip" style="left: 65px; top: 50%; transform: translateY(-50%) translateX(-10px);">HOME</span>
             </a>
           </div>
 
-          <nav class="flex-grow-1 mt-2">
+          <nav class="flex-grow-1 mt-md-2 d-flex flex-md-column align-items-center" style="overflow: visible;">
             <a class="nav-item" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">
-              <span class="material-symbols-outlined">dashboard</span>
-              <span class="nav-label">Dashboard</span>
+              <span class="material-symbols-outlined">home</span>
+              <span class="nav-tooltip">DASHBOARD</span>
             </a>
             <a class="nav-item" routerLink="/breaches" routerLinkActive="active">
-              <span class="material-symbols-outlined">database</span>
-              <span class="nav-label">Breach Log</span>
+              <span class="material-symbols-outlined">description</span>
+              <span class="nav-tooltip">BREACH LOG</span>
             </a>
             <a class="nav-item" routerLink="/map" routerLinkActive="active">
-              <span class="material-symbols-outlined">query_stats</span>
-              <span class="nav-label">Exposure Intel</span>
+              <span class="material-symbols-outlined">search</span>
+              <span class="nav-tooltip">EXPOSURE INTEL</span>
             </a>
             @if (auth.isAnalyst()) {
               <a class="nav-item" routerLink="/analytics" routerLinkActive="active">
                 <span class="material-symbols-outlined">analytics</span>
-                <span class="nav-label">Analytics</span>
+                <span class="nav-tooltip">ANALYTICS</span>
               </a>
             }
             @if (auth.isAdmin()) {
               <a class="nav-item" routerLink="/admin" routerLinkActive="active">
                 <span class="material-symbols-outlined">admin_panel_settings</span>
-                <span class="nav-label">Admin Terminal</span>
+                <span class="nav-tooltip">ADMIN TERMINAL</span>
               </a>
             }
           </nav>
 
-          <div class="sidebar-footer p-3 border-top border-outline-variant border-opacity-10">
+          <div class="sidebar-footer p-3 border-top border-outline-variant border-opacity-10 d-md-flex d-none flex-column align-items-center" style="overflow: visible;">
             <div class="nav-item" (click)="themeService.toggleTheme()">
               <span class="material-symbols-outlined">
                 {{ themeService.theme() === 'dark' ? 'light_mode' : 'dark_mode' }}
               </span>
-              <span class="nav-label">Theme</span>
+              <span class="nav-tooltip">THEME</span>
             </div>
 
             <div class="dropdown">
               <div class="nav-item" data-bs-toggle="dropdown">
                 <span class="material-symbols-outlined">person</span>
-                <span class="nav-label">{{ auth.isAuthenticated() ? 'Profile' : 'Account' }}</span>
+                <span class="nav-tooltip">{{ auth.isAuthenticated() ? 'PROFILE' : 'ACCOUNT' }}</span>
               </div>
-              <ul class="dropdown-menu glass-panel border-outline-variant shadow-lg">
+              <ul class="dropdown-menu glass-panel border-outline-variant shadow-lg" style="z-index: 4000;">
                 @if (auth.isAuthenticated()) {
                   <li><a class="dropdown-item text-xs-caps text-on-surface" routerLink="/auth/profile">Profile</a></li>
                   <li><hr class="dropdown-divider"></li>
@@ -85,7 +80,6 @@ import { FormsModule } from '@angular/forms';
                   <li><a class="dropdown-item text-xs-caps text-on-surface" routerLink="/auth/register">Sign Up</a></li>
                 }
               </ul>
-
             </div>
           </div>
         </aside>
@@ -197,17 +191,12 @@ export class AppComponent implements OnInit {
   notifications = inject(NotificationService);
   private router = inject(Router);
 
-  isCollapsed = signal(false);
   searchTerm = '';
 
   ngOnInit(): void {
     if (this.auth.isAuthenticated()) {
       this.auth.fetchProfile().subscribe({ error: () => {} });
     }
-  }
-
-  toggleSidebar() {
-    this.isCollapsed.set(!this.isCollapsed());
   }
 
   logout() {

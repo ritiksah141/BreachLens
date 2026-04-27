@@ -14,22 +14,37 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
     <div class="map-wrapper" [style.height]="height">
       <div #mapContainer id="global-map" style="height: 100%; width: 100%; border-radius: 8px; overflow: hidden;"></div>
 
-      <!-- Map Controls Overlay -->
-      <div class="position-absolute top-0 end-0 m-2 z-3 d-flex flex-column gap-2" style="z-index: 1001 !important;">
-        <button class="btn btn-dark bg-surface-container-highest border-0 p-1 shadow-sm rounded-circle"
-                (click)="toggleViewportSync()" [class.text-primary]="viewportSync" title="Sync with Viewport">
-          <span class="material-symbols-outlined fs-6">sync_alt</span>
-        </button>
-        <button class="btn btn-dark bg-surface-container-highest border-0 p-1 shadow-sm rounded-circle"
-                (click)="useMyLocation()" [disabled]="geoLoading" title="Near Me">
-          <span class="material-symbols-outlined fs-6" *ngIf="!geoLoading">my_location</span>
-          <span class="spinner-border spinner-border-sm" *ngIf="geoLoading"></span>
-        </button>
-        <button class="btn btn-dark bg-surface-container-highest border-0 p-1 shadow-sm rounded-circle"
-                (click)="refreshMap()" [disabled]="geoLoading" title="Refresh">
-          <span class="material-symbols-outlined fs-6" *ngIf="!geoLoading">refresh</span>
-          <span class="spinner-border spinner-border-sm" *ngIf="geoLoading"></span>
-        </button>
+      <!-- Map Controls Overlay (Tactical HUD Style) -->
+      <div class="position-absolute bottom-0 start-0 m-3 z-3 d-flex flex-column gap-2" style="z-index: 1001 !important; margin-bottom: 50px !important;">
+        <div class="glass-panel p-1 d-flex flex-column gap-1 border border-outline-variant border-opacity-20 shadow-lg" style="border-radius: 12px;">
+          <div class="tactical-tooltip-wrapper">
+             <button class="btn btn-tactical-map" (click)="zoomIn()"><span class="material-symbols-outlined fs-6">add</span></button>
+             <span class="tactical-tooltip">ZOOM IN</span>
+          </div>
+          <div class="tactical-tooltip-wrapper">
+             <button class="btn btn-tactical-map" (click)="zoomOut()"><span class="material-symbols-outlined fs-6">remove</span></button>
+             <span class="tactical-tooltip">ZOOM OUT</span>
+          </div>
+          <div class="border-top border-outline-variant border-opacity-10 my-1 mx-2"></div>
+          <div class="tactical-tooltip-wrapper">
+             <button class="btn btn-tactical-map" (click)="toggleViewportSync()" [class.active]="viewportSync"><span class="material-symbols-outlined fs-6">sync_alt</span></button>
+             <span class="tactical-tooltip">{{ viewportSync ? 'SYNC ACTIVE' : 'SYNC VIEWPORT' }}</span>
+          </div>
+          <div class="tactical-tooltip-wrapper">
+             <button class="btn btn-tactical-map" (click)="useMyLocation()" [disabled]="geoLoading">
+                <span class="material-symbols-outlined fs-6" *ngIf="!geoLoading">my_location</span>
+                <span class="spinner-border spinner-border-sm" *ngIf="geoLoading" style="width: 12px; height: 12px;"></span>
+             </button>
+             <span class="tactical-tooltip">LOCAL SCAN</span>
+          </div>
+          <div class="tactical-tooltip-wrapper">
+             <button class="btn btn-tactical-map" (click)="refreshMap()" [disabled]="geoLoading">
+                <span class="material-symbols-outlined fs-6" *ngIf="!geoLoading">refresh</span>
+                <span class="spinner-border spinner-border-sm" *ngIf="geoLoading" style="width: 12px; height: 12px;"></span>
+             </button>
+             <span class="tactical-tooltip">SYNC RECORDS</span>
+          </div>
+        </div>
       </div>
 
       <!-- Bottom Legend -->
@@ -55,6 +70,77 @@ import { SeverityBadgeComponent } from '../../../shared/components/severity-badg
     .map-wrapper { position: relative; width: 100%; border-radius: 8px; background: var(--surface-container-low); }
     .text-xs-caps { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
     #global-map { background: var(--background) !important; }
+
+    .btn-tactical-map {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--on-surface-variant);
+      transition: all 0.2s ease;
+    }
+
+    .btn-tactical-map:hover {
+      background: var(--surface-container-highest);
+      color: var(--primary);
+    }
+
+    .btn-tactical-map.active {
+      background: var(--primary-container);
+      color: var(--primary);
+      border-color: color-mix(in srgb, var(--primary) 20%, transparent);
+    }
+
+    .btn-tactical-map:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .tactical-tooltip-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .tactical-tooltip {
+      position: absolute;
+      left: 100%;
+      margin-left: 12px;
+      padding: 4px 8px;
+      background: var(--surface-container-highest);
+      color: var(--primary);
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      border-radius: 4px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.2s ease;
+      border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      z-index: 2000;
+    }
+
+    .tactical-tooltip::before {
+      content: '';
+      position: absolute;
+      right: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 5px solid transparent;
+      border-right-color: color-mix(in srgb, var(--primary) 30%, transparent);
+    }
+
+    .tactical-tooltip-wrapper:hover .tactical-tooltip {
+      opacity: 1;
+      transform: translateX(4px);
+    }
 
     ::ng-deep .bl-popup .leaflet-popup-content-wrapper {
       background: var(--surface-container-high) !important;
@@ -102,10 +188,9 @@ export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
     const L = await import('leaflet' as any);
 
     this.map = L.map(this.mapContainer.nativeElement, {
-      zoomControl: false // Disable default to reposition it
+      zoomControl: false, // Disable default Leaflet zoom controls
+      attributionControl: false // Disable Leaflet logo and attribution
     }).setView([20, 0], 2);
-
-    L.control.zoom({ position: 'bottomright' }).addTo(this.map);
 
     this.map.on('moveend', () => {
       if (this.viewportSync) this.loadByViewport();
@@ -113,6 +198,14 @@ export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.updateTileLayer();
     this.loadGeoJson();
+  }
+
+  zoomIn() {
+    if (this.map) this.map.zoomIn();
+  }
+
+  zoomOut() {
+    if (this.map) this.map.zoomOut();
   }
 
   toggleViewportSync() {
@@ -159,7 +252,6 @@ export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
       : 'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png';
 
     this.tileLayer = L.tileLayer(url, {
-      attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a>',
       maxZoom: 20
     }).addTo(this.map);
   }

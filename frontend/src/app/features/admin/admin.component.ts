@@ -811,8 +811,9 @@ export class AdminComponent implements OnInit {
   }
 
   severityColor(s: string): string {
-    const colors: any = { critical: 'error', high: 'high', medium: 'medium', low: 'primary', informational: 'on-surface-variant' };
-    return colors[s?.toLowerCase()] || 'on-surface-variant';
+    const sev = s?.toLowerCase() || 'info';
+    if (sev === 'informational' || sev === 'info') return 'severity-info';
+    return `severity-${sev}`;
   }
 
   fc(name: string): any {

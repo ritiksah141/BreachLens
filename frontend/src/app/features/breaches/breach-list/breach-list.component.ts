@@ -623,7 +623,9 @@ export class BreachListComponent implements OnInit {
   }
 
   severityBorder(s: string): string {
-    return s?.toLowerCase() ?? 'informational';
+    const sev = s?.toLowerCase() ?? 'informational';
+    if (sev === 'info') return 'severity-info';
+    return `severity-${sev}`;
   }
 
   getIcon(industry: string): string {
