@@ -22,95 +22,96 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
   imports: [RouterLink, NgClass, DatePipe, DecimalPipe, TitleCasePipe, SeverityBadgeComponent, CommonModule, FormsModule, PercentPipe, TimeAgoPipe, RiskLevelPipe, CompactNumberPipe, CopyClipboardDirective, RequireRoleDirective],
   template: `
     <!-- Header glass bar -->
-    <div class="glass-panel p-3 mb-4 shadow-lg d-flex justify-content-between align-items-center border-0">
-      <a routerLink="/breaches" class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-3 shadow-sm d-flex align-items-center gap-2 text-on-surface">
+    <div class="glass-panel p-3 mb-4 shadow-lg d-flex justify-content-between align-items-center border-0 animate__animated animate__fadeIn">
+      <a routerLink="/breaches" class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-3 shadow-sm d-flex align-items-center gap-2 text-on-surface" style="font-size: 8px;">
         <span class="material-symbols-outlined fs-6">arrow_back</span> BACK TO LOGS
       </a>
       <div class="d-flex align-items-center gap-3">
         @if (auth.isAnalyst()) {
-          <div class="badge py-2 px-3 glass-panel border border-primary border-opacity-25 text-on-surface text-xs-caps shadow-sm">
-            <span class="p-1 bg-success rounded-circle animate-pulse me-2" style="width: 8px; height: 8px; display: inline-block;"></span> ANALYST ACCESS
+          <div class="badge py-2 px-3 glass-panel border border-primary border-opacity-25 text-on-surface text-xs-caps shadow-sm" style="font-size: 8px;">
+            <span class="p-1 bg-success rounded-circle animate-pulse me-2" style="width: 6px; height: 6px; display: inline-block;"></span> ANALYST ACCESS
           </div>
         }
-        <span class="badge py-2 px-3 glass-panel border border-primary border-opacity-25 text-primary text-xs-caps shadow-sm">ID: {{ (id).slice(-8) | uppercase }}</span>
+        <span class="badge py-2 px-3 glass-panel border border-primary border-opacity-25 text-primary text-xs-caps shadow-sm" style="font-size: 8px;">ID: {{ (id).slice(-8) | uppercase }}</span>
       </div>
     </div>
 
     @if (loading) {
       <div class="text-center py-5 glass-panel border-0 shadow-lg">
-        <div class="spinner-border text-primary" role="status"></div>
-        <p class="text-on-surface-variant text-xs-caps mt-3">Fetching intelligence packet...</p>
+        <div class="spinner-border text-primary spinner-border-sm me-2" role="status"></div>
+        <span class="text-on-surface-variant text-xs-caps" style="font-size: 7px;">FETCHING INTELLIGENCE PACKET...</span>
       </div>
     }
 
     @if (error) {
       <div class="glass-panel p-4 border-error border-start border-4 text-error shadow-lg animate__animated animate__shakeX">
-        <span class="material-symbols-outlined fs-4 me-2">warning</span> {{ error }}
+        <span class="material-symbols-outlined fs-4 me-2">warning</span>
+        <span class="text-xs-caps fw-bold" style="font-size: 8px;">{{ error | uppercase }}</span>
       </div>
     }
 
     @if (breach && !loading) {
       <!-- System Parameters Row -->
-      <div class="glass-panel p-3 mb-4 shadow-lg border-0 d-flex justify-content-around align-items-center flex-wrap gap-4">
+      <div class="glass-panel p-3 mb-4 shadow-lg border-0 d-flex justify-content-around align-items-center flex-wrap gap-4 animate__animated animate__fadeIn">
         <div class="d-flex align-items-center gap-2">
-           <span class="p-1 bg-primary rounded-circle shadow-sm"></span>
-           <span class="text-xs-caps fw-bold text-on-surface" style="font-size: 8px; letter-spacing: 0.15em;">ENCRYPTION PROTOCOLS: AES-GCM</span>
+           <span class="p-1 bg-primary rounded-circle shadow-sm" style="width: 4px; height: 4px;"></span>
+           <span class="text-xs-caps fw-bold text-on-surface opacity-75" style="font-size: 6px; letter-spacing: 0.15em;">ENCRYPTION: AES-GCM</span>
         </div>
         <div class="d-flex align-items-center gap-2">
-           <span class="p-1 bg-secondary rounded-circle shadow-sm"></span>
-           <span class="text-xs-caps fw-bold text-on-surface" style="font-size: 8px; letter-spacing: 0.15em;">ORBITAL DATA: SYNCED</span>
+           <span class="p-1 bg-secondary rounded-circle shadow-sm" style="width: 4px; height: 4px;"></span>
+           <span class="text-xs-caps fw-bold text-on-surface opacity-75" style="font-size: 6px; letter-spacing: 0.15em;">TELEMETRY: SYNCED</span>
         </div>
         <div class="d-flex align-items-center gap-2">
-           <span class="p-1 bg-success rounded-circle shadow-sm"></span>
-           <span class="text-xs-caps fw-bold text-on-surface" style="font-size: 8px; letter-spacing: 0.15em;">TECHNICAL SPECIFICATIONS: NOMINAL</span>
+           <span class="p-1 bg-success rounded-circle shadow-sm" style="width: 4px; height: 4px;"></span>
+           <span class="text-xs-caps fw-bold text-on-surface opacity-75" style="font-size: 6px; letter-spacing: 0.15em;">SIGNAL: NOMINAL</span>
         </div>
       </div>
 
       <!-- Bento Layout Top -->
-      <div class="row g-4 mb-4">
+      <div class="row g-4 mb-4 animate__animated animate__fadeIn" style="animation-delay: 0.1s;">
         <div class="col-lg-8">
-          <div class="glass-panel shadow-lg h-100 position-relative overflow-hidden border-0">
+          <div class="glass-panel shadow-lg h-100 position-relative border-0">
             <div class="card-body p-4 p-md-5 d-flex flex-column h-100">
               <div class="d-flex justify-content-between flex-wrap gap-3 mb-4">
                 <div class="d-flex gap-2 align-items-center">
                   <app-severity-badge [severity]="breach.severity" />
-                  <span class="badge py-2 px-3 glass-panel border border-outline-variant border-opacity-25 text-on-surface-variant text-xs-caps">{{ (breach.status || 'LOGGED') | uppercase }}</span>
-                  <span class="badge py-2 px-3 glass-panel border border-outline-variant border-opacity-25 text-on-surface-variant text-xs-caps">{{ (breach.industry || 'OTHER') | uppercase }}</span>
+                  <span class="badge py-1 px-3 glass-panel border border-outline-variant border-opacity-25 text-on-surface-variant text-xs-caps" style="font-size: 7px;">{{ (breach.status || 'LOGGED') | uppercase }}</span>
+                  <span class="badge py-1 px-3 glass-panel border border-outline-variant border-opacity-25 text-on-surface-variant text-xs-caps" style="font-size: 7px;">{{ (breach.industry || 'OTHER') | uppercase }}</span>
                 </div>
                 <ng-container *appRequireRole="['analyst', 'admin']">
-                  <a [routerLink]="['/admin']" [queryParams]="{edit: breach._id}" class="btn btn-warning text-on-warning text-xs-caps py-1 px-3 shadow-lg fw-extrabold" style="font-size: 9px; box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);">
+                  <a [routerLink]="['/admin']" [queryParams]="{edit: breach._id}" class="btn btn-warning text-on-warning text-xs-caps py-1 px-3 shadow-sm fw-bold" style="font-size: 8px;">
                     EDIT RECORD
                   </a>
                 </ng-container>
               </div>
-              <h2 class="font-headline fw-extrabold text-on-surface tracking-tight mb-2 fs-1">{{ breach.title }}</h2>
-              <p class="text-on-surface-variant lead mb-5" style="max-width: 800px;">{{ breach.description }}</p>
+              <h2 class="font-headline fw-extrabold text-on-surface tracking-tight mb-2 fs-2">{{ breach.title }}</h2>
+              <p class="text-on-surface-variant small mb-5" style="max-width: 800px; line-height: 1.6;">{{ breach.description }}</p>
 
               <div class="row g-3 mt-auto">
                 <div class="col-6 col-md-3">
-                  <div class="p-3 bg-surface-container-low rounded-3 border border-outline-variant border-opacity-10 text-center h-100 shadow-sm">
-                    <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">RECORDS IMPACTED</div>
+                  <div class="p-3 bg-surface-container-low rounded-3 border border-outline-variant border-opacity-10 text-center h-100 shadow-sm transition-all hover-glow">
+                    <div class="text-xs-caps text-on-surface-variant mb-1" style="font-size: 6px;">RECORDS</div>
                     <div class="fs-4 fw-bold text-on-surface font-headline">{{ breach.affected_records_count | compactNumber }}</div>
                   </div>
                 </div>
                 <div class="col-6 col-md-3">
-                  <div class="p-3 bg-surface-container-low rounded-3 border border-outline-variant border-opacity-10 text-center h-100 shadow-sm">
-                    <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">RISK SCORE</div>
+                  <div class="p-3 bg-surface-container-low rounded-3 border border-outline-variant border-opacity-10 text-center h-100 shadow-sm transition-all hover-glow">
+                    <div class="text-xs-caps text-on-surface-variant mb-1" style="font-size: 6px;">RISK SCORE</div>
                     <div class="fs-4 fw-bold font-headline" [ngClass]="breach.risk_score | riskLevel:'class'">
                       {{ (breach.risk_score ?? 0) | number:'1.1-1' }}
                     </div>
                   </div>
                 </div>
                 <div class="col-6 col-md-3">
-                  <div class="p-3 bg-surface-container-low rounded-3 border border-outline-variant border-opacity-10 text-center h-100 shadow-sm">
-                    <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">EVENT DATE</div>
-                    <div class="fs-6 fw-bold text-on-surface">{{ breach.breach_date | date:'MMM dd, yyyy' }}</div>
+                  <div class="p-3 bg-surface-container-low rounded-3 border border-outline-variant border-opacity-10 text-center h-100 shadow-sm transition-all hover-glow">
+                    <div class="text-xs-caps text-on-surface-variant mb-1" style="font-size: 6px;">EVENT DATE</div>
+                    <div class="fw-bold text-on-surface" style="font-size: 11px;">{{ breach.breach_date | date:'MMM dd, yyyy' }}</div>
                   </div>
                 </div>
                 <div class="col-6 col-md-3">
-                  <div class="p-3 bg-surface-container-low rounded-3 border border-outline-variant border-opacity-10 text-center h-100 shadow-sm">
-                    <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">DETECTION LAG</div>
-                    <div class="fs-6 fw-bold text-on-surface">{{ detectionLag }} DAYS</div>
+                  <div class="p-3 bg-surface-container-low rounded-3 border border-outline-variant border-opacity-10 text-center h-100 shadow-sm transition-all hover-glow">
+                    <div class="text-xs-caps text-on-surface-variant mb-1" style="font-size: 6px;">DETECTION LAG</div>
+                    <div class="fw-bold text-on-surface" style="font-size: 11px;">{{ detectionLag }} DAYS</div>
                   </div>
                 </div>
               </div>
@@ -139,31 +140,31 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
       </div>
 
       <!-- Parameters & Monitoring Section -->
-      <div class="row g-4 mb-4">
+      <div class="row g-4 mb-4 animate__animated animate__fadeIn" style="animation-delay: 0.2s;">
         <div class="col-lg-6">
-          <div class="glass-panel shadow-lg h-100 border-0 overflow-hidden">
+          <div class="glass-panel shadow-lg h-100 border-0 overflow-hidden d-flex flex-column">
             <div class="p-3 border-bottom border-outline-variant border-opacity-10 bg-surface-container-low">
-              <span class="text-xs-caps text-primary fw-bold">INTELLIGENCE PARAMETERS</span>
+              <span class="text-xs-caps text-primary fw-bold" style="font-size: 8px;">INTELLIGENCE PARAMETERS</span>
             </div>
             <div class="card-body p-4">
               <div class="d-flex flex-column gap-3">
                 <div class="d-flex justify-content-between border-bottom border-outline-variant border-opacity-10 pb-2">
-                  <span class="text-xs-caps text-on-surface-variant" style="font-size: 8px;">ORGANIZATION</span>
-                  <span class="fw-bold small text-on-surface">{{ getOrganisationName(breach) }}</span>
+                  <span class="text-xs-caps text-on-surface-variant" style="font-size: 7px;">ORGANIZATION</span>
+                  <span class="fw-bold small text-on-surface">{{ getOrganisationName(breach) | uppercase }}</span>
                 </div>
                 <div class="d-flex justify-content-between border-bottom border-outline-variant border-opacity-10 pb-2">
-                  <span class="text-xs-caps text-on-surface-variant" style="font-size: 8px;">COMPLEXITY</span>
+                  <span class="text-xs-caps text-on-surface-variant" style="font-size: 7px;">COMPLEXITY</span>
                   <span class="fw-bold small text-on-surface">{{ getOrganisationSize(breach) }}</span>
                 </div>
                 <div class="d-flex justify-content-between border-bottom border-outline-variant border-opacity-10 pb-2">
-                  <span class="text-xs-caps text-on-surface-variant" style="font-size: 8px;">ATTACK VECTOR</span>
+                  <span class="text-xs-caps text-on-surface-variant" style="font-size: 7px;">ATTACK VECTOR</span>
                   <span class="fw-bold small text-on-surface">{{ getAttackVectorLabel(breach) }}</span>
                 </div>
                 <div class="mt-2">
-                  <span class="text-xs-caps text-on-surface-variant d-block mb-2" style="font-size: 8px;">EXPOSED DATA TYPES</span>
-                  <div class="d-flex flex-nowrap gap-2 overflow-auto custom-scrollbar pb-2">
+                  <span class="text-xs-caps text-on-surface-variant d-block mb-2" style="font-size: 7px;">EXPOSED DATA TYPES</span>
+                  <div class="d-flex flex-wrap gap-2">
                     @for (dt of breach.data_types_exposed; track dt) {
-                      <span class="badge py-2 px-3 glass-panel border border-outline-variant border-opacity-25 text-on-surface text-xs-caps shadow-sm flex-shrink-0" style="font-size: 7.5px;">{{ dt.split('_').join(' ') | uppercase }}</span>
+                      <span class="badge py-1 px-2 glass-panel border border-outline-variant border-opacity-25 text-on-surface-variant text-xs-caps shadow-sm" style="font-size: 6px;">{{ dt.split('_').join(' ') | uppercase }}</span>
                     }
                   </div>
                 </div>
@@ -173,91 +174,53 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
         </div>
 
         <div class="col-lg-6">
-          <div class="glass-panel shadow-lg h-100 border-0 overflow-hidden">
+          <div class="glass-panel shadow-lg h-100 border-0 overflow-hidden d-flex flex-column">
             <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center bg-surface-container-low">
-              <span class="text-xs-caps text-primary fw-bold">MONITORING ALERTS</span>
+              <span class="text-xs-caps text-primary fw-bold" style="font-size: 8px;">MONITORING ALERTS</span>
               @if (auth.isAnalyst()) {
-                <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-1 px-2 text-on-surface fw-bold shadow-sm" style="font-size: 8px;" (click)="showAddAlert = !showAddAlert">
+                <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-1 px-2 text-on-surface fw-bold shadow-sm" style="font-size: 7px;" (click)="showAddAlert = !showAddAlert">
                   {{ showAddAlert ? 'CANCEL' : '+ ADD ALERT' }}
                 </button>
               }
             </div>
 
             @if (showAddAlert) {
-              <div class="p-4 border-bottom border-outline-variant border-opacity-10 bg-surface-container-high">
-                <div class="row g-3">
+              <div class="p-3 border-bottom border-outline-variant border-opacity-10 bg-surface-container-high animate__animated animate__fadeIn">
+                <div class="row g-2">
                   <div class="col-12">
-                    <input [(ngModel)]="newAlert.message" class="form-control" placeholder="Alert message..." style="font-size: 11px; height: 38px;" />
+                    <input [(ngModel)]="newAlert.message" class="form-control" placeholder="Alert details..." style="font-size: 11px; height: 32px;" />
                   </div>
                   <div class="col-md-6">
-                    <select [(ngModel)]="newAlert.alert_type" class="form-select" style="font-size: 11px; height: 38px;">
+                    <select [(ngModel)]="newAlert.alert_type" class="form-select" style="font-size: 11px; height: 32px;">
                       <option value="new_exposure">NEW EXPOSURE</option>
                       <option value="credential_stuffing">CREDENTIAL STUFFING</option>
-                      <option value="dark_web_mention">DARK WEB MENTION</option>
-                      <option value="domain_squatting">DOMAIN SQUATTING</option>
                     </select>
                   </div>
-                  <div class="col-md-6">
-                    <select [(ngModel)]="newAlert.severity" class="form-select" style="font-size: 11px; height: 38px;">
-                      <option value="critical">CRITICAL</option>
-                      <option value="high">HIGH</option>
-                      <option value="medium">MEDIUM</option>
-                      <option value="low">LOW</option>
-                    </select>
-                  </div>
-                  <div class="col-12 text-end">
-                    <button class="btn btn-primary px-3 fw-bold" (click)="addAlert()" [disabled]="!newAlert.message" style="font-size: 9px; height: 38px;">SAVE ALERT</button>
+                  <div class="col-md-6 text-end">
+                    <button class="btn btn-primary px-3 fw-bold text-xs-caps" (click)="addAlert()" [disabled]="!newAlert.message" style="font-size: 8px; height: 32px;">SAVE</button>
                   </div>
                 </div>
               </div>
             }
 
-            <div class="p-0 overflow-auto custom-scrollbar" style="max-height: 250px;">
+            <div class="p-0 overflow-auto custom-scrollbar-hidden flex-grow-1" style="max-height: 250px;">
               <ul class="list-group list-group-flush">
                 @for (alert of alerts; track alert._id) {
                   <li class="list-group-item bg-transparent border-outline-variant border-opacity-10 p-3 hover-bg-surface-container-high transition-all">
-                    @if (editingAlertId === alert._id) {
-                      <div class="row g-2 animate__animated animate__fadeIn">
-                        <div class="col-12">
-                          <input [(ngModel)]="editAlertData.message" class="form-control" style="font-size: 11px; height: 38px;" />
-                        </div>
-                        <div class="col-md-6">
-                          <select [(ngModel)]="editAlertData.alert_type" class="form-select" style="font-size: 11px; height: 38px;">
-                            <option value="new_exposure">NEW EXPOSURE</option>
-                            <option value="credential_stuffing">CREDENTIAL STUFFING</option>
-                            <option value="dark_web_mention">DARK WEB MENTION</option>
-                            <option value="domain_squatting">DOMAIN SQUATTING</option>
-                          </select>
-                        </div>
-                        <div class="col-md-6 text-end d-flex gap-2">
-                          <button class="btn btn-primary px-2 fw-bold flex-grow-1" (click)="saveEditAlert()" style="font-size: 9px; height: 38px;">SAVE</button>
-                          <button class="btn btn-dark py-1 px-2 flex-grow-1" (click)="editingAlertId = null" style="font-size: 9px; height: 38px;">CANCEL</button>
-                        </div>
+                    <div class="d-flex justify-content-between mb-1 gap-3">
+                      <span class="text-on-surface small fw-bold" style="font-size: 11px;">{{ getAlertMessage(alert) }}</span>
+                      <div class="d-flex gap-2 align-items-center flex-shrink-0">
+                        @if (auth.isAnalyst()) {
+                          <button class="btn-close-tactical" (click)="deleteAlert(alert._id!)"><span class="material-symbols-outlined" style="font-size: 12px;">close</span></button>
+                        }
+                        <span class="p-1 rounded-circle" [ngClass]="alert.acknowledged ? 'bg-success' : 'bg-error'" style="width: 5px; height: 5px;"></span>
                       </div>
-                    } @else {
-                      <div class="d-flex justify-content-between mb-2 gap-3">
-                        <span class="text-on-surface small fw-bold">{{ getAlertMessage(alert) }}</span>
-                        <div class="d-flex gap-2 align-items-center flex-shrink-0">
-                          @if (auth.isAnalyst()) {
-                            @if (!alert.acknowledged) {
-                              <button class="btn btn-primary text-on-primary text-xs-caps py-1 px-2 fw-extrabold shadow-lg" style="font-size: 7px; box-shadow: 0 0 10px rgba(123, 208, 255, 0.4);" (click)="toggleAlertAck(alert)">ACKNOWLEDGE</button>
-                            } @else {
-                              <button class="btn btn-dark bg-surface-container-highest border-0 text-on-surface text-xs-caps py-1 px-2" style="font-size: 7px;" (click)="toggleAlertAck(alert)">UNDO</button>
-                            }
-                            <button class="btn btn-link p-0 text-on-surface-variant" (click)="startEditAlert(alert)"><span class="material-symbols-outlined fs-6">edit</span></button>
-                            <button class="btn-close-tactical" (click)="deleteAlert(alert._id!)"><span class="material-symbols-outlined">close</span></button>
-                          }
-                          <span class="badge text-xs-caps py-1 px-2 shadow-sm" [ngClass]="alert.acknowledged ? 'bg-success bg-opacity-10 text-success border border-success border-opacity-20' : 'bg-severity-critical text-white shadow-sm'" style="font-size: 7px;">
-                            {{ alert.acknowledged ? 'ACKNOWLEDGED' : 'OPEN' }}
-                          </span>
-                        </div>
-                      </div>
-                      <div class="text-xs-caps opacity-50 text-on-surface-variant" style="font-size: 7px;">{{ alert.alert_type.split('_').join(' ') | uppercase }} // {{ alert.severity | uppercase }}</div>
-                    }
+                    </div>
+                    <div class="text-xs-caps opacity-50 text-on-surface-variant fw-bold" style="font-size: 6px;">{{ alert.alert_type.split('_').join(' ') | uppercase }} // {{ alert.severity | uppercase }}</div>
                   </li>
                 }
                 @if (alerts.length === 0) {
-                  <li class="list-group-item bg-transparent text-center py-5 opacity-25 text-xs-caps text-on-surface">NO ACTIVE ALERTS</li>
+                  <li class="list-group-item bg-transparent text-center py-5 opacity-25 text-xs-caps text-on-surface" style="font-size: 7px;">NO ACTIVE ALERTS</li>
                 }
               </ul>
             </div>
@@ -267,25 +230,77 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
 
       <!-- INCIDENT TIMELINE SECTION -->
       @if (auth.isAuthenticated()) {
-        <div class="row g-4 mb-4">
+        <div class="row g-4 mb-4 animate__animated animate__fadeIn" style="animation-delay: 0.3s;">
+          <!-- Impacted Entities Table (RESTORED) -->
+          <div class="col-lg-12" *appRequireRole="['analyst', 'admin']">
+            <div class="glass-panel shadow-lg border-0 overflow-hidden mb-4">
+              <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center bg-surface-container-low">
+                <span class="text-xs-caps text-primary fw-bold" style="font-size: 8px;">IMPACTED ENTITIES (PII DATA)</span>
+                <span class="badge py-1 px-2 glass-panel border border-outline-variant border-opacity-25 text-on-surface-variant text-xs-caps" style="font-size: 7px;">{{ accounts.length }} RECORDS LOADED</span>
+              </div>
+              <div class="table-responsive custom-scrollbar-hidden" style="max-height: 300px;">
+                <table class="table table-hover align-middle mb-0">
+                  <thead>
+                    <tr class="bg-surface-container-low">
+                      <th class="ps-4 text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 7px;">IDENTITY</th>
+                      <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 7px;">EXPOSED DATA</th>
+                      <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 7px;">STATUS</th>
+                      <th class="pe-4 border-0"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (acc of accounts; track acc._id) {
+                      <tr class="bg-transparent border-bottom border-outline-variant border-opacity-5 transition-all hover-bg-surface-container-high">
+                        <td class="ps-4">
+                          <div class="fw-bold text-on-surface small" style="font-size: 11px;">{{ acc.email || acc.username || 'ANONYMOUS' }}</div>
+                          <div class="text-xs-caps opacity-50 font-mono" style="font-size: 6px;">UID: {{ (acc._id || '0x0').slice(-8) | uppercase }}</div>
+                        </td>
+                        <td>
+                          <div class="d-flex flex-wrap gap-1">
+                            @for (data of acc.data_exposed; track data) {
+                              <span class="badge bg-surface-container-highest text-on-surface-variant border border-outline-variant border-opacity-10" style="font-size: 6px; padding: 2px 4px;">{{ data | uppercase }}</span>
+                            }
+                          </div>
+                        </td>
+                        <td>
+                          <span class="text-xs-caps fw-bold" [ngClass]="acc.notified ? 'text-success' : 'text-warning'" style="font-size: 7px;">
+                            {{ acc.notified ? 'NOTIFIED' : 'PENDING' }}
+                          </span>
+                        </td>
+                        <td class="pe-4 text-end">
+                          <button class="btn btn-link p-0 text-primary" [appCopyClipboard]="acc.email || acc.username || ''" title="Copy Identity">
+                            <span class="material-symbols-outlined fs-6">content_copy</span>
+                          </button>
+                        </td>
+                      </tr>
+                    }
+                    @if (accounts.length === 0) {
+                      <tr><td colspan="4" class="text-center py-5 opacity-25 text-xs-caps text-on-surface" style="font-size: 8px;">NO PII DATA CAPTURED FOR THIS INCIDENT</td></tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
           <div class="col-12">
             <div class="glass-panel shadow-lg border-0 p-4 p-md-5">
               <div class="d-flex justify-content-between align-items-center mb-5">
-                <h5 class="text-xs-caps text-primary fw-bold m-0 fs-5">INCIDENT TIMELINE</h5>
+                <h5 class="text-xs-caps text-primary fw-bold m-0" style="font-size: 10px;">INCIDENT TIMELINE</h5>
                 @if (auth.isAnalyst()) {
-                  <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-3 text-on-surface fw-bold shadow-sm" style="font-size: 9px;" (click)="showAddTimeline = !showAddTimeline">
+                  <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-3 text-on-surface fw-bold shadow-sm" style="font-size: 8px;" (click)="showAddTimeline = !showAddTimeline">
                     {{ showAddTimeline ? 'CANCEL' : '+ ADD EVENT' }}
                   </button>
                 }
               </div>
 
               @if (showAddTimeline) {
-                <div class="glass-panel p-4 mb-5 border-primary border-opacity-20 bg-surface-container-high">
+                <div class="glass-panel p-4 mb-5 border-primary border-opacity-20 bg-surface-container-high animate__animated animate__fadeIn">
                   <div class="row g-3">
                     <div class="col-md-6"><input [(ngModel)]="newEvent.event_type" class="form-control" placeholder="Event type..." style="font-size: 11px; height: 38px;" /></div>
                     <div class="col-md-6"><input type="datetime-local" [(ngModel)]="newEvent.occurred_at" class="form-control" style="font-size: 11px; height: 38px;" /></div>
                     <div class="col-12"><textarea [(ngModel)]="newEvent.description" class="form-control" rows="2" placeholder="Event description..." style="font-size: 11px;"></textarea></div>
-                    <div class="col-12 text-end"><button class="btn btn-primary px-3 fw-bold" (click)="addTimeline()" style="font-size: 9px; height: 38px;">SAVE EVENT</button></div>
+                    <div class="col-12 text-end"><button class="btn btn-primary px-3 fw-bold text-xs-caps" (click)="addTimeline()" style="font-size: 8px; height: 38px;">SAVE EVENT</button></div>
                   </div>
                 </div>
               }
@@ -293,21 +308,21 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
               <div class="d-flex flex-column gap-5">
                 @for (event of timeline; track event._id) {
                   <div class="animate__animated animate__fadeInUp">
-                    <div class="text-xs-caps text-primary fw-extrabold mb-2 ps-1" style="font-size: 9px; letter-spacing: 0.15em;">{{ event.event_type.split('_').join(' ') | uppercase }}</div>
-                    <div class="glass-panel p-4 shadow-lg border-0 bg-surface-container-low">
+                    <div class="text-xs-caps text-primary fw-extrabold mb-2 ps-1" style="font-size: 7px; letter-spacing: 0.15em;">{{ event.event_type.split('_').join(' ') | uppercase }}</div>
+                    <div class="glass-panel p-4 shadow-lg border-0 bg-surface-container-low transition-all hover-glow">
                       @if (editingTimelineId === event._id) {
                         <div class="row g-3">
                           <div class="col-md-6"><input [(ngModel)]="editEventData.event_type" class="form-control" style="font-size: 11px; height: 38px;" /></div>
                           <div class="col-md-6"><input type="datetime-local" [(ngModel)]="editEventData.occurred_at" class="form-control" style="font-size: 11px; height: 38px;" /></div>
                           <div class="col-12"><textarea [(ngModel)]="editEventData.description" class="form-control" rows="2" style="font-size: 11px;"></textarea></div>
                           <div class="col-12 text-end d-flex gap-2">
-                             <button class="btn btn-primary px-3 fw-bold flex-grow-1" (click)="saveEditTimeline()" style="font-size: 9px; height: 38px;">SAVE CHANGES</button>
-                             <button class="btn btn-dark py-1 px-3 flex-grow-1" (click)="editingTimelineId = null" style="font-size: 9px; height: 38px;">CANCEL</button>
+                             <button class="btn btn-primary px-3 fw-bold flex-grow-1 text-xs-caps" (click)="saveEditTimeline()" style="font-size: 8px; height: 38px;">SAVE</button>
+                             <button class="btn btn-dark py-1 px-3 flex-grow-1 text-xs-caps" (click)="editingTimelineId = null" style="font-size: 8px; height: 38px;">CANCEL</button>
                           </div>
                         </div>
                       } @else {
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                           <span class="text-xs-caps font-mono opacity-50 text-on-surface-variant" style="font-size: 8px;">{{ event.occurred_at | date:'yyyy.MM.dd || HH:mm' }}</span>
+                           <span class="text-xs-caps font-mono opacity-50 text-on-surface-variant" style="font-size: 7px;">{{ event.occurred_at | date:'yyyy.MM.dd || HH:mm' }}</span>
                            @if (auth.isAnalyst()) {
                              <div class="d-flex gap-2">
                                <button class="btn btn-link p-0 text-on-surface-variant" (click)="startEditTimeline(event)"><span class="material-symbols-outlined fs-6">edit</span></button>
@@ -315,11 +330,11 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
                              </div>
                            }
                         </div>
-                        <p class="text-on-surface small mb-4 lead" style="font-size: 0.85rem; line-height: 1.6;">{{ event.description }}</p>
+                        <p class="text-on-surface small mb-4 opacity-100" style="font-size: 0.8rem; line-height: 1.6;">{{ event.description }}</p>
                         @if (event.actor) {
                            <div class="mt-3 pt-3 border-top border-outline-variant border-opacity-10 d-flex align-items-center gap-2">
-                              <span class="material-symbols-outlined fs-6 text-primary opacity-75">person_outline</span>
-                              <span class="text-xs-caps opacity-50 text-on-surface-variant" style="font-size: 7px;">OPERATOR: {{ event.actor | uppercase }}</span>
+                              <span class="material-symbols-outlined fs-6 text-primary opacity-75" style="font-size: 12px;">person_outline</span>
+                              <span class="text-xs-caps opacity-50 text-on-surface-variant fw-bold" style="font-size: 6px;">OPERATOR: {{ event.actor | uppercase }}</span>
                            </div>
                         }
                       }
@@ -327,7 +342,7 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
                   </div>
                 }
                 @if (timeline.length === 0) {
-                  <div class="p-5 text-center opacity-25 text-xs-caps text-on-surface">NO TIMELINE RECORDS CAPTURED</div>
+                  <div class="p-5 text-center opacity-25 text-xs-caps text-on-surface" style="font-size: 8px;">NO TIMELINE RECORDS CAPTURED</div>
                 }
               </div>
             </div>
@@ -337,11 +352,11 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
 
       <!-- MITIGATION PROTOCOLS SECTION -->
       @if (auth.isAuthenticated()) {
-        <div class="row g-4 mb-5">
+        <div class="row g-4 mb-5 animate__animated animate__fadeIn" style="animation-delay: 0.4s;">
           <div class="col-12">
             <div class="glass-panel shadow-lg border-0 p-4 p-md-5">
               <div class="d-flex justify-content-between align-items-center mb-5">
-                <h5 class="text-xs-caps text-primary fw-bold m-0 fs-5">MITIGATION PROTOCOLS</h5>
+                <h5 class="text-xs-caps text-primary fw-bold m-0" style="font-size: 10px;">MITIGATION PROTOCOLS</h5>
                 @if (auth.isAnalyst()) {
                   <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-3 text-on-surface fw-bold shadow-sm" style="font-size: 8px;" (click)="showAddRemediation = !showAddRemediation">
                     {{ showAddRemediation ? 'CANCEL' : '+ ADD PROTOCOL' }}
@@ -350,12 +365,12 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
               </div>
 
               @if (showAddRemediation) {
-                <div class="glass-panel p-4 mb-5 border-primary border-opacity-20 bg-surface-container-high">
+                <div class="glass-panel p-4 mb-5 border-primary border-opacity-20 bg-surface-container-high animate__animated animate__fadeIn">
                   <div class="row g-3">
-                    <div class="col-12"><input [(ngModel)]="newAction.action" class="form-control bg-surface-container-low border-0 text-on-surface text-xs-caps shadow-inner" placeholder="MITIGATION ACTION..." style="font-size: 10px;" /></div>
-                    <div class="col-md-6"><select [(ngModel)]="newAction.status" class="form-select bg-surface-container-low border-0 text-on-surface text-xs-caps" style="font-size: 10px;"><option value="pending">PENDING</option><option value="in_progress">IN PROGRESS</option><option value="completed">COMPLETED</option></select></div>
-                    <div class="col-md-6"><input [(ngModel)]="newAction.assigned_to" class="form-control bg-surface-container-low border-0 text-on-surface text-xs-caps shadow-inner" placeholder="ASSIGNED OPERATOR..." style="font-size: 10px;" /></div>
-                    <div class="col-12 text-end"><button class="btn btn-primary text-on-primary text-xs-caps py-1 px-3 fw-bold" (click)="addRemediation()" style="font-size: 9px;">SAVE PROTOCOL</button></div>
+                    <div class="col-12"><input [(ngModel)]="newAction.action" class="form-control" placeholder="Action description..." style="font-size: 11px; height: 38px;" /></div>
+                    <div class="col-md-6"><select [(ngModel)]="newAction.status" class="form-select" style="font-size: 11px; height: 38px;"><option value="pending">PENDING</option><option value="in_progress">IN PROGRESS</option><option value="completed">COMPLETED</option></select></div>
+                    <div class="col-md-6"><input [(ngModel)]="newAction.assigned_to" class="form-control" placeholder="Assignee..." style="font-size: 11px; height: 38px;" /></div>
+                    <div class="col-12 text-end"><button class="btn btn-primary text-xs-caps py-1 px-3 fw-bold" (click)="addRemediation()" style="font-size: 8px; height: 38px;">SAVE</button></div>
                   </div>
                 </div>
               }
@@ -363,45 +378,45 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
               <div class="d-flex flex-column gap-3">
                 @for (action of remediation; track action._id) {
                   <div class="animate__animated animate__fadeInUp">
-                    <div class="text-xs-caps text-primary fw-extrabold mb-2 ps-1" style="font-size: 9px; letter-spacing: 0.15em;">PROTOCOL ENTRY</div>
-                    <div class="glass-panel p-4 shadow-lg border-0 d-flex justify-content-between align-items-center bg-surface-container-low">
+                    <div class="text-xs-caps text-primary fw-extrabold mb-2 ps-1" style="font-size: 7px; letter-spacing: 0.15em;">PROTOCOL ENTRY</div>
+                    <div class="glass-panel p-4 shadow-lg border-0 d-flex justify-content-between align-items-center bg-surface-container-low transition-all hover-glow">
                       @if (editingRemediationId === action._id) {
                         <div class="row g-2 w-100">
-                          <div class="col-md-6"><input [(ngModel)]="editRemediationData.action" class="form-control bg-surface-container-high border-0 text-on-surface text-xs-caps" style="font-size: 9px;" /></div>
-                          <div class="col-md-4"><input [(ngModel)]="editRemediationData.assigned_to" class="form-control bg-surface-container-high border-0 text-on-surface text-xs-caps" placeholder="OPERATOR" style="font-size: 9px;" /></div>
+                          <div class="col-md-6"><input [(ngModel)]="editRemediationData.action" class="form-control" style="font-size: 11px;" /></div>
+                          <div class="col-md-4"><input [(ngModel)]="editRemediationData.assigned_to" class="form-control" placeholder="OPERATOR" style="font-size: 11px;" /></div>
                           <div class="col-md-2 d-flex gap-2">
-                            <button class="btn btn-primary text-on-primary text-xs-caps py-1 px-2 fw-bold flex-grow-1" (click)="saveEditRemediation()" style="font-size: 8px;">SAVE</button>
-                            <button class="btn btn-dark text-on-surface text-xs-caps py-1 px-2 flex-grow-1" (click)="editingRemediationId = null" style="font-size: 8px;">X</button>
+                            <button class="btn btn-primary px-1 fw-bold text-xs-caps flex-grow-1" (click)="saveEditRemediation()" style="font-size: 7px;">SAVE</button>
+                            <button class="btn btn-dark px-1 text-xs-caps flex-grow-1" (click)="editingRemediationId = null" style="font-size: 7px;">X</button>
                           </div>
                         </div>
                       } @else {
                         <div class="flex-grow-1 pe-4">
-                          <div class="fw-bold text-on-surface small mb-1">{{ action.action }}</div>
-                          <div class="text-xs-caps opacity-50 text-on-surface-variant d-flex align-items-center gap-2" style="font-size: 8px;">
-                             <span class="material-symbols-outlined fs-6" style="font-size: 12px;">account_circle</span>
+                          <div class="fw-bold text-on-surface small mb-1" style="font-size: 11px;">{{ action.action }}</div>
+                          <div class="text-xs-caps opacity-50 text-on-surface-variant d-flex align-items-center gap-2 fw-bold" style="font-size: 6px;">
+                             <span class="material-symbols-outlined fs-6" style="font-size: 11px;">account_circle</span>
                              {{ action.assigned_to ? (action.assigned_to | uppercase) : 'UNASSIGNED' }}
                           </div>
                         </div>
                         <div class="d-flex gap-3 align-items-center">
                           @if (auth.isAnalyst()) {
                             <button class="btn btn-link p-0 text-on-surface-variant" (click)="startEditRemediation(action)"><span class="material-symbols-outlined fs-6">edit</span></button>
-                            <select [ngModel]="action.status" (change)="updateRemediationStatus(action, $event)" class="form-select bg-surface-container-low border-0 text-on-surface text-xs-caps py-0 px-2 shadow-sm" style="font-size: 8px; height: 26px; width: auto; min-width: 100px;">
+                            <select [ngModel]="action.status" (change)="updateRemediationStatus(action, $event)" class="form-select bg-surface-container-low border-0 text-on-surface text-xs-caps py-0 px-2 shadow-sm" style="font-size: 7px; height: 26px; width: auto; min-width: 100px;">
                               <option value="pending">PENDING</option><option value="in_progress">IN PROGRESS</option><option value="completed">COMPLETED</option>
                             </select>
                             <button class="btn-close-tactical" (click)="deleteRemediation(action._id!)"><span class="material-symbols-outlined">close</span></button>
                           }
-                          <span class="badge text-xs-caps py-2 px-3 border shadow-sm" [ngClass]="{
+                          <span class="badge text-xs-caps py-2 px-3 border shadow-sm fw-bold" [ngClass]="{
                             'bg-success bg-opacity-10 text-success border-success border-opacity-25': action.status === 'completed',
                             'bg-warning bg-opacity-10 text-warning border-warning border-opacity-25': action.status === 'in_progress',
                             'bg-surface-container-highest text-on-surface-variant border-outline-variant': action.status === 'pending'
-                          }" style="font-size: 7px; min-width: 80px; text-align: center;">{{ action.status.split('_').join(' ') | uppercase }}</span>
+                          }" style="font-size: 6px; min-width: 80px; text-align: center; letter-spacing: 0.1em;">{{ action.status.split('_').join(' ') | uppercase }}</span>
                         </div>
                       }
                     </div>
                   </div>
                 }
                 @if (remediation.length === 0) {
-                  <div class="p-5 text-center opacity-25 text-xs-caps text-on-surface">NO MITIGATION PROTOCOLS LOGGED</div>
+                  <div class="p-5 text-center opacity-25 text-xs-caps text-on-surface" style="font-size: 8px;">NO MITIGATION PROTOCOLS LOGGED</div>
                 }
               </div>
             </div>

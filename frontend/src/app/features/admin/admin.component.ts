@@ -23,16 +23,16 @@ import { UserManagementComponent } from './user-management/user-management.compo
   ],
   template: `
     <!-- Page Header -->
-    <div class="glass-panel p-4 mb-4 shadow-lg d-flex justify-content-between align-items-center border-0">
+    <div class="glass-panel p-4 mb-4 shadow-lg d-flex justify-content-between align-items-center border-0 animate__animated animate__fadeIn">
       <div>
         <h2 class="font-headline fw-extrabold text-on-surface tracking-tight page-title mb-1">Command Center</h2>
-        <p class="page-subtitle mb-0 opacity-75">System Administration Terminal</p>
+        <p class="text-xs-caps mb-0 text-on-surface-variant opacity-75" style="font-size: 7px; letter-spacing: 0.1em;">System administration and operational intelligence node.</p>
       </div>
       <div class="d-flex gap-3 align-items-center">
-        <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-3 shadow-sm text-on-surface" (click)="refreshStats()">
+        <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-3 shadow-sm text-on-surface" style="font-size: 8px;" (click)="refreshStats()">
           <span class="material-symbols-outlined fs-6 me-1">refresh</span> SYNC DATA
         </button>
-        <span class="badge py-2 px-3 glass-panel border border-primary border-opacity-25 text-primary text-xs-caps shadow-sm">{{ (auth.currentUser()?.role || 'operator') | uppercase }} ACCESS</span>
+        <span class="badge py-2 px-3 glass-panel border border-primary border-opacity-25 text-primary text-xs-caps shadow-sm" style="font-size: 8px;">{{ (auth.currentUser()?.role || 'operator') | uppercase }} ACCESS</span>
       </div>
     </div>
 
@@ -41,8 +41,8 @@ import { UserManagementComponent } from './user-management/user-management.compo
         <div class="d-flex align-items-center gap-3">
           <span class="material-symbols-outlined fs-2 text-error">security</span>
           <div>
-            <div class="fw-bold text-xs-caps text-error mb-1">Access Denied</div>
-            <div class="small opacity-75 text-on-surface">Elevated privileges required for terminal access. Please <a routerLink="/auth/login" class="text-error fw-bold">Login</a>.</div>
+            <div class="fw-bold text-xs-caps text-error mb-1" style="font-size: 8px;">ACCESS DENIED</div>
+            <div class="text-xs-caps opacity-75 text-on-surface" style="font-size: 7px;">Elevated privileges required for terminal access. Please <a routerLink="/auth/login" class="text-error fw-bold text-decoration-none">LOGIN</a>.</div>
           </div>
         </div>
       </div>
@@ -51,13 +51,13 @@ import { UserManagementComponent } from './user-management/user-management.compo
     @if (auth.isAdmin()) {
       <!-- System Stats Row -->
       @if (stats) {
-        <div class="row g-4 mb-4">
+        <div class="row g-4 mb-4 animate__animated animate__fadeIn" style="animation-delay: 0.1s;">
           <div class="col-md-4">
-            <div class="glass-panel p-4 border-0 border-start border-primary border-4 shadow-lg">
-              <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">OPERATOR NETWORK</div>
+            <div class="glass-panel p-4 border-0 border-start border-primary border-4 shadow-lg h-100">
+              <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 7px;">OPERATOR NETWORK</div>
               <div class="d-flex justify-content-between align-items-end">
-                <h3 class="mb-0 fw-bold font-headline text-on-surface">{{ stats.users.total }}</h3>
-                <div class="text-xs-caps" style="font-size: 8px;">
+                <h3 class="mb-0 fw-bold font-headline text-on-surface fs-2">{{ stats.users.total }}</h3>
+                <div class="text-xs-caps fw-bold" style="font-size: 6px; letter-spacing: 0.1em;">
                   <span class="text-success">{{ stats.users.active }} ACTIVE</span> •
                   <span class="text-error opacity-50">{{ stats.users.inactive }} OFFLINE</span>
                 </div>
@@ -65,11 +65,11 @@ import { UserManagementComponent } from './user-management/user-management.compo
             </div>
           </div>
           <div class="col-md-4">
-            <div class="glass-panel p-4 border-0 border-start border-secondary border-4 shadow-lg">
-              <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">INTELLIGENCE REPOSITORY</div>
+            <div class="glass-panel p-4 border-0 border-start border-secondary border-4 shadow-lg h-100">
+              <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 7px;">INTELLIGENCE REPOSITORY</div>
               <div class="d-flex justify-content-between align-items-end">
-                <h3 class="mb-0 fw-bold font-headline text-on-surface">{{ stats.breaches.total }}</h3>
-                <div class="text-xs-caps text-on-surface-variant" style="font-size: 8px;">
+                <h3 class="mb-0 fw-bold font-headline text-on-surface fs-2">{{ stats.breaches.total }}</h3>
+                <div class="text-xs-caps text-on-surface-variant fw-bold" style="font-size: 6px; letter-spacing: 0.1em;">
                   {{ stats.breaches.by_status['active'] || 0 }} ACTIVE •
                   {{ stats.breaches.by_status['resolved'] || 0 }} RESOLVED
                 </div>
@@ -77,13 +77,13 @@ import { UserManagementComponent } from './user-management/user-management.compo
             </div>
           </div>
           <div class="col-md-4">
-            <div class="glass-panel p-4 border-0 border-start border-error border-4 shadow-lg">
-              <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 8px;">CRITICAL ALERTS</div>
+            <div class="glass-panel p-4 border-0 border-start border-error border-4 shadow-lg h-100">
+              <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 7px;">CRITICAL EVENTS</div>
               <div class="d-flex justify-content-between align-items-end">
-                <h3 class="mb-0 fw-bold font-headline text-error">{{ stats.alerts.unacknowledged }}</h3>
-                <div class="text-xs-caps text-error opacity-75 d-flex align-items-center gap-2" style="font-size: 8px;">
-                  <span class="p-1 bg-success rounded-circle animate-pulse" style="width: 6px; height: 6px;"></span>
-                  UNACKNOWLEDGED EVENTS
+                <h3 class="mb-0 fw-bold font-headline text-error fs-2">{{ stats.alerts.unacknowledged }}</h3>
+                <div class="text-xs-caps text-error opacity-75 d-flex align-items-center gap-2 fw-bold" style="font-size: 6px; letter-spacing: 0.1em;">
+                  <span class="p-1 bg-success rounded-circle animate-pulse" style="width: 5px; height: 5px;"></span>
+                  UNACKNOWLEDGED
                 </div>
               </div>
             </div>
@@ -94,18 +94,23 @@ import { UserManagementComponent } from './user-management/user-management.compo
       <!-- Tab Navigation - Full Width -->
       <div class="glass-panel p-1 mb-4 d-flex border border-outline-variant border-opacity-10 shadow-sm" style="border-radius: 999px;">
         <button class="btn text-xs-caps py-2 px-4 rounded-pill transition-all flex-grow-1"
+                style="font-size: 7px;"
                 [ngClass]="activeTab === 'manage' ? 'btn-primary text-on-primary shadow-sm' : 'btn-link text-on-surface-variant text-decoration-none'"
           (click)="activeTab = 'manage'">MANAGE LOGS</button>
         <button class="btn text-xs-caps py-2 px-4 rounded-pill transition-all flex-grow-1"
+                style="font-size: 7px;"
                 [ngClass]="activeTab === 'bulk' ? 'btn-primary text-on-primary shadow-sm' : 'btn-link text-on-surface-variant text-decoration-none'"
           (click)="activeTab = 'bulk'">BULK IMPORT</button>
         <button class="btn text-xs-caps py-2 px-4 rounded-pill transition-all flex-grow-1"
+                style="font-size: 7px;"
                 [ngClass]="activeTab === 'audit' ? 'btn-primary text-on-primary shadow-sm' : 'btn-link text-on-surface-variant text-decoration-none'"
           (click)="loadAuditLogs(); activeTab = 'audit'">AUDIT TRAIL</button>
         <button class="btn text-xs-caps py-2 px-4 rounded-pill transition-all flex-grow-1"
+                style="font-size: 7px;"
                 [ngClass]="activeTab === 'health' ? 'btn-primary text-on-primary shadow-sm' : 'btn-link text-on-surface-variant text-decoration-none'"
                 (click)="loadHealthData(); activeTab = 'health'">HEALTH</button>
         <button class="btn text-xs-caps py-2 px-4 rounded-pill transition-all flex-grow-1"
+                style="font-size: 7px;"
                 [ngClass]="activeTab === 'users' ? 'btn-primary text-on-primary shadow-sm' : 'btn-link text-on-surface-variant text-decoration-none'"
                 (click)="activeTab = 'users'">OPERATORS</button>
       </div>
@@ -116,16 +121,16 @@ import { UserManagementComponent } from './user-management/user-management.compo
              <div class="row g-4">
                 <div class="col-md-6">
                    <div class="glass-panel p-4 shadow-lg border-0 h-100">
-                      <h5 class="text-xs-caps text-primary mb-4">SYSTEM READINESS</h5>
+                      <h5 class="text-xs-caps text-primary mb-4" style="font-size: 8px;">SYSTEM READINESS</h5>
                       @if (healthReady) {
                          <div class="d-flex flex-column gap-3">
-                            <div class="p-3 bg-surface-container-high rounded d-flex justify-content-between align-items-center">
-                               <span class="text-xs-caps opacity-75">DATABASE CONNECTION</span>
-                               <span class="badge" [ngClass]="healthReady.checks.database === 'ok' ? 'bg-success' : 'bg-error'">{{ healthReady.checks.database | uppercase }}</span>
+                            <div class="p-3 bg-surface-container-high rounded d-flex justify-content-between align-items-center border border-outline-variant border-opacity-10">
+                               <span class="text-xs-caps opacity-75" style="font-size: 7px;">DATABASE CONNECTION</span>
+                               <span class="badge py-1 px-2 text-xs-caps" [ngClass]="healthReady.checks.database === 'ok' ? 'bg-success text-white' : 'bg-error text-white'" style="font-size: 6px;">{{ healthReady.checks.database | uppercase }}</span>
                             </div>
-                            <div class="p-3 bg-surface-container-high rounded d-flex justify-content-between align-items-center">
-                               <span class="text-xs-caps opacity-75">OVERALL STATUS</span>
-                               <span class="badge" [ngClass]="healthReady.status === 'ok' ? 'bg-success' : 'bg-error'">{{ healthReady.status | uppercase }}</span>
+                            <div class="p-3 bg-surface-container-high rounded d-flex justify-content-between align-items-center border border-outline-variant border-opacity-10">
+                               <span class="text-xs-caps opacity-75" style="font-size: 7px;">OVERALL STATUS</span>
+                               <span class="badge py-1 px-2 text-xs-caps" [ngClass]="healthReady.status === 'ok' ? 'bg-success text-white' : 'bg-error text-white'" style="font-size: 6px;">{{ healthReady.status | uppercase }}</span>
                             </div>
                          </div>
                       }
@@ -133,20 +138,20 @@ import { UserManagementComponent } from './user-management/user-management.compo
                 </div>
                 <div class="col-md-6">
                    <div class="glass-panel p-4 shadow-lg border-0 h-100">
-                      <h5 class="text-xs-caps text-secondary mb-4">API METADATA</h5>
+                      <h5 class="text-xs-caps text-secondary mb-4" style="font-size: 8px;">API METADATA</h5>
                       @if (healthInfo) {
                          <div class="d-flex flex-column gap-2">
-                            <div class="d-flex justify-content-between border-bottom border-outline-variant border-opacity-10 pb-2">
-                               <span class="text-xs-caps opacity-50">APPLICATION</span>
-                               <span class="text-on-surface fw-bold small">{{ healthInfo.application }}</span>
+                            <div class="d-flex justify-content-between border-bottom border-outline-variant border-opacity-10 pb-2 px-1">
+                               <span class="text-xs-caps opacity-50" style="font-size: 7px;">APPLICATION</span>
+                               <span class="text-on-surface fw-bold small">{{ healthInfo.application | uppercase }}</span>
                             </div>
-                            <div class="d-flex justify-content-between border-bottom border-outline-variant border-opacity-10 pb-2">
-                               <span class="text-xs-caps opacity-50">PYTHON VERSION</span>
+                            <div class="d-flex justify-content-between border-bottom border-outline-variant border-opacity-10 pb-2 px-1">
+                               <span class="text-xs-caps opacity-50" style="font-size: 7px;">PYTHON VERSION</span>
                                <span class="text-on-surface font-mono small">{{ healthInfo.python_version }}</span>
                             </div>
-                            <div class="d-flex justify-content-between border-bottom border-outline-variant border-opacity-10 pb-2">
-                               <span class="text-xs-caps opacity-50">UPTIME</span>
-                               <span class="text-on-surface fw-bold small">{{ healthInfo.uptime_seconds }} SECONDS</span>
+                            <div class="d-flex justify-content-between border-bottom border-outline-variant border-opacity-10 pb-2 px-1">
+                               <span class="text-xs-caps opacity-50" style="font-size: 7px;">UPTIME</span>
+                               <span class="text-on-surface fw-bold small font-mono">{{ healthInfo.uptime_seconds | number }}s</span>
                             </div>
                          </div>
                       }
@@ -161,14 +166,14 @@ import { UserManagementComponent } from './user-management/user-management.compo
             <div class="col-lg-7 d-flex">
               <div class="glass-panel flex-grow-1 shadow-lg overflow-hidden border-0 d-flex flex-column">
                 <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center bg-surface-container-low">
-                  <span class="text-xs-caps text-on-surface fw-bold">Active Investigation Log</span>
+                  <span class="text-xs-caps text-on-surface fw-bold" style="font-size: 8px;">Active Investigation Log</span>
                   <div class="d-flex gap-2">
                     @if (selectedIds.size > 0 && auth.isAdmin()) {
                       <button class="btn btn-dark bg-error-container bg-opacity-10 text-error border-0 text-xs-caps py-1 px-2 fw-bold" (click)="bulkDelete()" style="font-size: 8px;">
-                        DELETE ({{ selectedIds.size }})
+                        PURGE ({{ selectedIds.size }})
                       </button>
                     }
-                    <button class="btn btn-primary text-on-primary text-xs-caps py-1 px-2 fw-bold" (click)="startCreate()" style="font-size: 8px;">+ NEW ENTRY</button>
+                    <button class="btn btn-primary text-on-primary text-xs-caps py-1 px-2 fw-bold shadow-sm" (click)="startCreate()" style="font-size: 8px;">+ NEW ENTRY</button>
                   </div>
                 </div>
 
@@ -177,19 +182,19 @@ import { UserManagementComponent } from './user-management/user-management.compo
                   <div class="row g-2 align-items-end">
                     <div class="col-md-3">
                       <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 7px;">QUERY</label>
-                      <input class="form-control" style="font-size: 11px; height: 32px;" placeholder="Title or source..." [(ngModel)]="adminFilters.q" (input)="onAdminSearchChange()" (keyup.enter)="applyAdminFilters()" />
+                      <input class="form-control" style="font-size: 11px; height: 32px;" placeholder="Search..." [(ngModel)]="adminFilters.q" (input)="onAdminSearchChange()" (keyup.enter)="applyAdminFilters()" />
                     </div>
                     <div class="col-md-2">
                       <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 7px;">LEVEL</label>
                       <select class="form-select" style="font-size: 11px; height: 32px;" [(ngModel)]="adminFilters.severity" (change)="applyAdminFilters()">
-                        <option value="">ALL SEVERITY</option>
+                        <option value="">ALL</option>
                         @for (s of severities; track s) { <option [value]="s">{{ s | uppercase }}</option> }
                       </select>
                     </div>
                     <div class="col-md-2">
                       <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 7px;">STATUS</label>
                       <select class="form-select" style="font-size: 11px; height: 32px;" [(ngModel)]="adminFilters.status" (change)="applyAdminFilters()">
-                        <option value="">ALL STATUS</option>
+                        <option value="">ALL</option>
                         @for (s of statuses; track s) { <option [value]="s">{{ s | uppercase }}</option> }
                       </select>
                     </div>
@@ -198,24 +203,13 @@ import { UserManagementComponent } from './user-management/user-management.compo
                       <input type="number" min="0" max="10" step="0.1" class="form-control text-center" style="font-size: 11px; height: 32px;" placeholder="0.0" [(ngModel)]="adminFilters.min_risk" (change)="applyAdminFilters()" />
                     </div>
                     <div class="col-md-3 d-flex gap-2">
-                      <button class="btn btn-primary flex-grow-1" style="height: 32px;" (click)="applyAdminFilters()">QUERY</button>
-                      <button class="btn btn-dark flex-grow-1" style="height: 32px;" (click)="resetAdminFilters()">RESET</button>
+                      <button class="btn btn-primary flex-grow-1 fw-bold text-xs-caps" style="height: 32_px; font-size: 8px;" (click)="applyAdminFilters()">QUERY</button>
+                      <button class="btn btn-dark flex-grow-1 fw-bold text-xs-caps" style="height: 32px; font-size: 8px;" (click)="resetAdminFilters()">RESET</button>
                     </div>
-                  </div>
-                  <!-- Filter Chips -->
-                  <div class="d-flex flex-wrap gap-2 mt-3" *ngIf="adminFilterChips.length">
-                    @for (chip of adminFilterChips; track chip.key) {
-                      <div class="badge glass-panel border border-outline-variant border-opacity-25 text-on-surface py-1 px-2 d-flex align-items-center gap-2">
-                        <span style="font-size: 7px;">{{ chip.label | uppercase }}</span>
-                        <button class="btn btn-link p-0 text-on-surface-variant border-0 d-flex align-items-center" (click)="clearAdminFilter(chip.key)">
-                          <span class="btn-close-tactical" style="width: 14px; height: 14px;"><span class="material-symbols-outlined" style="font-size: 9px !important;">close</span></span>
-                        </button>
-                      </div>
-                    }
                   </div>
                 </div>
 
-                <div class="p-0 overflow-auto custom-scrollbar flex-grow-1" style="max-height: 550px;">
+                <div class="p-0 overflow-auto custom-scrollbar-hidden flex-grow-1" style="max-height: 550px;">
                   @if (listLoading) {
                     <div class="text-center py-5"><div class="spinner-border spinner-border-sm text-primary"></div></div>
                   }
@@ -227,16 +221,17 @@ import { UserManagementComponent } from './user-management/user-management.compo
                         <div class="d-flex gap-3 align-items-start">
                           <input type="checkbox" class="form-check-input mt-1" [checked]="selectedIds.has(b._id)" (click)="$event.stopPropagation()" (change)="toggleSelection(b._id)" />
                           <div>
-                            <div class="fw-bold text-on-surface small mb-1">{{ b.title }}</div>
+                            <div class="fw-bold text-on-surface small mb-1" style="font-size: 11px;">{{ b.title }}</div>
                             <div class="d-flex gap-2 align-items-center">
-                              <span class="text-xs-caps" [ngClass]="'text-' + severityColor(b.severity)" style="font-size: 8px;">{{ b.severity | uppercase }}</span>
+                              <span class="p-1 rounded-circle" [ngClass]="'bg-' + severityColor(b.severity)" style="width: 5px; height: 5px;"></span>
+                              <span class="text-xs-caps fw-bold" [ngClass]="'text-' + severityColor(b.severity)" style="font-size: 7px;">{{ b.severity | uppercase }}</span>
                               <span class="text-on-surface-variant opacity-25">•</span>
-                              <span class="text-xs-caps text-on-surface-variant" style="font-size: 8px;">{{ (b.status || 'LOGGED') | uppercase }}</span>
+                              <span class="text-xs-caps text-on-surface-variant" style="font-size: 7px;">{{ (b.status || 'LOGGED') | uppercase }}</span>
                             </div>
                           </div>
                         </div>
                         <button class="btn-close-tactical ms-2" (click)="deleteBreach(b._id, $event)">
-                          <span class="material-symbols-outlined">close</span>
+                          <span class="material-symbols-outlined fs-6">close</span>
                         </button>
                       </div>
                     }
@@ -250,107 +245,77 @@ import { UserManagementComponent } from './user-management/user-management.compo
 
             <!-- Form Side -->
             <div class="col-lg-5 d-flex">
-              <div class="glass-panel flex-grow-1 shadow-lg border-0 d-flex flex-column">
+              <div class="glass-panel flex-grow-1 shadow-lg border-0 d-flex flex-column animate__animated animate__fadeInRight">
                 <div class="p-3 border-bottom border-outline-variant border-opacity-10 bg-surface-container-low" style="border-radius: 1.25rem 1.25rem 0 0;">
-                  <span class="text-xs-caps text-on-surface fw-bold">{{ editingId ? 'EDIT LOG ENTRY' : 'CREATE NEW ENTRY' }}</span>
+                  <span class="text-xs-caps text-on-surface fw-bold" style="font-size: 8px;">{{ editingId ? 'EDIT LOG ENTRY' : 'CREATE NEW ENTRY' }}</span>
                 </div>
-                <div class="p-4 d-flex flex-column flex-grow-1 overflow-auto custom-scrollbar" style="max-height: 750px;">
-                  @if (formSuccess) { <div class="alert bg-success-container bg-opacity-10 border-success text-success py-2 small mb-4 text-xs-caps border-0 border-start border-4">{{ formSuccess | uppercase }}</div> }
-                  @if (formError) { <div class="alert bg-error-container bg-opacity-10 border-error text-error py-2 small mb-4 text-xs-caps border-0 border-start border-4">{{ formError | uppercase }}</div> }
+                <div class="p-4 d-flex flex-column flex-grow-1 overflow-auto custom-scrollbar-hidden" style="max-height: 750px;">
+                  @if (formSuccess) { <div class="alert bg-success-container bg-opacity-10 border-success text-success py-2 small mb-4 text-xs-caps border-0 border-start border-4 fw-bold" style="font-size: 7px;">{{ formSuccess | uppercase }}</div> }
+                  @if (formError) { <div class="alert bg-error-container bg-opacity-10 border-error text-error py-2 small mb-4 text-xs-caps border-0 border-start border-4 fw-bold" style="font-size: 7px;">{{ formError | uppercase }}</div> }
 
                   <form [formGroup]="breachForm" (ngSubmit)="onSubmit()" class="d-flex flex-column flex-grow-1">
                     <div class="row g-3">
-                      <!-- Primary Intelligence -->
                       <div class="col-12">
-                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 8px;">EVENT TITLE</label>
-                        <input formControlName="title" class="form-control bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('title')" placeholder="Enter event title..." />
+                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 7px;">EVENT TITLE</label>
+                        <input formControlName="title" class="form-control" [ngClass]="fc('title')" placeholder="Enter event title..." style="font-size: 11px;" />
                       </div>
                       <div class="col-12">
-                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 8px;">DESCRIPTION</label>
-                        <textarea formControlName="description" class="form-control bg-surface-container-high border-0 text-on-surface" rows="3" [ngClass]="fc('description')" placeholder="Telemetry details..."></textarea>
+                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 7px;">DESCRIPTION</label>
+                        <textarea formControlName="description" class="form-control" rows="3" [ngClass]="fc('description')" placeholder="Telemetry details..." style="font-size: 11px;"></textarea>
                       </div>
 
-                      <!-- Classification -->
                       <div class="col-md-6">
-                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 8px;">THREAT LEVEL</label>
-                        <select formControlName="severity" class="form-select bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('severity')">
+                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 7px;">THREAT LEVEL</label>
+                        <select formControlName="severity" class="form-select" [ngClass]="fc('severity')" style="font-size: 11px;">
                           @for (s of severities; track s) { <option [value]="s">{{ s | uppercase }}</option> }
                         </select>
                       </div>
                       <div class="col-md-6">
-                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 8px;">STATUS</label>
-                        <select formControlName="status" class="form-select bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('status')">
+                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 7px;">OPERATIONAL STATUS</label>
+                        <select formControlName="status" class="form-select" [ngClass]="fc('status')" style="font-size: 11px;">
                           @for (s of statuses; track s) { <option [value]="s">{{ s | uppercase }}</option> }
                         </select>
                       </div>
 
-                      <!-- Operational Metadata -->
                       <div class="col-md-6">
-                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 8px;">BREACH DATE</label>
-                        <input formControlName="breach_date" type="date" class="form-control bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('breach_date')" />
+                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 7px;">BREACH DATE</label>
+                        <input formControlName="breach_date" type="date" class="form-control" [ngClass]="fc('breach_date')" style="font-size: 11px;" />
                       </div>
                       <div class="col-md-6">
-                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 8px;">DISCOVERED DATE</label>
-                        <input formControlName="discovered_date" type="date" class="form-control bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('discovered_date')" />
-                      </div>
-
-                      <div class="col-md-6">
-                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 8px;">RISK SCORE</label>
-                        <input formControlName="risk_score" type="number" step="0.1" class="form-control bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('risk_score')" />
-                      </div>
-                      <div class="col-md-6">
-                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 8px;">RECORDS IMPACTED</label>
-                        <input formControlName="affected_records_count" type="number" class="form-control bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('affected_records_count')" />
+                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 7px;">DISCOVERED</label>
+                        <input formControlName="discovered_date" type="date" class="form-control" [ngClass]="fc('discovered_date')" style="font-size: 11px;" />
                       </div>
 
-                      <!-- Target Organization -->
+                      <div class="col-md-6">
+                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 7px;">RISK SCORE (0-10)</label>
+                        <input formControlName="risk_score" type="number" step="0.1" class="form-control" [ngClass]="fc('risk_score')" style="font-size: 11px;" />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 7px;">RECORDS IMPACTED</label>
+                        <input formControlName="affected_records_count" type="number" class="form-control" [ngClass]="fc('affected_records_count')" style="font-size: 11px;" />
+                      </div>
+
                       <div class="col-12 mt-2 pt-2 border-top border-outline-variant border-opacity-10">
-                        <label class="text-xs-caps text-primary mb-2 d-block fw-bold" style="font-size: 8px;">TARGET ORGANIZATION</label>
+                        <label class="text-xs-caps text-primary mb-2 d-block fw-bold" style="font-size: 7px;">TARGET ORGANIZATION</label>
                       </div>
                       <div class="col-md-8" formGroupName="organisation">
-                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 8px;">ORG NAME</label>
-                        <input formControlName="name" class="form-control bg-surface-container-high border-0 text-on-surface" placeholder="Organization name..." />
+                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 7px;">ORG NAME</label>
+                        <input formControlName="name" class="form-control" placeholder="Organization name..." style="font-size: 11px;" />
                       </div>
                       <div class="col-md-4">
-                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 8px;">INDUSTRY</label>
-                        <select formControlName="industry" class="form-select bg-surface-container-high border-0 text-on-surface" [ngClass]="fc('industry')">
+                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 7px;">INDUSTRY</label>
+                        <select formControlName="industry" class="form-select" [ngClass]="fc('industry')" style="font-size: 11px;">
                           @for (i of industries; track i) { <option [value]="i">{{ i | uppercase }}</option> }
                         </select>
-                      </div>
-                      <div class="col-md-7" formGroupName="organisation">
-                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 8px;">PRIMARY DOMAIN</label>
-                        <input formControlName="domain" class="form-control bg-surface-container-high border-0 text-on-surface" placeholder="domain.com" />
-                      </div>
-                      <div class="col-md-5" formGroupName="organisation">
-                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 8px;">ORG SIZE</label>
-                        <select formControlName="size" class="form-select bg-surface-container-high border-0 text-on-surface">
-                          <option value="small">SMALL</option>
-                          <option value="mid">MID-MARKET</option>
-                          <option value="large">LARGE</option>
-                          <option value="enterprise">ENTERPRISE</option>
-                        </select>
-                      </div>
-
-                      <!-- Technical Context -->
-                      <div class="col-12 mt-2 pt-2 border-top border-outline-variant border-opacity-10">
-                        <label class="text-xs-caps text-primary mb-2 d-block fw-bold" style="font-size: 8px;">TECHNICAL CONTEXT</label>
-                      </div>
-                      <div class="col-12">
-                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 8px;">SOURCE INTEL URL</label>
-                        <input formControlName="source_url" class="form-control bg-surface-container-high border-0 text-on-surface" placeholder="https://..." />
-                      </div>
-                      <div class="col-12">
-                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 8px;">EXPOSED DATA TYPES (COMMA SEPARATED)</label>
-                        <input formControlName="data_types_input" class="form-control bg-surface-container-high border-0 text-on-surface" placeholder="email, passwords, addresses..." />
                       </div>
                     </div>
 
                     <div class="d-flex gap-2 mt-auto pt-4">
-                      <button type="submit" class="btn btn-primary text-on-primary px-4 py-2 text-xs-caps flex-grow-1 fw-bold" [disabled]="formLoading" style="height: 48px;">
+                      <button type="submit" class="btn btn-primary text-on-primary px-4 py-2 text-xs-caps flex-grow-1 fw-bold shadow-sm" [disabled]="formLoading" style="height: 44px; font-size: 9px;">
                         {{ editingId ? 'UPDATE RECORD' : 'CREATE RECORD' }}
                       </button>
                       @if (editingId) {
-                        <button type="button" class="btn btn-dark bg-surface-container-highest border-0 text-on-surface px-4 py-2 text-xs-caps" (click)="cancelEdit()" style="height: 48px;">CANCEL</button>
+                        <button type="button" class="btn btn-dark bg-surface-container-highest border-0 text-on-surface px-4 py-2 text-xs-caps fw-bold" (click)="cancelEdit()" style="height: 44px; font-size: 9px;">CANCEL</button>
                       }
                     </div>
                   </form>
@@ -364,24 +329,24 @@ import { UserManagementComponent } from './user-management/user-management.compo
           <div class="animate__animated animate__fadeIn">
             <div class="glass-panel shadow-lg overflow-hidden border-0">
               <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between bg-surface-container-low">
-                <span class="text-xs-caps text-on-surface fw-bold">Bulk Import Processor</span>
-                <span class="text-xs-caps opacity-50 text-on-surface-variant" style="font-size: 8px;">JSON SCHEMA REQUIRED</span>
+                <span class="text-xs-caps text-on-surface fw-bold" style="font-size: 8px;">Bulk Import Processor</span>
+                <span class="text-xs-caps opacity-50 text-on-surface-variant" style="font-size: 7px;">JSON SCHEMA REQUIRED</span>
               </div>
               <div class="card-body p-4 p-md-5">
                 <div class="mb-5 p-4 bg-surface-container-high border border-outline-variant border-opacity-10 rounded-3">
-                  <label class="text-xs-caps text-on-surface-variant mb-3 d-block">UPLOAD LOG PACKET</label>
-                  <input type="file" (change)="onFileSelected($event)" accept=".json" class="form-control bg-surface-container border-0 text-on-surface" />
+                  <label class="text-xs-caps text-on-surface-variant mb-3 d-block" style="font-size: 7px;">UPLOAD LOG PACKET</label>
+                  <input type="file" (change)="onFileSelected($event)" accept=".json" class="form-control" style="font-size: 11px;" />
                 </div>
 
-                <label class="text-xs-caps text-on-surface-variant mb-3 d-block">MANUAL DATA BUFFER</label>
-                <textarea #jsonInput class="form-control bg-surface-container-high border-0 font-monospace text-primary mb-4"
+                <label class="text-xs-caps text-on-surface-variant mb-3 d-block" style="font-size: 7px;">MANUAL DATA BUFFER</label>
+                <textarea #jsonInput class="form-control font-monospace text-primary mb-4"
                           style="font-size: 11px; height: 300px;"
                           placeholder='[ { "title": "Breach Event", ... } ]'></textarea>
 
-                @if (bulkSuccess) { <div class="alert bg-success-container bg-opacity-10 border-success text-success py-2 small mb-4 text-xs-caps border-0 border-start border-4">{{ bulkSuccess | uppercase }}</div> }
-                @if (bulkError) { <div class="alert bg-error-container bg-opacity-10 border-error text-error py-2 small mb-4 text-xs-caps border-0 border-start border-4">{{ bulkError | uppercase }}</div> }
+                @if (bulkSuccess) { <div class="alert bg-success-container bg-opacity-10 border-success text-success py-2 small mb-4 text-xs-caps border-0 border-start border-4 fw-bold" style="font-size: 7px;">{{ bulkSuccess | uppercase }}</div> }
+                @if (bulkError) { <div class="alert bg-error-container bg-opacity-10 border-error text-error py-2 small mb-4 text-xs-caps border-0 border-start border-4 fw-bold" style="font-size: 7px;">{{ bulkError | uppercase }}</div> }
 
-                <button class="btn btn-primary text-on-primary py-3 px-5 text-xs-caps fw-bold" (click)="onBulkImport(jsonInput.value)" [disabled]="bulkLoading">
+                <button class="btn btn-primary text-on-primary py-3 px-5 text-xs-caps fw-bold shadow-sm" style="font-size: 9px;" (click)="onBulkImport(jsonInput.value)" [disabled]="bulkLoading">
                    PROCESS IMPORT
                 </button>
               </div>
@@ -393,28 +358,35 @@ import { UserManagementComponent } from './user-management/user-management.compo
           <div class="animate__animated animate__fadeIn">
             <div class="glass-panel shadow-lg overflow-hidden border-0">
               <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center bg-surface-container-low">
-                <span class="text-xs-caps text-on-surface fw-bold">System Audit Trail</span>
-                <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-1 px-2 text-on-surface" style="font-size: 8px;" (click)="loadAuditLogs()">REFRESH TRAIL</button>
+                <span class="text-xs-caps text-on-surface fw-bold" style="font-size: 8px;">System Audit Trail</span>
+                <button class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-1 px-2 text-on-surface fw-bold" style="font-size: 7px;" (click)="loadAuditLogs()">REFRESH TRAIL</button>
               </div>
-              <div class="p-0 table-responsive">
+              <div class="p-0 table-responsive custom-scrollbar-hidden">
                 <table class="table table-hover mb-0 align-middle">
                   <thead>
                     <tr class="bg-surface-container-low">
-                      <th class="ps-4 text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">TIMESTAMP</th>
-                      <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">OPERATOR</th>
-                      <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">ACTION</th>
-                      <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">RESOURCE</th>
-                      <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">RESULT</th>
+                      <th class="ps-4 text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 7px;">TIMESTAMP</th>
+                      <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 7px;">OPERATOR</th>
+                      <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 7px;">ACTION</th>
+                      <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 7px;">RESOURCE</th>
+                      <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 7px;">METADATA</th>
+                      <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 7px;">RESULT</th>
                     </tr>
                   </thead>
                   <tbody>
                     @for (log of auditLogs; track log.timestamp) {
-                      <tr class="bg-transparent border-bottom border-outline-variant border-opacity-5">
-                        <td class="ps-4 text-on-surface-variant small font-mono">{{ log.timestamp | date:'MM.dd HH:mm:ss' }}</td>
-                        <td><span class="text-primary fw-bold font-mono small">{{ log.user_id }}</span></td>
-                        <td><span class="text-xs-caps opacity-75 border border-outline-variant border-opacity-25 px-2 py-1 rounded text-on-surface" style="font-size: 8px;">{{ log.action | uppercase }}</span></td>
-                        <td class="text-on-surface-variant small text-on-surface">{{ log.resource }}</td>
-                        <td><span class="text-xs-caps fw-bold" [ngClass]="log.result.startsWith('success') ? 'text-success' : 'text-error'" style="font-size: 8px;">{{ log.result | uppercase }}</span></td>
+                      <tr class="bg-transparent border-bottom border-outline-variant border-opacity-5 transition-all hover-bg-surface-container-high">
+                        <td class="ps-4 text-on-surface-variant small font-mono" style="font-size: 10px;">{{ log.timestamp | date:'MM.dd || HH:mm:ss' }}</td>
+                        <td><span class="text-primary fw-bold font-mono small" style="font-size: 10px;">{{ log.user_id }}</span></td>
+                        <td><span class="text-xs-caps opacity-75 border border-outline-variant border-opacity-25 px-2 py-1 rounded text-on-surface fw-bold" style="font-size: 6px;">{{ log.action | uppercase }}</span></td>
+                        <td class="text-on-surface-variant small text-on-surface fw-bold" style="font-size: 10px;">{{ log.resource }}</td>
+                        <td>
+                          <div class="d-flex flex-column">
+                            <span class="text-xs-caps text-on-surface-variant opacity-75 font-mono" style="font-size: 7px;">IP: {{ log.ip_address || 'UNKNOWN' }}</span>
+                            <span class="text-xs-caps text-on-surface-variant opacity-50 text-truncate" style="font-size: 6px; max-width: 150px;">{{ log.user_agent || 'UNKNOWN AGENT' }}</span>
+                          </div>
+                        </td>
+                        <td><span class="text-xs-caps fw-bold" [ngClass]="log.result.startsWith('success') ? 'text-success' : 'text-error'" style="font-size: 7px;">{{ log.result | uppercase }}</span></td>
                       </tr>
                     }
                   </tbody>

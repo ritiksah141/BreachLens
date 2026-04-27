@@ -40,7 +40,7 @@ import { FormsModule } from '@angular/forms';
               <span class="nav-tooltip">BREACH LOG</span>
             </a>
             <a class="nav-item" routerLink="/map" routerLinkActive="active">
-              <span class="material-symbols-outlined">search</span>
+              <span class="material-symbols-outlined">radar</span>
               <span class="nav-tooltip">EXPOSURE INTEL</span>
             </a>
             @if (auth.isAnalyst()) {

@@ -11,59 +11,59 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
   standalone: true,
   imports: [CommonModule, PaginationComponent],
   template: `
-    <div class="card border-0 bg-surface-container-low shadow-lg overflow-hidden">
-      <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center">
-        <span class="text-xs-caps text-on-surface">Operator Management Console</span>
+    <div class="glass-panel border-0 shadow-lg overflow-hidden animate__animated animate__fadeIn">
+      <div class="p-3 border-bottom border-outline-variant border-opacity-10 d-flex justify-content-between align-items-center bg-surface-container-low">
+        <span class="text-xs-caps text-on-surface fw-bold" style="font-size: 8px;">OPERATOR MANAGEMENT CONSOLE</span>
         @if (loading) {
           <div class="spinner-border spinner-border-sm text-primary"></div>
         }
       </div>
       <div class="card-body p-0">
         @if (error) {
-          <div class="alert bg-error-container bg-opacity-10 border-error text-error m-3 small text-xs-caps">
-            <span class="material-symbols-outlined fs-6 me-2">error</span> {{ error }}
+          <div class="alert bg-error-container bg-opacity-10 border-error text-error m-3 small text-xs-caps fw-bold" style="font-size: 7px; border: 0; border-start: 4px solid var(--error);">
+            <span class="material-symbols-outlined fs-6 me-2">error</span> {{ error | uppercase }}
           </div>
         }
         @if (success) {
-          <div class="alert bg-success-container bg-opacity-10 border-success text-success m-3 small text-xs-caps">
-            <span class="material-symbols-outlined fs-6 me-2">check_circle</span> {{ success }}
+          <div class="alert bg-success-container bg-opacity-10 border-success text-success m-3 small text-xs-caps fw-bold" style="font-size: 7px; border: 0; border-start: 4px solid var(--success);">
+            <span class="material-symbols-outlined fs-6 me-2">check_circle</span> {{ success | uppercase }}
           </div>
         }
 
-        <div class="table-responsive">
-          <table class="table table-hover mb-0 align-middle custom-terminal-table">
+        <div class="table-responsive custom-scrollbar-hidden">
+          <table class="table table-hover mb-0 align-middle">
             <thead>
               <tr class="bg-surface-container-low">
-                <th class="ps-4 text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Identifier</th>
-                <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Access Level</th>
-                <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Connectivity</th>
-                <th class="pe-4 text-end text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 8px;">Operations</th>
+                <th class="ps-4 text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 7px;">IDENTIFIER</th>
+                <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 7px;">ACCESS LEVEL</th>
+                <th class="text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 7px;">CONNECTIVITY</th>
+                <th class="pe-4 text-end text-xs-caps text-on-surface-variant border-0 py-3" style="font-size: 7px;">OPERATIONS</th>
               </tr>
             </thead>
-            <tbody class="border-top-0">
+            <tbody>
               @for (user of users; track user._id) {
-                <tr class="bg-transparent border-bottom border-outline-variant border-opacity-10">
+                <tr class="bg-transparent border-bottom border-outline-variant border-opacity-5 transition-all hover-bg-surface-container-high">
                   <td class="ps-4">
                     <div class="d-flex align-items-center gap-3 py-1">
-                      <div class="p-2 bg-surface-container-highest rounded-circle position-relative">
-                        <span class="material-symbols-outlined text-on-surface-variant fs-5">person</span>
+                      <div class="p-2 bg-surface-container-highest rounded-circle position-relative shadow-sm" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+                        <span class="material-symbols-outlined text-primary fs-6">person</span>
                         @if (user.is_active) {
-                          <span class="position-absolute bottom-0 end-0 p-1 bg-success rounded-circle border border-outline-variant"></span>
+                          <span class="position-absolute bottom-0 end-0 p-1 bg-success rounded-circle border border-surface shadow-sm" style="width: 8px; height: 8px;"></span>
                         }
                       </div>
                       <div>
-                        <div class="fw-bold text-on-surface small">{{ user.username }}</div>
-                        <div class="text-on-surface-variant font-mono" style="font-size: 9px;">{{ user.email }}</div>
+                        <div class="fw-bold text-on-surface small" style="font-size: 11px;">{{ user.username }}</div>
+                        <div class="text-on-surface-variant font-mono opacity-50" style="font-size: 7px;">{{ user.email }}</div>
                       </div>
                     </div>
                   </td>
                   <td>
                     <select
-                      class="form-select bg-surface-container border-0 text-xs-caps py-1 px-2"
+                      class="form-select bg-surface-container-high border-0 text-on-surface py-1 px-2"
                       [value]="user.role"
                       (change)="onRoleChange(user._id, $event)"
                       [disabled]="user._id === auth.currentUser()?._id"
-                      style="font-size: 9px; width: auto;"
+                      style="font-size: 9px; width: auto; height: 30px; min-width: 130px;"
                     >
                       <option value="guest">GUEST ACCESS</option>
                       <option value="analyst">ANALYST LEVEL</option>
@@ -72,19 +72,19 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
                   </td>
                   <td>
                     <div class="d-flex align-items-center gap-2">
-                      <span class="p-1 rounded-circle" [ngClass]="user.is_active ? 'bg-success animate-pulse' : 'bg-on-surface-variant opacity-25'"></span>
-                      <span class="text-xs-caps fw-bold" [ngClass]="user.is_active ? 'text-success' : 'text-on-surface-variant'">
+                      <span class="p-1 rounded-circle shadow-sm" [ngClass]="user.is_active ? 'bg-success animate-pulse' : 'bg-on-surface-variant opacity-25'" style="width: 6px; height: 6px;"></span>
+                      <span class="text-xs-caps fw-bold" [ngClass]="user.is_active ? 'text-success' : 'text-on-surface-variant opacity-50'" style="font-size: 7px;">
                         {{ user.is_active ? 'ONLINE' : 'OFFLINE' }}
                       </span>
                     </div>
                   </td>
                   <td class="pe-4 text-end">
                     <button
-                      class="btn btn-dark bg-opacity-10 text-xs-caps py-1 px-3 border-0 transition-all"
-                      [ngClass]="user.is_active ? 'text-error hover-bg-error' : 'text-success hover-bg-success'"
+                      class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-1 px-3 shadow-sm transition-all fw-bold"
+                      [ngClass]="user.is_active ? 'text-error' : 'text-success'"
                       (click)="toggleStatus(user)"
                       [disabled]="user._id === auth.currentUser()?._id"
-                      style="font-size: 8px;"
+                      style="font-size: 7px; height: 30px;"
                     >
                       {{ user.is_active ? 'DEACTIVATE' : 'ACTIVATE' }}
                     </button>
@@ -95,29 +95,23 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
           </table>
         </div>
       </div>
-      <div class="p-3 border-top border-outline-variant border-opacity-10">
-        <app-pagination
-          [currentPage]="page"
-          [totalPages]="totalPages"
-          (pageChange)="onPageChange($event)"
-        />
+      <div class="p-3 border-top border-outline-variant border-opacity-10 bg-surface-container-low">
+        <app-pagination [currentPage]="page" [totalPages]="totalPages" (pageChange)="onPageChange($event)" />
       </div>
     </div>
   `,
   styles: [`
     .text-xs-caps { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; }
-    .custom-terminal-table tr:hover { background-color: color-mix(in srgb, var(--primary) 3%, transparent) !important; }
     .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
-    .text-error { color: var(--error) !important; }
-    .text-success { color: var(--success) !important; }
-    .bg-success { background-color: var(--success) !important; }
-    .bg-error-container { background-color: var(--error-container) !important; }
-    .bg-success-container { background-color: var(--success-container) !important; }
-    .border-error { border-color: var(--error) !important; }
-    .border-success { border-color: var(--success) !important; }
-    .hover-bg-error:hover { background-color: color-mix(in srgb, var(--error) 10%, transparent) !important; }
-    .hover-bg-success:hover { background-color: color-mix(in srgb, var(--success) 10%, transparent) !important; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+
+    .hover-bg-surface-container-high:hover {
+       background-color: var(--surface-container-high) !important;
+    }
+
+    .custom-scrollbar-hidden::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar-hidden::-webkit-scrollbar-thumb { background: transparent; border-radius: 10px; }
+    .custom-scrollbar-hidden:hover::-webkit-scrollbar-thumb { background: var(--outline-variant); }
   `]
 })
 export class UserManagementComponent implements OnInit {

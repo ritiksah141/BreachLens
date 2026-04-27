@@ -11,28 +11,26 @@ import { CompactNumberPipe } from '../../shared/pipes/compact-number.pipe';
   standalone: true,
   imports: [CommonModule, FormsModule, DecimalPipe, PercentPipe, TitleCasePipe, CompactNumberPipe],
   template: `
-    <div class="row g-4 mb-4 mt-2">
-      <!-- Header -->
-      <div class="col-12">
-        <div class="glass-panel p-4 shadow-lg border-0 d-flex justify-content-between align-items-center">
-          <div>
-            <h2 class="font-headline fw-extrabold text-on-surface tracking-tight page-title mb-1">Intelligence & Analytics</h2>
-            <p class="page-subtitle mb-0 opacity-75">Advanced Data Surface Visualization</p>
-          </div>
-          <div class="d-flex align-items-center gap-3">
-             <span class="badge py-2 px-3 text-xs-caps shadow-sm d-flex align-items-center gap-2"
-                   style="background: var(--surface-container-highest); border: 1px solid var(--primary); color: var(--primary);">
-                <span class="material-symbols-outlined fs-6">analytics</span>
-                REAL-TIME METRICS
-             </span>
-          </div>
-        </div>
+    <!-- Page Header -->
+    <div class="glass-panel p-4 mb-4 shadow-lg border-0 d-flex justify-content-between align-items-center animate__animated animate__fadeIn">
+      <div>
+        <h2 class="font-headline fw-extrabold text-on-surface tracking-tight page-title mb-1">Intelligence & Analytics</h2>
+        <p class="text-xs-caps mb-0 text-on-surface-variant opacity-75" style="font-size: 7px; letter-spacing: 0.1em;">Advanced cross-sector visualization and surface-level vulnerability mapping.</p>
       </div>
+      <div class="d-flex align-items-center gap-3">
+         <span class="badge py-2 px-3 text-xs-caps shadow-sm d-flex align-items-center gap-2"
+               style="background: var(--surface-container-highest); border: 1px solid var(--primary); color: var(--primary); font-size: 8px;">
+            <span class="material-symbols-outlined fs-6">analytics</span>
+            LIVE METRICS
+         </span>
+      </div>
+    </div>
 
+    <div class="row g-4 mb-5 animate__animated animate__fadeIn" style="animation-delay: 0.1s;">
       <!-- Top Row Charts -->
       <div class="col-lg-6">
         <div class="glass-panel p-4 shadow-lg h-100 border-0 d-flex flex-column">
-          <h5 class="text-xs-caps mb-3">Top Organisations Targeted</h5>
+          <h5 class="text-xs-caps mb-3 text-on-surface" style="font-size: 8px;">Top Organisations Targeted</h5>
           <div class="flex-grow-1 position-relative" style="min-height: 250px;">
             <canvas #orgsChart></canvas>
           </div>
@@ -41,7 +39,7 @@ import { CompactNumberPipe } from '../../shared/pipes/compact-number.pipe';
 
       <div class="col-lg-6">
         <div class="glass-panel p-4 shadow-lg h-100 border-0 d-flex flex-column">
-          <h5 class="text-xs-caps mb-3">Risk Distribution</h5>
+          <h5 class="text-xs-caps mb-3 text-on-surface" style="font-size: 8px;">Risk Distribution</h5>
           <div class="flex-grow-1 position-relative" style="min-height: 250px;">
             <canvas #riskChart></canvas>
           </div>
@@ -51,7 +49,7 @@ import { CompactNumberPipe } from '../../shared/pipes/compact-number.pipe';
       <!-- Middle Row Charts -->
       <div class="col-lg-8">
         <div class="glass-panel p-4 shadow-lg h-100 border-0 d-flex flex-column">
-          <h5 class="text-xs-caps mb-3">Industry vs Year Correlation</h5>
+          <h5 class="text-xs-caps mb-3 text-on-surface" style="font-size: 8px;">Industry vs Year Correlation</h5>
           <div class="flex-grow-1 position-relative" style="min-height: 350px;">
             <canvas #industryYearChart></canvas>
           </div>
@@ -60,21 +58,21 @@ import { CompactNumberPipe } from '../../shared/pipes/compact-number.pipe';
 
       <div class="col-lg-4">
         <div class="glass-panel p-4 shadow-lg h-100 border-0 d-flex flex-column">
-          <h5 class="text-xs-caps mb-3">Exposed Data Frequency</h5>
-          <div class="flex-grow-1 position-relative" style="min-height: 350px;">
+          <h5 class="text-xs-caps mb-3 text-on-surface" style="font-size: 8px;">Exposed Data Frequency</h5>
+          <div class="flex-grow-1 overflow-auto custom-scrollbar-hidden pe-1" style="max-height: 350px;">
              @if (loadingDataTypes) {
-               <div class="position-absolute top-50 start-50 translate-middle">
+               <div class="text-center py-5">
                  <div class="spinner-border spinner-border-sm text-primary"></div>
                </div>
              }
-             <div class="list-group list-group-flush overflow-auto custom-scrollbar h-100" style="max-height: 350px;">
+             <div class="d-flex flex-column gap-2">
                @for (dt of dataTypes; track dt.data_type; let i = $index) {
-                 <div class="list-group-item bg-transparent border-outline-variant border-opacity-10 px-0 py-2 border-0">
+                 <div class="p-2 rounded bg-surface-container-high border border-outline-variant border-opacity-10 shadow-sm transition-all hover-glow cursor-pointer">
                    <div class="d-flex justify-content-between mb-1">
-                      <span class="text-xs-caps opacity-75 font-mono" style="font-size: 9px;">{{ dt.data_type.split('_').join(' ') | uppercase }}</span>
-                      <span class="text-xs-caps fw-bold text-primary" style="font-size: 9px;">{{ dt.count }} INCIDENTS</span>
+                      <span class="text-xs-caps text-on-surface opacity-75" style="font-size: 7px;">{{ dt.data_type.split('_').join(' ') | uppercase }}</span>
+                      <span class="text-xs-caps fw-bold text-primary" style="font-size: 7px;">{{ dt.count }}</span>
                    </div>
-                   <div class="progress bg-surface-container-high" style="height: 3px;">
+                   <div class="progress bg-white bg-opacity-5" style="height: 2px;">
                       <div class="progress-bar bg-primary" [style.width.%]="(dt.count / maxDataTypesCount) * 100"></div>
                    </div>
                  </div>
@@ -89,7 +87,15 @@ import { CompactNumberPipe } from '../../shared/pipes/compact-number.pipe';
   styles: [`
     :host { display: block; }
     .text-xs-caps { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; }
-    .custom-scrollbar::-webkit-scrollbar { width: 3px; }
+    .custom-scrollbar-hidden::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar-hidden::-webkit-scrollbar-thumb { background: transparent; border-radius: 10px; }
+    .custom-scrollbar-hidden:hover::-webkit-scrollbar-thumb { background: var(--outline-variant); }
+
+    .hover-glow:hover {
+       background-color: var(--surface-container-highest) !important;
+       border-color: var(--primary) !important;
+       transform: translateX(4px);
+    }
   `]
 })
 export class AnalyticsComponent implements OnInit, AfterViewInit, OnDestroy {
