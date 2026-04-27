@@ -187,10 +187,10 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
               <div class="p-4 border-bottom border-outline-variant border-opacity-10 bg-surface-container-high">
                 <div class="row g-3">
                   <div class="col-12">
-                    <input [(ngModel)]="newAlert.message" class="form-control bg-surface-container-low border-0 text-on-surface text-xs-caps shadow-inner" placeholder="ALERT MESSAGE..." style="font-size: 10px;" />
+                    <input [(ngModel)]="newAlert.message" class="form-control" placeholder="Alert message..." style="font-size: 11px; height: 38px;" />
                   </div>
                   <div class="col-md-6">
-                    <select [(ngModel)]="newAlert.alert_type" class="form-select bg-surface-container-low border-0 text-on-surface text-xs-caps" style="font-size: 10px;">
+                    <select [(ngModel)]="newAlert.alert_type" class="form-select" style="font-size: 11px; height: 38px;">
                       <option value="new_exposure">NEW EXPOSURE</option>
                       <option value="credential_stuffing">CREDENTIAL STUFFING</option>
                       <option value="dark_web_mention">DARK WEB MENTION</option>
@@ -198,7 +198,7 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
                     </select>
                   </div>
                   <div class="col-md-6">
-                    <select [(ngModel)]="newAlert.severity" class="form-select bg-surface-container-low border-0 text-on-surface text-xs-caps" style="font-size: 10px;">
+                    <select [(ngModel)]="newAlert.severity" class="form-select" style="font-size: 11px; height: 38px;">
                       <option value="critical">CRITICAL</option>
                       <option value="high">HIGH</option>
                       <option value="medium">MEDIUM</option>
@@ -206,7 +206,7 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
                     </select>
                   </div>
                   <div class="col-12 text-end">
-                    <button class="btn btn-primary text-on-primary text-xs-caps py-1 px-3 fw-bold" (click)="addAlert()" [disabled]="!newAlert.message" style="font-size: 9px;">SAVE ALERT</button>
+                    <button class="btn btn-primary px-3 fw-bold" (click)="addAlert()" [disabled]="!newAlert.message" style="font-size: 9px; height: 38px;">SAVE ALERT</button>
                   </div>
                 </div>
               </div>
@@ -219,10 +219,10 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
                     @if (editingAlertId === alert._id) {
                       <div class="row g-2 animate__animated animate__fadeIn">
                         <div class="col-12">
-                          <input [(ngModel)]="editAlertData.message" class="form-control bg-surface-container-low border-0 text-on-surface text-xs-caps" style="font-size: 10px;" />
+                          <input [(ngModel)]="editAlertData.message" class="form-control" style="font-size: 11px; height: 38px;" />
                         </div>
                         <div class="col-md-6">
-                          <select [(ngModel)]="editAlertData.alert_type" class="form-select bg-surface-container-low border-0 text-on-surface text-xs-caps" style="font-size: 10px;">
+                          <select [(ngModel)]="editAlertData.alert_type" class="form-select" style="font-size: 11px; height: 38px;">
                             <option value="new_exposure">NEW EXPOSURE</option>
                             <option value="credential_stuffing">CREDENTIAL STUFFING</option>
                             <option value="dark_web_mention">DARK WEB MENTION</option>
@@ -230,8 +230,8 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
                           </select>
                         </div>
                         <div class="col-md-6 text-end d-flex gap-2">
-                          <button class="btn btn-primary text-on-primary text-xs-caps py-1 px-2 fw-bold flex-grow-1" (click)="saveEditAlert()" style="font-size: 8px;">SAVE</button>
-                          <button class="btn btn-dark text-on-surface text-xs-caps py-1 px-2 flex-grow-1" (click)="editingAlertId = null" style="font-size: 8px;">CANCEL</button>
+                          <button class="btn btn-primary px-2 fw-bold flex-grow-1" (click)="saveEditAlert()" style="font-size: 9px; height: 38px;">SAVE</button>
+                          <button class="btn btn-dark py-1 px-2 flex-grow-1" (click)="editingAlertId = null" style="font-size: 9px; height: 38px;">CANCEL</button>
                         </div>
                       </div>
                     } @else {
@@ -282,10 +282,10 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
               @if (showAddTimeline) {
                 <div class="glass-panel p-4 mb-5 border-primary border-opacity-20 bg-surface-container-high">
                   <div class="row g-3">
-                    <div class="col-md-6"><input [(ngModel)]="newEvent.event_type" class="form-control bg-surface-container-low border-0 text-on-surface text-xs-caps shadow-inner" placeholder="EVENT TYPE..." style="font-size: 10px;" /></div>
-                    <div class="col-md-6"><input type="datetime-local" [(ngModel)]="newEvent.occurred_at" class="form-control bg-surface-container-low border-0 text-xs-caps text-on-surface shadow-inner" style="font-size: 10px;" /></div>
-                    <div class="col-12"><textarea [(ngModel)]="newEvent.description" class="form-control bg-surface-container-low border-0 text-on-surface text-xs-caps shadow-inner" rows="2" placeholder="EVENT DESCRIPTION..." style="font-size: 10px;"></textarea></div>
-                    <div class="col-12 text-end"><button class="btn btn-primary text-on-primary text-xs-caps py-1 px-3 fw-bold" (click)="addTimeline()" style="font-size: 9px;">SAVE EVENT</button></div>
+                    <div class="col-md-6"><input [(ngModel)]="newEvent.event_type" class="form-control" placeholder="Event type..." style="font-size: 11px; height: 38px;" /></div>
+                    <div class="col-md-6"><input type="datetime-local" [(ngModel)]="newEvent.occurred_at" class="form-control" style="font-size: 11px; height: 38px;" /></div>
+                    <div class="col-12"><textarea [(ngModel)]="newEvent.description" class="form-control" rows="2" placeholder="Event description..." style="font-size: 11px;"></textarea></div>
+                    <div class="col-12 text-end"><button class="btn btn-primary px-3 fw-bold" (click)="addTimeline()" style="font-size: 9px; height: 38px;">SAVE EVENT</button></div>
                   </div>
                 </div>
               }
@@ -297,12 +297,12 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
                     <div class="glass-panel p-4 shadow-lg border-0 bg-surface-container-low">
                       @if (editingTimelineId === event._id) {
                         <div class="row g-3">
-                          <div class="col-md-6"><input [(ngModel)]="editEventData.event_type" class="form-control bg-surface-container-high border-0 text-on-surface text-xs-caps" style="font-size: 10px;" /></div>
-                          <div class="col-md-6"><input type="datetime-local" [(ngModel)]="editEventData.occurred_at" class="form-control bg-surface-container-high border-0 text-xs-caps text-on-surface" style="font-size: 10px;" /></div>
-                          <div class="col-12"><textarea [(ngModel)]="editEventData.description" class="form-control bg-surface-container-high border-0 text-on-surface text-xs-caps" rows="2" style="font-size: 10px;"></textarea></div>
+                          <div class="col-md-6"><input [(ngModel)]="editEventData.event_type" class="form-control" style="font-size: 11px; height: 38px;" /></div>
+                          <div class="col-md-6"><input type="datetime-local" [(ngModel)]="editEventData.occurred_at" class="form-control" style="font-size: 11px; height: 38px;" /></div>
+                          <div class="col-12"><textarea [(ngModel)]="editEventData.description" class="form-control" rows="2" style="font-size: 11px;"></textarea></div>
                           <div class="col-12 text-end d-flex gap-2">
-                             <button class="btn btn-primary text-on-primary text-xs-caps py-1 px-3 fw-bold flex-grow-1" (click)="saveEditTimeline()">SAVE CHANGES</button>
-                             <button class="btn btn-dark text-on-surface text-xs-caps py-1 px-3 flex-grow-1" (click)="editingTimelineId = null">CANCEL</button>
+                             <button class="btn btn-primary px-3 fw-bold flex-grow-1" (click)="saveEditTimeline()" style="font-size: 9px; height: 38px;">SAVE CHANGES</button>
+                             <button class="btn btn-dark py-1 px-3 flex-grow-1" (click)="editingTimelineId = null" style="font-size: 9px; height: 38px;">CANCEL</button>
                           </div>
                         </div>
                       } @else {

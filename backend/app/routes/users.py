@@ -83,10 +83,7 @@ def update_user(user_id: str):
         if not current_password:
             return error_response("Current password is required to set a new password.", 400)
 
-        user_doc = user_service.get_by_id(user_id)
-        if not user_doc or not bcrypt.checkpw(
-            current_password.encode("utf-8"), user_doc["password_hash"].encode("utf-8")
-        ):
+        if not user_service.verify_password(user_id, current_password):
             return error_response("Current password verification failed.", 401)
 
         if not _PASSWORD_RE.match(data["password"]):

@@ -70,13 +70,22 @@ function isStrongPassword(password: string): boolean {
             <form [formGroup]="resetForm" (ngSubmit)="submitReset()" class="d-flex flex-column gap-3">
               <div>
                 <label class="text-xs-caps text-on-surface-variant mb-2">Reset Token</label>
-                <input
-                  type="password"
-                  formControlName="token"
-                  autocomplete="one-time-code"
-                  class="form-control bg-surface-container-low border-0 text-on-surface"
-                  placeholder="Paste reset token"
-                />
+                <div class="input-group">
+                  <input
+                    [type]="showToken ? 'text' : 'password'"
+                    formControlName="token"
+                    autocomplete="one-time-code"
+                    class="form-control bg-surface-container-low border-0 text-on-surface ps-3"
+                    placeholder="Paste reset token"
+                  />
+                  <button
+                    type="button"
+                    class="input-group-text bg-surface-container-low border-0 text-on-surface-variant pwd-toggle"
+                    (click)="showToken = !showToken"
+                  >
+                    <span class="material-symbols-outlined fs-6">{{ showToken ? 'visibility_off' : 'visibility' }}</span>
+                  </button>
+                </div>
               </div>
 
               <div>
@@ -167,6 +176,7 @@ export class ResetPasswordComponent implements OnInit {
   mode: 'request' | 'reset' = 'request';
   loadingRequest = false;
   loadingReset = false;
+  showToken = false;
   showPassword = false;
   showConfirmPassword = false;
   devToken = '';

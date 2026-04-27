@@ -81,19 +81,34 @@ import { NotificationService } from '../../../core/services/notification.service
                </div>
                <form (ngSubmit)="updatePassword()">
                   <div class="mb-3">
-                     <label class="text-xs-caps text-on-surface-variant mb-2 d-block" style="font-size: 7px;">CURRENT PASSWORD</label>
-                     <input type="password" name="currentPassword" [(ngModel)]="currentPassword" class="form-control bg-surface-container-high border-0 text-on-surface text-xs-caps" style="font-size: 10px;" placeholder="VERIFY IDENTITY">
+                     <label class="text-xs-caps text-on-surface-variant mb-2 d-block" style="font-size: 7px;">Current Password</label>
+                     <div class="input-group">
+                       <input [type]="showCurrentPassword ? 'text' : 'password'" name="currentPassword" [(ngModel)]="currentPassword" class="form-control bg-surface-container-high border-0 text-on-surface" style="font-size: 11px;" placeholder="Verify current identity">
+                       <button type="button" class="input-group-text bg-surface-container-high border-0 text-on-surface-variant pwd-toggle" (click)="showCurrentPassword = !showCurrentPassword">
+                         <span class="material-symbols-outlined fs-6">{{ showCurrentPassword ? 'visibility_off' : 'visibility' }}</span>
+                       </button>
+                     </div>
                   </div>
                   <div class="mb-3">
-                     <label class="text-xs-caps text-on-surface-variant mb-2 d-block" style="font-size: 7px;">NEW OPERATOR PASSWORD</label>
-                     <input type="password" name="newPassword" [(ngModel)]="newPassword" class="form-control bg-surface-container-high border-0 text-on-surface text-xs-caps" style="font-size: 10px;" placeholder="8+ CHARS, UPPER, DIGIT">
+                     <label class="text-xs-caps text-on-surface-variant mb-2 d-block" style="font-size: 7px;">New Operator Password</label>
+                     <div class="input-group">
+                       <input [type]="showNewPassword ? 'text' : 'password'" name="newPassword" [(ngModel)]="newPassword" class="form-control bg-surface-container-high border-0 text-on-surface" style="font-size: 11px;" placeholder="8+ chars, upper, digit">
+                       <button type="button" class="input-group-text bg-surface-container-high border-0 text-on-surface-variant pwd-toggle" (click)="showNewPassword = !showNewPassword">
+                         <span class="material-symbols-outlined fs-6">{{ showNewPassword ? 'visibility_off' : 'visibility' }}</span>
+                       </button>
+                     </div>
                   </div>
                   <div class="mb-4">
-                     <label class="text-xs-caps text-on-surface-variant mb-2 d-block" style="font-size: 7px;">CONFIRM NEW PASSWORD</label>
-                     <input type="password" name="confirmPassword" [(ngModel)]="confirmPassword" class="form-control bg-surface-container-high border-0 text-on-surface text-xs-caps" style="font-size: 10px;" placeholder="REPEAT PASSWORD">
+                     <label class="text-xs-caps text-on-surface-variant mb-2 d-block" style="font-size: 7px;">Confirm New Password</label>
+                     <div class="input-group">
+                       <input [type]="showConfirmPassword ? 'text' : 'password'" name="confirmPassword" [(ngModel)]="confirmPassword" class="form-control bg-surface-container-high border-0 text-on-surface" style="font-size: 11px;" placeholder="Repeat new password">
+                       <button type="button" class="input-group-text bg-surface-container-high border-0 text-on-surface-variant pwd-toggle" (click)="showConfirmPassword = !showConfirmPassword">
+                         <span class="material-symbols-outlined fs-6">{{ showConfirmPassword ? 'visibility_off' : 'visibility' }}</span>
+                       </button>
+                     </div>
                   </div>
                   <button type="submit" class="btn btn-error w-100 py-2 text-xs-caps fw-bold text-white shadow-sm" style="background-color: var(--error);" [disabled]="loading || !newPassword || !currentPassword">
-                     ROTATE CREDENTIALS
+                     Rotate Credentials
                   </button>
                </form>
             </div>
@@ -244,6 +259,8 @@ import { NotificationService } from '../../../core/services/notification.service
       word-break: break-word;
     }
 
+    .pwd-toggle { cursor: pointer; }
+
     .role-admin { color: var(--error) !important; border-color: var(--error) !important; }
     .role-analyst { color: var(--primary) !important; border-color: var(--primary) !important; }
     .role-guest { color: var(--on-surface-variant) !important; border-color: var(--on-surface-variant) !important; }
@@ -260,6 +277,10 @@ export class ProfileComponent implements OnInit {
   confirmPassword = '';
   currentPassword = '';
   loading = false;
+
+  showCurrentPassword = false;
+  showNewPassword = false;
+  showConfirmPassword = false;
 
   get user() {
     return this.auth.currentUser();

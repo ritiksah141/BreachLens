@@ -14,6 +14,7 @@ from app.models.breach import (
     RemediationActionSchema,
     TimelineEventSchema,
 )
+from app.extensions import limiter, mongo
 from app.services.breach_service import BreachService
 from app.utils.response import error_response, success_response
 from app.utils.validators import (
@@ -572,6 +573,7 @@ def bulk_delete_breaches():
 # ---------------------------------------------------------------------------
 
 @breaches_bp.get("/exposure-check")
+@limiter.limit("5 per minute")
 def exposure_check():
     """Check if an email address or domain appears in any known breach."""
     from app.utils.validators import is_valid_email, is_valid_domain

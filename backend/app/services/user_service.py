@@ -40,12 +40,33 @@ class UserService:
         return users, total
 
     def get_by_id(self, user_id: str) -> Optional[dict]:
-        """Fetch a single user by ObjectId string."""
+        """Fetch a single user by ObjectId string (safe fields only)."""
         try:
             oid = ObjectId(user_id)
         except (InvalidId, TypeError):
             return None
         return self.col.find_one({"_id": oid}, self.SAFE_FIELDS)
+
+    def verify_password(self, user_id: str, password: str) -> bool:
+        """
+        Verify a plain-text password against a user's stored hash.
+        This keeps the hash encapsulated within the service layer.
+        """
+        import bcrypt
+        try:
+            oid = ObjectId(user_id)
+        except (InvalidId, TypeError):
+            return False
+
+        user = self.col.find_one({"_id": oid}, {"password_hash": 1})
+        if not user or "password_hash" not in user:
+            return False
+
+        stored_hash = user["password_hash"]
+        if isinstance(stored_hash, str):
+            stored_hash = stored_hash.encode("utf-8")
+
+        return bcrypt.checkpw(password.encode("utf-8"), stored_hash)
 
     def update_user(self, user_id: str, updates: dict) -> Optional[dict]:
         """

@@ -56,7 +56,7 @@ import { forkJoin } from 'rxjs';
                 [(ngModel)]="query"
                 (keyup.enter)="performCheck()"
                 class="pill-input flex-grow-1 text-on-surface"
-                [placeholder]="searchMode === 'email' ? 'ENTER EMAIL OR USERNAME...' : 'ENTER CORPORATE DOMAIN (e.g. company.com)...'"
+                [placeholder]="searchMode === 'email' ? 'Enter email or username...' : 'Enter corporate domain (e.g. company.com)...'"
                 autocomplete="off"
               >
             </div>

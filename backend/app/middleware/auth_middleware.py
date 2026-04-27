@@ -64,7 +64,7 @@ def _decode_token(token: str) -> dict | None:
 def _populate_g(payload: dict) -> None:
     """Populate ``flask.g`` with user identity fields from the decoded JWT."""
     g.current_user = payload.get("user", "")
-    g.current_user_id = payload.get("user", "")
+    g.current_user_id = payload.get("user_id", "")
     g.current_user_claims = payload
     # Role is derived from the admin flag AND the optional role field.
     if payload.get("admin"):

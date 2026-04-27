@@ -84,13 +84,13 @@ import { FormsModule } from '@angular/forms';
         <!-- Dynamic Panel (Attack Surface / Recent) -->
         <div class="glass-panel p-4 shadow-lg flex-grow-1 overflow-hidden d-flex flex-column">
           <h5 class="text-xs-caps mb-3 d-flex justify-content-between flex-shrink-0 text-on-surface" style="font-size: 8px;">
-            <span>{{ isAnalyst ? 'Attack Surface' : 'Live Incursions' }}</span>
+            <span>{{ auth.isAnalyst() ? 'Attack Surface' : 'Live Incursions' }}</span>
             <span class="p-1 bg-success rounded-circle animate-pulse" style="width: 6px; height: 6px;"></span>
           </h5>
 
           <div class="flex-grow-1 overflow-auto custom-scrollbar-hidden pe-1">
             <!-- Analyst View -->
-            @if (isAnalyst && attackSurface) {
+            @if (auth.isAnalyst() && attackSurface) {
               <div class="d-flex flex-column gap-2">
                 @for (dt of attackSurface.top_data_types | slice:0:4; track dt.data_type; let i = $index) {
                    <div class="p-2 rounded bg-surface-container-high border border-outline-variant border-opacity-10 shadow-sm transition-all hover-glow cursor-pointer"
@@ -205,7 +205,6 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   trendData: MonthlyTrend[] = [];
   recentBreaches: Breach[] = [];
   attackSurface: AttackSurfaceProfile | null = null;
-  isAnalyst = false;
 
   displayYear = new Date().getFullYear();
   selectedYear = new Date().getFullYear();
@@ -219,6 +218,12 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private charts: any[] = [];
   private viewReady = false;
 
+  private _authWatcher = effect(() => {
+    // React to role changes from AuthService signals
+    this.auth.isAnalyst();
+    this.loadData();
+  });
+
   private _themeWatcher = effect(() => {
     this.themeService.theme();
     if (this.viewReady) this.renderAllCharts();
@@ -229,9 +234,6 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     for (let i = 0; i < 5; i++) {
       this.availableYears.push(currentYear - i);
     }
-
-    this.isAnalyst = this.auth.isAnalyst();
-    this.loadData();
   }
 
   ngAfterViewInit(): void {
@@ -256,7 +258,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.loadMonthlyTrend(this.selectedYear, true);
 
-    if (this.isAnalyst) {
+    if (this.auth.isAnalyst()) {
        this.analytics.getAttackSurfaceProfile().subscribe({
          next: (res) => {
            this.attackSurface = res.data;

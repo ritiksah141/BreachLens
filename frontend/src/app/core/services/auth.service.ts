@@ -1,7 +1,7 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap, catchError, throwError } from 'rxjs';
+import { Observable, tap, catchError, throwError, switchMap, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { NotificationService } from './notification.service';
 import {
@@ -56,23 +56,20 @@ export class AuthService {
   // Auth operations
   // ------------------------------------------------------------------
 
-  login(credentials: LoginCredentials): Observable<ApiResponse<AuthToken>> {
+  login(credentials: LoginCredentials): Observable<ApiResponse<User>> {
     return this.http
       .post<ApiResponse<AuthToken>>(`${this.apiUrl}/auth/login`, credentials)
       .pipe(
-        tap((res) => {
+        switchMap((res) => {
           const token = res.data?.token;
           if (token) {
             localStorage.setItem(TOKEN_KEY, token);
             this._token.set(token);
             this._lastSessionExpiryNoticeAt = 0;
-            // Fetch user profile after login
-            this.fetchProfile().subscribe({
-              next: (u) => {
-                this.notifications.show(`Welcome back, ${u.data.username}.`, 'success', 3000);
-                this.router.navigate(['/dashboard']);
-              }
-            });
+            // Return the profile fetch observable
+            return this.fetchProfile();
+          } else {
+            return throwError(() => new Error('No token received'));
           }
         }),
         catchError((err) => throwError(() => err))
