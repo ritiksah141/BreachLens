@@ -126,10 +126,10 @@ Request → Middleware → Routes → Services → Models → MongoDB
 
 ### **Endpoint Summary**
 - **Authentication**: 8 endpoints
-- **Breaches**: 32 endpoints (CRUD + geospatial + sub-documents)
-- **Analytics**: 10 endpoints (aggregation pipelines)
+- **Breaches**: 35 endpoints (CRUD + geospatial + sub-documents + tactical)
+- **Analytics**: 11 endpoints (aggregation pipelines + trends)
 - **Users**: 4 endpoints (profile management)
-- **Admin**: 6 endpoints (user management, bulk operations)
+- **Admin**: 7 endpoints (user management, bulk operations, audit)
 - **Health**: 3 endpoints (liveness, readiness)
 
 ---
@@ -228,7 +228,7 @@ FLASK_ENV=testing python run.py
 
 ## 📊 Statistics
 
-- **Total Endpoints**: 63
+- **Total Endpoints**: 68
 - **Test Coverage**: 88%
 - **Services**: 4 (Auth, Breach, User, Analytics)
 - **Routes**: 6 blueprints

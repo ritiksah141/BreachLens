@@ -3,7 +3,7 @@
 > **Cyber Threat Intelligence Platform** - Full-stack application for tracking data breaches, mapping cyber-attacks, and monitoring compromised assets.
 
 [![Backend Tests](https://img.shields.io/badge/Backend_Tests-586%20passing-brightgreen.svg)](backend/tests/)
-[![Frontend Tests](https://img.shields.io/badge/Frontend_Tests-247%20passing-brightgreen.svg)](frontend/src/app/)
+[![Frontend Tests](https://img.shields.io/badge/Frontend_Tests-249%20passing-brightgreen.svg)](frontend/src/app/)
 [![Coverage](https://img.shields.io/badge/Coverage-88%25-brightgreen.svg)](backend/htmlcov/)
 [![Python](https://img.shields.io/badge/Python-3.14-blue.svg)](https://www.python.org/)
 [![Angular](https://img.shields.io/badge/Angular-17.3-red.svg)](https://angular.dev/)
@@ -49,14 +49,15 @@ The system is built with a RESTful API backend (Flask + MongoDB) designed for sc
 ## ✨ Features
 
 ### **Core Functionality**
-- ✅ **63 REST API Endpoints** - Complete CRUD operations for breaches, users, and analytics
-- ✅ **JWT Authentication** - Secure token-based authentication with blacklist support
-- ✅ **Role-Based Access Control (RBAC)** - Admin, Analyst, and Guest roles
-- ✅ **Geospatial Queries** - Find breaches by location using MongoDB 2dsphere indexes
-- ✅ **Advanced Analytics** - 10 aggregation endpoints for risk assessment and trends
-- ✅ **Sub-document Management** - Track accounts, timelines, remediation, and alerts
-- ✅ **Exposure Checking** - Check if email/domain appears in breach data
-- ✅ **Comprehensive Testing** - 833 tests across backend (586) and frontend (247)
+- ✅ **65 REST API Endpoints** - Complete CRUD operations for breaches, users, and analytics
+- ✅ **JWT Authentication** - Secure token-based authentication with functional guards
+- ✅ **Role-Based Access Control (RBAC)** - Admin, Analyst, and Guest roles with structural directives
+- ✅ **Geospatial Mapping** - Leaflet-js tactical map with GeoJSON telemetry and geolocation
+- ✅ **Advanced Analytics** - 11 aggregation endpoints for industry-year trends and risk distribution
+- ✅ **Exposure Scanner** - Real-time identity and domain exposure intelligence scanner
+- ✅ **Dark/Light Themes** - System-aware theming with CSS custom properties
+- ✅ **Comprehensive Testing** - 835 tests across backend (586) and frontend (249)
+
 
 ### **Security Features**
 - 🔐 JWT token authentication with MongoDB-based blacklist
@@ -95,10 +96,10 @@ The system is built with a RESTful API backend (Flask + MongoDB) designed for sc
 - **Mapping**: Leaflet.js 1.9.4 with GeoJSON, Stadia Maps + OpenStreetMap tiles
 - **Charts**: Chart.js 4.4 (6 chart types, theme-reactive)
 - **State Management**: Angular Signals (signal, computed, effect)
-- **Testing**: Jasmine 5.1 + Karma 6.4 (247 tests)
+- **Testing**: Jasmine 5.1 + Karma 6.4 (249 tests)
 
 ### **Development Tools**
-- **API Testing**: Postman (64 requests, 108 test assertions)
+- **API Testing**: Postman (69 requests, 115+ test assertions)
 - **Code Quality**: pytest, coverage.py, pre-commit hooks
 - **Security Scanning**: detect-secrets
 - **Version Control**: Git with branch protection
@@ -133,7 +134,7 @@ BreachLens/
 ├── frontend/                         # Frontend (Angular 17 SPA)
 │   ├── src/app/                      # Application source
 │   │   ├── core/                     # Guards, interceptors, resolvers, services
-│   │   ├── features/                 # Lazy-loaded feature components (14)
+for│   │   ├── features/                 # Lazy-loaded feature components (16)
 │   │   └── shared/                   # Pipes, directives, shared components
 │   ├── package.json                  # Node dependencies
 │   └── README.md                     # Frontend documentation
@@ -348,7 +349,7 @@ Angular 17 single-page application with **14 standalone components**, **247 pass
 | Route Resolver | 1 (breach detail pre-fetch) |
 | HTTP Interceptor | 1 (JWT + error handling) |
 | Backend Endpoints Consumed | 65 |
-| Tests | 247 passing |
+| Tests | 249 passing |
 
 **Frontend documentation**: [frontend/README.md](frontend/README.md)
 
@@ -402,7 +403,7 @@ The project has comprehensive test coverage across both backend and frontend: **
 | User Management | ~30 | User profile and management |
 | Performance | 14 | Benchmarks (deselected by default) |
 
-#### **Frontend Tests (247 passing)**
+#### **Frontend Tests (249 passing)**
 
 | Test Module | Tests | Focus |
 |-------------|-------|-------|
@@ -587,7 +588,7 @@ For questions or issues:
 | Frontend SPA | ✅ Complete | 100% (Coursework 2) |
 | API Documentation | ✅ Complete | 100% |
 | Backend Testing | ✅ Complete | 586 tests, 88% coverage |
-| Frontend Testing | ✅ Complete | 247 tests across 17 spec files |
+| Frontend Testing | ✅ Complete | 249 tests across 16 components |
 
 **Last Updated**: April 2026
 **Version**: v2.0.0 (Full Stack)

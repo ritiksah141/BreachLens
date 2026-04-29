@@ -27,7 +27,7 @@ npm start
 ### **3. Run Tests**
 ```bash
 npx ng test --watch=false --browsers=ChromeHeadless
-# Expected: 247 passing
+# Expected: 249 passing
 ```
 
 ### **4. Production Build**
@@ -55,19 +55,21 @@ frontend/
 │   │   │   │   └── breach.resolver.ts    # Pre-fetches breach data before navigation
 │   │   │   └── services/                 # Application services (7)
 │   │   │       ├── auth.service.ts       # JWT auth, login/register/logout, signals
-│   │   │       ├── breach.service.ts     # Breach CRUD, geospatial, subdocuments
-│   │   │       ├── analytics.service.ts  # Dashboard aggregation endpoints
+│   │   │       ├── breach.service.ts     # Breach CRUD, geospatial, exposure scanning
+│   │   │       ├── analytics.service.ts  # Dashboard and Analytics aggregations
 │   │   │       ├── admin.service.ts      # Admin stats, user management, audit
 │   │   │       ├── user.service.ts       # User profile CRUD
 │   │   │       ├── notification.service.ts # Signal-based toast notifications
 │   │   │       └── theme.service.ts      # Dark/light mode with localStorage
 │   │   ├── features/                     # Feature modules (lazy-loaded)
-│   │   │   ├── dashboard/                # Analytics dashboard (6 Chart.js charts)
+│   │   │   ├── dashboard/                # Live summary dashboard (KPIs, Trends)
+│   │   │   ├── analytics/                # Advanced analytics (Industry trends, Risk profiles)
 │   │   │   ├── breaches/
 │   │   │   │   ├── breach-list/          # Filterable data table with pagination
 │   │   │   │   ├── breach-detail/        # Full breach view with subdocument CRUD
-│   │   │   │   └── breach-map/           # Leaflet geospatial map
-│   │   │   ├── admin/                    # Admin panel (breach management, user mgmt)
+│   │   │   │   ├── breach-map/           # Tactical Leaflet geospatial map
+│   │   │   │   └── exposure-checker/     # Identity & Domain exposure intelligence
+│   │   │   ├── admin/                    # Admin panel (breach management, audit)
 │   │   │   │   └── user-management/      # User role/status management
 │   │   │   └── auth/
 │   │   │       ├── login/                # Email/password login
@@ -87,7 +89,7 @@ frontend/
 │   │   │       ├── risk-level.pipe.ts    # Score → label (CRITICAL/HIGH/LOW)
 │   │   │       └── compact-number.pipe.ts # 1500000 → "1.5M"
 │   │   ├── app.component.ts             # Root shell (header, nav, toasts, footer)
-│   │   ├── app.routes.ts                # Route config (9 lazy-loaded routes)
+│   │   ├── app.routes.ts                # Route config (10 lazy-loaded routes)
 │   │   └── app.config.ts                # Application providers
 │   ├── environments/                     # Environment configs
 │   ├── styles.css                        # Global CSS variables (dark/light themes)
@@ -108,7 +110,7 @@ frontend/
 ```bash
 npx ng test --watch=false --browsers=ChromeHeadless
 
-# Expected: 247 passed in ~3s
+# Expected: 249 passed in ~3s
 ```
 
 ### **Test Breakdown**
@@ -127,25 +129,10 @@ npx ng test --watch=false --browsers=ChromeHeadless
 | severity-badge.component.spec.ts | 13 | Badge rendering for all 5 severity levels |
 | pagination.component.spec.ts | 15 | Page navigation, edge cases, event emission |
 | profile.component.spec.ts | 22 | Profile display, role badges, session info |
-| breach-list.component.spec.ts | 10 | List rendering, filter integration |
+| breach-list.component.spec.ts | 11 | List rendering, filter integration |
 | dashboard.component.spec.ts | 10 | Chart initialization, analytics loading |
 | auth.service.spec.ts | 10 | JWT handling, login/logout flow |
-| breach.service.spec.ts | 9 | HTTP calls, query parameter building |
-
-### **Run Specific Tests**
-```bash
-# Single spec file
-npx ng test --watch=false --browsers=ChromeHeadless --include='**/pipes/*.spec.ts'
-
-# Watch mode (interactive)
-npx ng test
-```
-
-### **Generate Coverage Report**
-```bash
-npx ng test --watch=false --browsers=ChromeHeadless --code-coverage
-open coverage/breachlens-frontend/index.html
-```
+| breach.service.spec.ts | 10 | HTTP calls, query parameter building |
 
 ---
 
@@ -155,7 +142,7 @@ open coverage/breachlens-frontend/index.html
 
 | Feature | Implementation |
 |---------|---------------|
-| **Standalone Components** | All 13 components — zero NgModules |
+| **Standalone Components** | All 16 components — zero NgModules |
 | **Signals** | `signal()`, `computed()`, `effect()` across auth, theme, notifications |
 | **Functional Guards** | `authGuard`, `adminGuard`, `analystGuard` as `CanActivateFn` |
 | **Functional Interceptor** | `authInterceptor` as `HttpInterceptorFn` |
@@ -163,7 +150,7 @@ open coverage/breachlens-frontend/index.html
 | **Custom Pipes** | `TimeAgoPipe`, `RiskLevelPipe`, `CompactNumberPipe` |
 | **Custom Directives** | `CopyClipboardDirective` (attribute), `RequireRoleDirective` (structural) |
 | **Reactive Forms** | `FormGroup` + `FormBuilder` with custom validators |
-| **Lazy Loading** | All 9 routes use `loadComponent()` |
+| **Lazy Loading** | All 10 routes use `loadComponent()` |
 | **Control Flow** | `@if`, `@for` with `track`, `@switch`/`@case` |
 | **Dependency Injection** | `inject()` function, `providedIn: 'root'` |
 
@@ -174,24 +161,22 @@ ThemeService         → signal<'dark' | 'light'>, localStorage persistence
 NotificationService  → signal<Notification[]>, auto-dismiss timers
 ```
 
-No external state library — Angular signals provide reactive state with minimal overhead.
-
 ### **Component Inventory**
 
 | Category | Components | Count |
 |----------|-----------|-------|
-| **Features** | Dashboard, BreachList, BreachDetail, BreachMap, Admin, UserManagement, Login, Register, ResetPassword, Profile | 10 |
+| **Features** | Dashboard, Analytics, BreachList, BreachDetail, BreachMap, ExposureChecker, Admin, UserManagement, Login, Register, ResetPassword, Profile | 12 |
 | **Shared** | Navbar, Pagination, SeverityBadge | 3 |
 | **Root** | AppComponent | 1 |
-| **Total** | | **14** |
+| **Total** | | **16** |
 
 ### **Service Layer**
 
 | Service | Endpoints | Purpose |
 |---------|-----------|---------|
 | AuthService | 6 | JWT auth, login/register/logout, signal-based user state |
-| BreachService | 37 | CRUD, geospatial, subdocuments, advanced search, bulk ops |
-| AnalyticsService | 11 | Dashboard aggregations (summary, trends, distributions) |
+| BreachService | 37 | CRUD, geospatial, exposure check, advanced search |
+| AnalyticsService | 11 | Dashboard & Advanced analytics (summary, trends, distributions) |
 | AdminService | 7 | System stats, user management, audit logs |
 | UserService | 4 | User profile CRUD |
 | NotificationService | — | Client-side toast system (no HTTP) |
@@ -201,122 +186,40 @@ No external state library — Angular signals provide reactive state with minima
 
 ---
 
-## 🔌 Backend Communication
+## 🎨 Visualizations
 
-### **HTTP Methods Used**
-```
-GET     — List, search, filter, analytics, profile
-POST    — Create, login, register, bulk import
-PUT     — Full update
-PATCH   — Partial update, role changes, activate/deactivate
-DELETE  — Single delete, bulk delete
-```
+### **Exposure Intelligence (Scanner)**
+- **Identity Scan**: Cross-reference emails against verified breach records.
+- **Domain Audit**: Audit corporate domains for historical data incursions.
+- **Tactical Map**: Leaflet.js with GeoJSON markers, severity-based color coding, and risk radius scaling.
+- **Protocol Recommendations**: Dynamic security advice based on exposure detected.
 
-### **Authentication Flow**
-```
-1. POST /auth/login          → Receives JWT token
-2. Token stored in localStorage (bl_token)
-3. authInterceptor attaches x-access-token header to all requests
-4. 401 → handleSessionExpired() → clear session, redirect to /auth/login
-5. 403 → show error, re-sync user profile from server
-6. POST /auth/logout         → Token blacklisted server-side
-```
-
-### **Query Parameters**
-All list endpoints support flexible query strings:
-```
-/breaches?page=1&limit=12&severity=critical&status=active&sort_by=risk_score&order=desc
-/breaches/advanced-search?q=payment&industries=finance,healthcare&min_risk=7&include_facets=true
-/breaches/geo/near?longitude=-0.1278&latitude=51.5074&radius=100000
-/analytics/monthly-trend?year=2025
-```
-
----
-
-## 🎨 Theming
-
-### **Dark/Light Mode**
-- System preference detection on first visit (`prefers-color-scheme`)
-- Manual toggle via navbar button
-- Persisted to `localStorage`
-- CSS custom properties for all colors — single source of truth
-
-### **CSS Variable System**
-```css
-/* Dark mode (default) */
-:root {
-  --surface: #111318;
-  --primary: #7bd0ff;
-  --error: #f87171;
-  --severity-critical: #f87171;
-  --severity-high: #fb923c;
-  ...
-}
-
-/* Light mode override */
-[data-theme='light'] {
-  --surface: #f8f9fa;
-  --primary: #0284c7;
-  --error: #dc2626;
-  --severity-critical: #dc2626;
-  --severity-high: #ea580c;
-  ...
-}
-```
-
-### **Theme-Aware Components**
-- Leaflet map tiles switch between Stadia Maps (dark) and OpenStreetMap (light)
-- Chart.js colors read from CSS variables at runtime via `getComputedStyle()`
-- Map markers use severity CSS variables for dynamic coloring
-- All shadows use `color-mix()` instead of hardcoded `rgba()`
-
----
-
-## 🗺️ Visualizations
-
-### **Charts (Dashboard)**
+### **Advanced Analytics**
 | Chart | Type | Data Source |
 |-------|------|-------------|
-| Severity Breakdown | Bar | `/analytics/severity-breakdown` |
-| Monthly Threat Trend | Line | `/analytics/monthly-trend` |
-| Data Types Exposed | Doughnut | `/analytics/data-types-frequency` |
-| Risk Score Distribution | Histogram | `/analytics/risk-scores` |
 | Top Organisations | Horizontal Bar | `/analytics/top-organisations` |
-| Industry-Year Trends | Multi-line | `/analytics/industry-year-trend` |
+| Risk Distribution | Histogram (Line) | `/analytics/risk-scores` |
+| Industry-Year Trends | Stacked Bar | `/analytics/industry-year-trend` |
+| Exposed Data Frequency | Progress Indicators | `/analytics/data-types-frequency` |
 
-### **Maps (Breach Map + Detail)**
-- Leaflet.js with GeoJSON circle markers
-- Severity-based color coding + risk score radius scaling
-- Interactive popups with breach metadata
-- "Near me" geolocation button
-- Bounding box queries on map move
-- Theme-reactive tile layers
+### **Dashboard KPIs**
+| Visualization | Purpose |
+|---------------|---------|
+| Severity Breakdown | Doughnut chart showing threat levels |
+| Monthly Propagation | Interactive bar chart for temporal trends |
+| KPIs | Real-time counts of breaches, alerts, and avg risk |
+| Background Map | Ambient global telemetry visualization |
 
 ---
 
 ## 🔐 Role-Based Access
-
-### **Route Guards**
-| Guard | Protects | Behavior |
-|-------|----------|----------|
-| `authGuard` | `/auth/profile` | Redirect to `/auth/login` if unauthenticated |
-| `adminGuard` | `/admin` | Re-syncs role from server, redirects to `/` if not admin |
-| `analystGuard` | — (available) | Requires analyst or admin role |
-
-### **UI-Level RBAC**
-```html
-<!-- Structural directive hides elements by role -->
-<button *appRequireRole="['analyst', 'admin']">Edit Breach</button>
-
-<!-- Admin-only navigation -->
-<a *appRequireRole="'admin'" routerLink="/admin">Admin Panel</a>
-```
 
 ### **Access Matrix**
 | Feature | Guest | Analyst | Admin |
 |---------|-------|---------|-------|
 | View breaches | ✅ | ✅ | ✅ |
 | View analytics | ✅ | ✅ | ✅ |
+| Exposure Scanner | ✅ | ✅ | ✅ |
 | Edit breaches | ❌ | ✅ | ✅ |
 | Admin panel | ❌ | ❌ | ✅ |
 | User management | ❌ | ❌ | ✅ |
@@ -327,19 +230,18 @@ All list endpoints support flexible query strings:
 
 ### **Route Configuration**
 ```
-/                    → Dashboard          (lazy-loaded)
-/breaches            → BreachList         (lazy-loaded)
-/breaches/:id        → BreachDetail       (lazy-loaded, resolver: breachResolver)
-/map                 → BreachMap          (lazy-loaded)
-/admin               → Admin             (lazy-loaded, guard: adminGuard)
-/auth/login          → Login             (lazy-loaded)
-/auth/register       → Register          (lazy-loaded)
-/auth/reset-password → ResetPassword     (lazy-loaded)
-/auth/profile        → Profile           (lazy-loaded, guard: authGuard)
+/                    → Dashboard            (lazy-loaded)
+/breaches            → BreachList           (lazy-loaded)
+/breaches/:id        → BreachDetail         (lazy-loaded, resolver: breachResolver)
+/map                 → ExposureChecker      (lazy-loaded)
+/analytics           → Analytics            (lazy-loaded, guard: analystGuard)
+/admin               → Admin               (lazy-loaded, guard: adminGuard)
+/auth/login          → Login               (lazy-loaded)
+/auth/register       → Register            (lazy-loaded)
+/auth/reset-password → ResetPassword       (lazy-loaded)
+/auth/profile        → Profile             (lazy-loaded, guard: authGuard)
 **                   → Redirect to /
 ```
-
-All routes use `loadComponent()` for code splitting — each feature is a separate bundle loaded on demand.
 
 ---
 
@@ -409,5 +311,5 @@ CORS_ORIGINS=http://localhost:4200,http://localhost:3000
 
 ---
 
-**Status**: ✅ 247/247 tests passing | 14 components | 65 backend endpoints consumed
+**Status**: ✅ 249/249 tests passing | 16 components | 65 backend endpoints consumed
 **Angular Version**: 17.3 | **Node**: 18+

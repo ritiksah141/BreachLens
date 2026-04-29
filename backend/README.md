@@ -62,10 +62,10 @@ backend/
 │   ├── swagger_spec.py           # API documentation
 │   ├── routes/                   # REST endpoints
 │   │   ├── auth.py               # Authentication (8 endpoints)
-│   │   ├── breaches.py           # Breach CRUD (32 endpoints)
-│   │   ├── analytics.py          # Aggregations (10 endpoints)
+│   │   ├── breaches.py           # Breach CRUD (35 endpoints)
+│   │   ├── analytics.py          # Aggregations (11 endpoints)
 │   │   ├── users.py              # User management (4 endpoints)
-│   │   ├── admin.py              # Admin operations (6 endpoints)
+│   │   ├── admin.py              # Admin operations (7 endpoints)
 │   │   └── health.py             # Health checks (3 endpoints)
 │   ├── services/                 # Business logic layer
 │   │   ├── auth_service.py       # Authentication logic
@@ -151,7 +151,7 @@ pytest tests/ -m integration              # Integration tests
 
 ---
 
-## 📡 API Endpoints (63 Total)
+## 📡 API Endpoints (68 Total)
 
 ### **Base URL**: `http://localhost:5001/api/v1`
 
@@ -162,17 +162,24 @@ POST   /auth/register          # Register new user
 POST   /auth/login             # Login with JSON body
 POST   /auth/logout            # Logout (blacklist token in MongoDB)
 GET    /auth/me                # Get current user profile
+POST   /auth/forgot-password   # Request password reset token
+POST   /auth/reset-password    # Reset password with token
 ```
 
-### **Breaches** (32 endpoints)
+### **Breaches** (35 endpoints)
 ```
-GET    /breaches               # List breaches (paginated, filtered)
-POST   /breaches               # Create breach [Analyst/Admin]
-GET    /breaches/{id}          # Get single breach
-PUT    /breaches/{id}          # Full update [Analyst/Admin]
-PATCH  /breaches/{id}          # Partial update [Analyst/Admin]
-DELETE /breaches/{id}          # Delete breach [Admin]
+GET    /breaches                # List breaches (paginated, filtered)
+POST   /breaches                # Create breach [Analyst/Admin]
+GET    /breaches/{id}           # Get single breach
+PUT    /breaches/{id}           # Full update [Analyst/Admin]
+PATCH  /breaches/{id}           # Partial update [Analyst/Admin]
+DELETE /breaches/{id}           # Delete breach [Admin]
+GET    /breaches/advanced-search # Multi-criteria tactical search
+GET    /breaches/filter-options  # Get available filter values (industries, etc)
+GET    /breaches/subdocuments/query # Cross-subdocument pattern matching
 GET    /breaches/exposure-check # Check email/domain exposure
+POST   /breaches/bulk           # Bulk create/import breaches [Admin]
+DELETE /breaches/bulk           # Bulk delete breaches [Admin]
 
 # Sub-documents (20 endpoints):
 # - /breaches/{id}/accounts/* (5 endpoints)
@@ -186,7 +193,7 @@ GET    /breaches/geo/within-bounds # Bounding box search
 GET    /breaches/geo/geojson   # GeoJSON FeatureCollection
 ```
 
-### **Analytics** (10 endpoints)
+### **Analytics** (11 endpoints)
 ```
 GET    /analytics/risk-by-industry      # Risk scores per industry
 GET    /analytics/severity-breakdown    # Breaches by severity
@@ -195,35 +202,36 @@ GET    /analytics/top-organisations     # Most affected orgs
 GET    /analytics/data-types-frequency  # Exposed data types
 GET    /analytics/remediation-rate      # Completion rates
 GET    /analytics/alert-acknowledgement # Alert stats
+GET    /analytics/industry-year-trend   # Sector trends over time
+GET    /analytics/risk-scores           # Risk distribution mapping
+GET    /analytics/attack-surface-profile # Composite attack surface metrics
 GET    /analytics/summary               # Dashboard summary
 ```
 
 ### **Users** (4 endpoints)
 ```
 GET    /users                  # List all users [Admin]
-GET    /users/me               # Current user profile
-PATCH  /users/me               # Update profile
-PATCH  /users/{id}/role        # Change role [Admin]
-PATCH  /users/{id}/activate    # Activate user [Admin]
-PATCH  /users/{id}/deactivate  # Deactivate user [Admin]
+GET    /users/{id}             # Get user profile [Self/Admin]
+PATCH  /users/{id}             # Update profile [Self/Admin]
 DELETE /users/{id}             # Delete user [Admin]
 ```
 
-### **Admin** (6 endpoints)
+### **Admin** (7 endpoints)
 ```
 GET    /admin/stats            # System statistics [Admin]
-GET    /admin/users            # User management [Admin]
-GET    /admin/audit-logs       # Audit trail [Admin]
-POST   /admin/cache/clear      # Clear cache [Admin]
-POST   /admin/indexes/rebuild  # Rebuild indexes [Admin]
-GET    /admin/health/detailed  # Detailed health check [Admin]
+GET    /admin/users            # Detailed user management [Admin]
+PATCH  /admin/users/{id}/role  # Force role update [Admin]
+PATCH  /admin/users/{id}/activate # Reactivate account [Admin]
+PATCH  /admin/users/{id}/deactivate # Deactivate account [Admin]
+DELETE /admin/breaches/bulk    # Admin bulk purge [Admin]
+GET    /admin/audit-logs       # System audit trail [Admin]
 ```
 
 ### **Health** (3 endpoints)
 ```
 GET    /health                 # Basic health check
-GET    /health/ready           # Readiness check (DB + Redis)
-GET    /health/live            # Liveness check
+GET    /health/ready           # Readiness check (DB + Configuration)
+GET    /health/info            # Metadata about the running instance
 ```
 
 📖 **Full API Documentation**: [../docs/API_SPEC.md](../docs/API_SPEC.md)
@@ -262,6 +270,7 @@ Guest:   marcus@example.com    / Guest@123
 ### **Collections**
 1. **breaches** - Breach records with sub-documents
 2. **users** - User accounts and roles
+3. **blacklist** - Blacklisted JWT tokens
 
 ### **Indexes**
 ```python
@@ -357,6 +366,68 @@ logs/audit.log                    # Audit trail (security events)
 - ✅ **Rate Limiting** - 100 req/min on auth endpoints
 - ✅ **Audit Logging** - All auth events logged
 - ✅ **CORS** - Configured per environment
+
+---
+
+## 🚀 Running Locally
+
+### **Local MongoDB**
+```bash
+# macOS (Homebrew)
+brew tap mongodb/brew
+brew install mongodb-community
+brew services start mongodb-community
+
+# Verify
+mongosh --eval "db.version()"
+
+# Connection string (already set in .env.example)
+MONGO_URI=mongodb://localhost:27017/breachlens
+```
+
+---
+
+## 🐛 Troubleshooting
+
+### **MongoDB Connection Failed**
+```bash
+# Check mongod is running:
+brew services list | grep mongodb
+# or
+pgrep mongod
+
+# Check MONGO_URI in .env:
+cat .env | grep MONGO_URI
+# Should be: mongodb://localhost:27017/breachlens
+
+# Test connection:
+python -c "from pymongo import MongoClient; MongoClient('mongodb://localhost:27017').server_info()"
+```
+
+### **Tests Failing**
+```bash
+# Ensure venv is activated:
+source ../venv/bin/activate
+
+# Update dependencies:
+pip install -r requirements.txt
+
+# Run without integration tests:
+pytest tests/ -m "not integration"
+```
+
+---
+
+## 📚 Additional Resources
+
+- **API Reference**: [../docs/API_SPEC.md](../docs/API_SPEC.md)
+- **Testing Guide**: [tests/README.md](tests/README.md)
+
+---
+
+
+**Status**: ✅ 586/586 tests passing | 88% code coverage
+**API Version**: v1.0.0
 
 ---
 

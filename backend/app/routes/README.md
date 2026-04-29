@@ -9,11 +9,11 @@
 ```
 routes/
 ├── __init__.py       # Package marker
-├── auth.py           # Authentication endpoints (5 routes)
-├── breaches.py       # Breach CRUD + geospatial (22 routes)
-├── analytics.py      # Aggregation pipelines (10 routes)
-├── users.py          # User management (7 routes)
-├── admin.py          # Admin operations (6 routes)
+├── auth.py           # Authentication endpoints (8 routes)
+├── breaches.py       # Breach CRUD + geospatial + tactical (35 routes)
+├── analytics.py      # Aggregation pipelines (11 routes)
+├── users.py          # User management (4 routes)
+├── admin.py          # Admin operations (7 routes)
 └── health.py         # Health checks (3 routes)
 ```
 
@@ -35,7 +35,7 @@ routes/
 | GET | `/auth/login` | Login via Basic Auth (alias) | Basic |
 | POST | `/auth/logout` | Logout (blacklist token) | JWT |
 | GET | `/auth/me` | Get current user profile | JWT |
-| POST | `/auth/request-password-reset` | Request password reset | None |
+| POST | `/auth/forgot-password` | Request password reset token | None |
 | POST | `/auth/reset-password` | Reset password with token | None |
 | GET | `/login` | Login via HTTP Basic Auth | Basic |
 
@@ -53,9 +53,9 @@ routes/
 **Blueprint**: `breaches_bp`
 **Prefix**: `/api/v1/breaches`
 
-**32 endpoints total:**
+**35 endpoints total:**
 
-#### **Main CRUD Operations** (7 endpoints)
+#### **Main CRUD & Tactical Operations** (12 endpoints)
 
 | Method | Endpoint | Description | Auth | Role |
 |--------|----------|-------------|------|------|
@@ -65,7 +65,12 @@ routes/
 | PUT | `/{id}` | Full update breach | JWT | Analyst/Admin |
 | PATCH | `/{id}` | Partial update breach | JWT | Analyst/Admin |
 | DELETE | `/{id}` | Delete breach | JWT | Admin |
+| GET | `/advanced-search` | Multi-criteria tactical search | None | Public |
+| GET | `/filter-options` | Get available filter values | None | Public |
+| GET | `/subdocuments/query` | Cross-subdocument pattern matching | None | Public |
 | GET | `/exposure-check` | Check email/domain exposure | None | Public |
+| POST | `/bulk` | Bulk create/import breaches | JWT | Admin |
+| DELETE | `/bulk` | Bulk delete breaches | JWT | Admin |
 
 #### **Sub-document Routes (20 endpoints)**
 
@@ -131,6 +136,7 @@ routes/
 | GET | `/alert-acknowledgement` | Alert statistics | Array of {type, total, acknowledged} |
 | GET | `/industry-year-trend` | Industry trends over time | Array of {industry, year, count} |
 | GET | `/risk-scores` | Risk score distribution | Array of {range, count} |
+| GET | `/attack-surface-profile` | Attack surface metrics | Object with profile data |
 | GET | `/summary` | Dashboard summary | Object with all key metrics |
 
 **Key Features:**
@@ -153,7 +159,7 @@ routes/
 | GET | `/` | List all users | JWT | Admin |
 | GET | `/{user_id}` | Get user profile | JWT | Self/Admin |
 | PATCH | `/{user_id}` | Update user profile | JWT | Self/Admin |
-| DELETE | `/{user_id}` | Delete user account | JWT | Self/Admin |
+| DELETE | `/{user_id}` | Delete user account | JWT | Admin |
 
 **Key Features:**
 - Users can only view/edit their own profile
@@ -177,6 +183,7 @@ routes/
 | PATCH | `/users/{user_id}/activate` | Activate user account | Updated user object |
 | PATCH | `/users/{user_id}/deactivate` | Deactivate user account | Updated user object |
 | DELETE | `/breaches/bulk` | Bulk delete breaches | {deleted_count, failed_ids} |
+| GET | `/audit-logs` | System audit trail | Array of audit events |
 
 **Key Features:**
 - All routes require admin role
@@ -197,190 +204,9 @@ routes/
 | GET | `/` | Basic health check | {status: "ok"} |
 | GET | `/ready` | Readiness probe (DB check) | {status, db} |
 | GET | `/live` | Liveness probe | {status: "ok"} |
+| GET | `/info` | Service metadata | {version, environment, ...} |
 
 **Key Features:**
 - Kubernetes-compatible health checks
 - Database connectivity validation
 - 503 status on DB unavailable
-
----
-
-## 🔒 Authentication & Authorization
-
-### **Authentication Decorators**
-
-```python
-from app.middleware.auth_middleware import jwt_required, admin_required, require_role
-
-@breaches_bp.route("/", methods=["POST"])
-@jwt_required
-@require_role("analyst", "admin")
-def create_breach():
-    # Only analysts and admins can create breaches
-    pass
-```
-
-### **Available Decorators**
-- `@jwt_required` - Requires valid JWT token
-- `@admin_required` - Requires JWT + admin role
-- `@require_role(*roles)` - Requires JWT + one of specified roles
-
-### **Current User Context**
-
-```python
-from flask import g
-
-@jwt_required
-def my_route():
-    user_id = g.user_id        # MongoDB ObjectId string
-    user_role = g.user_role    # "admin", "analyst", or "guest"
-    username = g.username      # Username string
-```
-
----
-
-## 📊 Response Format
-
-### **Success Response**
-```json
-{
-  "status": "success",
-  "data": { ... },
-  "message": "Operation completed successfully",
-  "metadata": {
-    "page": 1,
-    "limit": 20,
-    "total": 100
-  }
-}
-```
-
-### **Error Response**
-```json
-{
-  "status": "error",
-  "message": "Invalid input",
-  "errors": ["Field 'email' is required", "Invalid severity value"]
-}
-```
-
----
-
-## 🛡️ Security Features
-
-### **Rate Limiting**
-
-Routes are protected with Flask-Limiter:
-
-```python
-@auth_bp.route("/login", methods=["POST"])
-@limiter.limit("5 per 15 minutes")
-def login():
-    # Limited to 5 login attempts per 15 minutes
-    pass
-```
-
-### **Input Sanitization**
-
-All user input is sanitized in services:
-- NoSQL injection prevention (strip `$` operators)
-- HTML/XSS sanitization via Bleach
-- Regex escaping for text search
-
-### **CORS**
-
-Configured for Angular frontend:
-- Allowed origins: `http://localhost:4200`
-- Methods: GET, POST, PUT, PATCH, DELETE
-- Headers: Content-Type, Authorization, x-access-token
-
----
-
-## 🧪 Testing Routes
-
-### **Using cURL**
-
-```bash
-# Public endpoint (no auth)
-curl http://localhost:5001/api/v1/breaches
-
-# Authenticated endpoint
-TOKEN="your-jwt-token"
-curl -H "x-access-token: $TOKEN" http://localhost:5001/api/v1/auth/me
-
-# Create breach
-curl -X POST http://localhost:5001/api/v1/breaches \
-  -H "x-access-token: $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"title": "Test Breach", "severity": "high", ...}'
-```
-
-### **Using Postman**
-
-Import collection from: `backend/postman/BreachLens.postman_collection.json`
-
----
-
-## 📝 Adding a New Route
-
-1. **Define the route in appropriate blueprint:**
-
-```python
-@breaches_bp.route("/my-endpoint", methods=["GET"])
-@jwt_required
-def my_endpoint():
-    # Implementation
-    pass
-```
-
-2. **Add business logic to service:**
-
-```python
-# In services/breach_service.py
-def my_service_method(self, param):
-    result = self.col.find_one({"field": param})
-    return result
-```
-
-3. **Add tests:**
-
-```python
-# In tests/test_breaches.py
-def test_my_endpoint(client, auth_admin_headers):
-    response = client.get("/api/v1/breaches/my-endpoint", headers=auth_admin_headers)
-    assert response.status_code == 200
-```
-
-4. **Update Swagger documentation:**
-
-```python
-"""
-My Endpoint
----
-tags:
-  - breaches
-responses:
-  200:
-    description: Success
-"""
-```
-
----
-
-## 🔍 Route Discovery
-
-To see all registered routes:
-
-```bash
-# From backend directory
-python -c "from app import create_app; app = create_app(); print('\\n'.join(str(rule) for rule in app.url_map.iter_rules()))"
-```
-
----
-
-## 📚 Related Documentation
-
-- [Services Documentation](../services/README.md) - Business logic layer
-- [Models Documentation](../models/README.md) - Validation schemas
-- [Middleware Documentation](../middleware/README.md) - Auth & logging
-- [Backend README](../../README.md) - Complete API specification, endpoints, authentication
