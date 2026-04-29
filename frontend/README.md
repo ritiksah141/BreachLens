@@ -1,6 +1,6 @@
 # BreachLens Frontend
 
-[![Tests](https://img.shields.io/badge/Tests-247%20passing-brightgreen.svg)](src/app/)
+[![Tests](https://img.shields.io/badge/Tests-249%20passing-brightgreen.svg)](src/app/)
 [![Angular](https://img.shields.io/badge/Angular-17.3-red.svg)](https://angular.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue.svg)](https://www.typescriptlang.org/)
 [![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-purple.svg)](https://getbootstrap.com/)
