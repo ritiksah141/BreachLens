@@ -71,3 +71,6 @@ node_modules/
 
 # Coverage reports
 coverage/
+
+# Documenttation build
+documentation/

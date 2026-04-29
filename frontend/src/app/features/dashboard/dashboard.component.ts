@@ -168,7 +168,9 @@ import { FormsModule } from '@angular/forms';
             <div class="mt-3 pt-3 border-top border-outline-variant border-opacity-10 animate__animated animate__fadeIn">
                <div class="d-flex justify-content-between align-items-center mb-2">
                   <span class="text-xs-caps text-primary fw-bold" style="font-size: 8px;">{{ monthNames[selectedMonth] }} INTEL</span>
-                  <button class="btn btn-link p-0 text-on-surface" (click)="selectedMonth = null" style="opacity: 0.5;"><span class="material-symbols-outlined fs-6" style="font-size: 14px;">close</span></button>
+                  <button class="btn-close-tactical" (click)="selectedMonth = null">
+                    <span class="material-symbols-outlined">close</span>
+                  </button>
                </div>
 
                <div class="overflow-auto custom-scrollbar" style="max-height: 200px;">

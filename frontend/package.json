@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "test": "ng test",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "compodoc": "npx compodoc -p tsconfig.doc.json -s"
   },
   "private": true,
   "dependencies": {
@@ -39,6 +40,7 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~5.4.0"
+    "typescript": "~5.4.0",
+    "@compodoc/compodoc": "^1.1.23"
   }
 }
