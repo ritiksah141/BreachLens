@@ -558,6 +558,7 @@ export class AdminComponent implements OnInit {
       min_risk: null
     };
     this.applyAdminFilters();
+    this.notifications.show('Operational filters reset.', 'info', 2000);
   }
 
   get adminFilterChips(): Array<{ key: string; label: string }> {
@@ -746,7 +747,9 @@ export class AdminComponent implements OnInit {
       this.adminService.bulkImport(data).subscribe({
         next: (res: any) => {
           this.bulkLoading = false;
-          this.bulkSuccess = `Import complete: ${res.data?.inserted_count || 0} records processed.`;
+          const count = res.data?.inserted_count || 0;
+          this.bulkSuccess = `Import complete: ${count} records processed.`;
+          this.notifications.show(`BULK IMPORT SUCCESSFUL: ${count} RECORDS ADDED.`, 'success', 4000);
           this.loadBreaches();
           this.loadStats();
           setTimeout(() => (this.bulkSuccess = ''), 5000);
@@ -754,6 +757,7 @@ export class AdminComponent implements OnInit {
         error: (err: any) => {
           this.bulkLoading = false;
           this.bulkError = err.error?.message || 'Bulk import failed.';
+          this.notifications.show(this.bulkError, 'error', 5000);
         },
       });
     } catch (err) {
@@ -766,6 +770,9 @@ export class AdminComponent implements OnInit {
       next: (res: any) => {
         this.auditLogs = res.data;
         this.auditTotalPages = res.meta.total_pages;
+        if (this.activeTab === 'audit') {
+          this.notifications.show('System audit trail synchronized.', 'info', 2000);
+        }
       },
     });
   }
@@ -776,9 +783,16 @@ export class AdminComponent implements OnInit {
   }
 
   loadHealthData(): void {
+    this.notifications.show('Initiating system health check...', 'info', 1500);
     this.adminService.getHealthReady().subscribe({
-      next: (res) => this.healthReady = res,
-      error: (err) => this.healthReady = err.error
+      next: (res) => {
+        this.healthReady = res;
+        this.notifications.show('Health telemetry received.', 'success', 2000);
+      },
+      error: (err) => {
+        this.healthReady = err.error;
+        this.notifications.show('Health check reported issues.', 'warning', 3000);
+      }
     });
     this.adminService.getHealthInfo().subscribe({
       next: (res) => this.healthInfo = res

@@ -24,6 +24,28 @@ import { FormsModule } from '@angular/forms';
       <!-- Background Map -->
       <div class="map-container-panel overflow-hidden" style="border-radius: 1rem;">
         <app-breach-map height="100%" />
+
+        <!-- Guest Welcome Hero -->
+        @if (!auth.isAuthenticated()) {
+          <div class="guest-hero-container">
+            <div class="guest-hero-card glass-panel p-4 shadow-lg animate__animated animate__fadeInUp">
+               <div class="d-flex align-items-center gap-3 mb-3">
+                  <span class="material-symbols-outlined text-primary" style="font-size: 42px; font-variation-settings: 'FILL' 1;">security</span>
+                  <div>
+                     <h2 class="fs-4 fw-bold text-primary mb-0 font-headline">REVEAL THE INVISIBLE</h2>
+                     <div class="text-xs-caps text-on-surface-variant" style="letter-spacing: 0.1em;">Guest Intelligence Feed</div>
+                  </div>
+               </div>
+               <p class="text-on-surface-variant mb-4" style="font-size: 0.8rem; line-height: 1.6; max-width: 300px;">
+                  You are viewing public breach telemetry. Create an account to monitor your own exposure and access professional-grade security analytics.
+               </p>
+               <div class="d-flex gap-2">
+                  <a routerLink="/auth/login" class="btn btn-primary btn-sm rounded-pill d-flex align-items-center justify-content-center" style="font-size: 9px; height: 38px; min-width: 110px;">SIGN IN</a>
+                  <a routerLink="/auth/register" class="btn btn-dark btn-sm rounded-pill d-flex align-items-center justify-content-center fw-bold text-uppercase" style="font-size: 9px; height: 38px; min-width: 110px; border: 1px solid var(--outline-variant);">REGISTER</a>
+               </div>
+            </div>
+          </div>
+        }
       </div>
 
       <!-- Floating KPI Row -->

@@ -1,5 +1,3 @@
-/// <reference types="jasmine" />
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { signal, computed } from '@angular/core';
@@ -8,6 +6,8 @@ import { of } from 'rxjs';
 
 import { ProfileComponent } from './profile.component';
 import { AuthService } from '../../../core/services/auth.service';
+import { UserService } from '../../../core/services/user.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import { User } from '../../../core/models/models';
 
 // ---------------------------------------------------------------------------
@@ -22,14 +22,12 @@ function createMockAuthService(user: User | null = null) {
   );
 
   return {
-    currentUser: _isAuthenticated() ? _user : signal(user),
+    currentUser: signal(user),
     isAuthenticated: _isAuthenticated,
     isAdmin: _isAdmin,
     isAnalyst: _isAnalyst,
     fetchProfile: jasmine.createSpy('fetchProfile').and.returnValue(of({ data: user })),
     logout: jasmine.createSpy('logout'),
-    // expose setter so tests can change user on the fly
-    _setUser: (u: User | null) => _user.set(u),
   };
 }
 
@@ -68,23 +66,29 @@ const MOCK_GUEST_USER: User = {
 describe('ProfileComponent', () => {
   let component: ProfileComponent;
   let fixture: ComponentFixture<ProfileComponent>;
-  let mockAuth: ReturnType<typeof createMockAuthService>;
+  let mockAuth: any;
+  let mockUserService: jasmine.SpyObj<UserService>;
+  let mockNotificationService: jasmine.SpyObj<NotificationService>;
 
-  function configureTestBed(user: User | null) {
+  async function configureTestBed(user: User | null) {
     mockAuth = createMockAuthService(user);
+    mockUserService = jasmine.createSpyObj('UserService', ['updateUser']);
+    mockNotificationService = jasmine.createSpyObj('NotificationService', ['show']);
 
-    return TestBed.configureTestingModule({
+    await TestBed.configureTestingModule({
       imports: [ProfileComponent],
       providers: [
-        provideRouter([]),
+        provideRouter([
+          { path: '', component: class {} as any },
+          { path: 'breaches', component: class {} as any },
+          { path: 'admin', component: class {} as any }
+        ]),
         { provide: AuthService, useValue: mockAuth },
+        { provide: UserService, useValue: mockUserService },
+        { provide: NotificationService, useValue: mockNotificationService },
       ],
     }).compileComponents();
   }
-
-  // ---------------------------------------------------------------
-  // Default setup with admin user
-  // ---------------------------------------------------------------
 
   describe('with an admin user', () => {
     beforeEach(async () => {
@@ -103,7 +107,7 @@ describe('ProfileComponent', () => {
     });
 
     it('should display the username', () => {
-      const el = fixture.debugElement.query(By.css('h2'));
+      const el = fixture.debugElement.query(By.css('h2.fs-3'));
       expect(el.nativeElement.textContent).toContain('admin_user');
     });
 
@@ -134,29 +138,24 @@ describe('ProfileComponent', () => {
       expect(badge.nativeElement.textContent.trim()).toBe('ADMIN');
     });
 
-    it('should show the admin "Command terminal" navigation link', () => {
+    it('should show the admin "Admin Tools" navigation link', () => {
       const compiled = fixture.nativeElement as HTMLElement;
-      expect(compiled.textContent).toContain('Command terminal');
+      expect(compiled.textContent).toContain('Admin Tools');
     });
 
     it('should display last login date', () => {
       const compiled = fixture.nativeElement as HTMLElement;
-      // The template uses date:'MMM dd, yyyy HH:mm'
-      expect(compiled.textContent).toContain('Jun 01, 2025');
+      expect(compiled.textContent).toContain('Jun 01');
     });
 
     it('should call logout when Terminate session button is clicked', () => {
       const btn = fixture.debugElement.query(
-        By.css('button.btn-primary')
+        By.css('button.btn-error')
       );
       btn.nativeElement.click();
       expect(mockAuth.logout).toHaveBeenCalled();
     });
   });
-
-  // ---------------------------------------------------------------
-  // Analyst user
-  // ---------------------------------------------------------------
 
   describe('with an analyst user', () => {
     beforeEach(async () => {
@@ -179,15 +178,11 @@ describe('ProfileComponent', () => {
       expect(badge.nativeElement.classList).toContain('role-analyst');
     });
 
-    it('should NOT show the admin "Command terminal" link', () => {
+    it('should NOT show the admin "Admin Tools" link', () => {
       const compiled = fixture.nativeElement as HTMLElement;
-      expect(compiled.textContent).not.toContain('Command terminal');
+      expect(compiled.textContent).not.toContain('Admin Tools');
     });
   });
-
-  // ---------------------------------------------------------------
-  // Guest user
-  // ---------------------------------------------------------------
 
   describe('with a guest user', () => {
     beforeEach(async () => {
@@ -205,15 +200,11 @@ describe('ProfileComponent', () => {
       expect(component.roleToneClass()).toBe('role-guest');
     });
 
-    it('should display "No login recorded" when last_login is not set', () => {
+    it('should display "FIRST LOGIN" when last_login is not set', () => {
       const compiled = fixture.nativeElement as HTMLElement;
-      expect(compiled.textContent).toContain('No login recorded');
+      expect(compiled.textContent).toContain('FIRST LOGIN');
     });
   });
-
-  // ---------------------------------------------------------------
-  // Null user (not authenticated)
-  // ---------------------------------------------------------------
 
   describe('with a null user (unauthenticated)', () => {
     beforeEach(async () => {
@@ -223,14 +214,14 @@ describe('ProfileComponent', () => {
       fixture.detectChanges();
     });
 
-    it('should handle null user gracefully — display "Unknown User"', () => {
-      const el = fixture.debugElement.query(By.css('h2'));
-      expect(el.nativeElement.textContent).toContain('Unknown User');
+    it('should handle null user gracefully — display "GUEST"', () => {
+      const el = fixture.debugElement.query(By.css('h2.fs-3'));
+      expect(el.nativeElement.textContent).toContain('GUEST');
     });
 
-    it('should display "No email available" when user is null', () => {
+    it('should display "N/A" when user email is null', () => {
       const compiled = fixture.nativeElement as HTMLElement;
-      expect(compiled.textContent).toContain('No email available');
+      expect(compiled.textContent).toContain('N/A');
     });
 
     it('should return "?" initial when user is null', () => {

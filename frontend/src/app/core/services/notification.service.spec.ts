@@ -1,7 +1,7 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { NotificationService, NotificationLevel } from './notification.service';
 
-describe('NotificationService', () => {
+describe( 'NotificationService', () => {
   let service: NotificationService;
 
   beforeEach(() => {
@@ -65,12 +65,13 @@ describe('NotificationService', () => {
     expect(service.notifications().length).toBe(1);
   });
 
-  it('should clear all notifications', () => {
+  it('should clear all notifications via clearHistory()', () => {
     service.show('A', 'info', 0);
     service.show('B', 'warning', 0);
     service.show('C', 'error', 0);
-    service.clear();
+    service.clearHistory();
     expect(service.notifications()).toEqual([]);
+    expect(service.history()).toEqual([]);
   });
 
   it('should auto-dismiss after the specified duration', fakeAsync(() => {
@@ -107,7 +108,7 @@ describe('NotificationService', () => {
     expect(service.notifications().length).toBe(1);
     service.show('B', 'error', 0);
     expect(service.notifications().length).toBe(2);
-    service.clear();
+    service.clearHistory();
     expect(service.notifications().length).toBe(0);
   });
 });

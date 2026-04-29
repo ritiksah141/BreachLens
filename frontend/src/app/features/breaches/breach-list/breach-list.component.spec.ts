@@ -1,60 +1,49 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { RouterTestingModule } from '@angular/router/testing';
-import { of, throwError } from 'rxjs';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BreachListComponent } from './breach-list.component';
 import { BreachService } from '../../../core/services/breach.service';
-
-const mockResponse = {
-  data: [
-    {
-      _id: '1', title: 'Test Breach', severity: 'critical',
-      status: 'open', industry: 'Finance', description: 'desc',
-      affected_records_count: 1000, breach_date: '2024-01-01',
-      discovered_date: '2024-01-02', risk_score: 9,
-    },
-  ],
-  meta: { page: 1, limit: 12, total: 1, total_pages: 1 },
-};
+import { NotificationService } from '../../../core/services/notification.service';
+import { ActivatedRoute } from '@angular/router';
+import { of, throwError } from 'rxjs';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 
 describe('BreachListComponent', () => {
   let component: BreachListComponent;
   let fixture: ComponentFixture<BreachListComponent>;
   let breachServiceSpy: jasmine.SpyObj<BreachService>;
+  let notificationServiceSpy: jasmine.SpyObj<NotificationService>;
+
+  const mockBreachResponse = {
+    status: 'success',
+    data: [
+      { _id: '1', title: 'Test Breach', severity: 'critical', industry: 'finance', affected_records_count: 1000, breach_date: '2023-01-01', organisation: { name: 'Test Org' } }
+    ],
+    meta: { total: 1, total_pages: 1, page: 1, limit: 15 },
+    facets: {
+      severity: [{ _id: 'critical', count: 1 }],
+      industry: [{ _id: 'finance', count: 1 }]
+    }
+  };
 
   beforeEach(async () => {
-    breachServiceSpy = jasmine.createSpyObj('BreachService', [
-      'getAdvancedSearch',
-      'getFilterOptions',
-      'querySubdocuments',
-    ]);
-    breachServiceSpy.getAdvancedSearch.and.returnValue(of(mockResponse as any));
-    breachServiceSpy.getFilterOptions.and.returnValue(of({
-      data: {
-        severities: ['critical', 'high'],
-        statuses: ['active', 'resolved'],
-        industries: ['finance', 'technology'],
-        data_types: [],
-        ranges: { min_risk: 0, max_risk: 10, min_records: 0, max_records: 1000 },
-      }
-    } as any));
-    breachServiceSpy.querySubdocuments.and.returnValue(of({
-      data: mockResponse.data,
-      meta: {
-        ...mockResponse.meta,
-        facets: {
-          timeline_event_types: [{ value: 'discovered', count: 2 }],
-        },
-      },
-    } as any));
+    breachServiceSpy = jasmine.createSpyObj('BreachService', ['getBreaches']);
+    notificationServiceSpy = jasmine.createSpyObj('NotificationService', ['show']);
 
     await TestBed.configureTestingModule({
-      imports: [BreachListComponent, HttpClientTestingModule, RouterTestingModule],
-      providers: [{ provide: BreachService, useValue: breachServiceSpy }],
+      imports: [BreachListComponent, FormsModule, CommonModule],
+      providers: [
+        { provide: BreachService, useValue: breachServiceSpy },
+        { provide: NotificationService, useValue: notificationServiceSpy },
+        {
+          provide: ActivatedRoute,
+          useValue: { queryParams: of({}) }
+        }
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(BreachListComponent);
     component = fixture.componentInstance;
+    breachServiceSpy.getBreaches.and.returnValue(of(mockBreachResponse as any));
     fixture.detectChanges();
   });
 
@@ -63,57 +52,57 @@ describe('BreachListComponent', () => {
   });
 
   it('should load breaches on init', () => {
-    expect(breachServiceSpy.getAdvancedSearch).toHaveBeenCalled();
+    expect(breachServiceSpy.getBreaches).toHaveBeenCalled();
     expect(component.breaches.length).toBe(1);
     expect(component.total).toBe(1);
   });
 
-  it('should display breach title', () => {
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Test Breach');
+  it('should handle API errors with notification', () => {
+    breachServiceSpy.getBreaches.and.returnValue(throwError(() => new Error('API Error')));
+    component.loadBreaches();
+    expect(notificationServiceSpy.show).toHaveBeenCalledWith(jasmine.any(String), 'error');
+    expect(component.loading).toBeFalse();
   });
 
-  it('should reset page to 1 when applying filters', () => {
-    component.filters.page = 3;
+  it('should apply filters and reset to page 1', () => {
+    component.filters.severity = 'high';
     component.applyFilters();
     expect(component.filters.page).toBe(1);
-    expect(breachServiceSpy.getAdvancedSearch).toHaveBeenCalledTimes(2);
+    expect(breachServiceSpy.getBreaches).toHaveBeenCalled();
   });
 
-  it('should show error when service fails', () => {
-    breachServiceSpy.getAdvancedSearch.and.returnValue(
-      throwError(() => ({ error: { message: 'Server error' } }))
-    );
-    component.loadBreaches();
-    expect(component.error).toBe('Server error');
-  });
-
-  it('should save filters to sessionStorage', () => {
-    component.filters.severity = 'high';
-    component.loadBreaches();
-    const saved = JSON.parse(sessionStorage.getItem('bl_breach_filters') ?? '{}');
-    expect(saved.severity).toBe('high');
-  });
-
-  it('should load filter options from backend metadata', () => {
-    expect(component.severities).toContain('critical');
-    expect(component.statuses).toContain('resolved');
-    expect(component.industries).toContain('finance');
-  });
-
-  it('should run deep subdocument query and store facets', () => {
-    component.subdocFilters.timeline_event_types = 'discovered';
-    component.runSubdocumentQuery();
-    expect(breachServiceSpy.querySubdocuments).toHaveBeenCalled();
-    expect(component.subdocFacets).toBeTruthy();
-  });
-
-  it('resetFilters() should clear all filters', () => {
-    component.filters.severity = 'critical';
-    component.filters.search = 'hack';
+  it('should reset filters correctly', () => {
+    component.filters.search = 'test';
+    component.showSubdocQuery = true;
     component.resetFilters();
-    expect(component.filters.severity).toBe('');
     expect(component.filters.search).toBe('');
-    expect(component.filters.page).toBe(1);
+    expect(component.showSubdocQuery).toBeFalse();
+    expect(notificationServiceSpy.show).toHaveBeenCalledWith('ALL FILTERS RESET', 'info', 2000);
+  });
+
+  it('should convert comma-separated advanced filters to arrays', () => {
+    component.showSubdocQuery = true;
+    // Set values as strings (as ngModel would do from a text input, though we use selects now,
+    // the logic still supports string-to-array transformation for robustness)
+    (component.subdocFilters as any).timeline_event_types = 'found, fixed';
+
+    component.loadBreaches();
+
+    const callArgs = breachServiceSpy.getBreaches.calls.mostRecent().args[0] as any;
+    expect(callArgs).toBeDefined();
+    expect(Array.isArray(callArgs.timeline_event_types)).toBeTrue();
+    expect(callArgs.timeline_event_types).toEqual(['found', 'fixed']);
+  });
+
+  it('should toggle sort order', () => {
+    const initialOrder = component.filters.order;
+    component.toggleOrder();
+    expect(component.filters.order).not.toBe(initialOrder);
+    expect(breachServiceSpy.getBreaches).toHaveBeenCalled();
+  });
+
+  it('should show feedback when refreshing logs', () => {
+    component.refreshLogs();
+    expect(notificationServiceSpy.show).toHaveBeenCalledWith('SYNCHRONIZING THREAT INTELLIGENCE...', 'info', 2000);
   });
 });

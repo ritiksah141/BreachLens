@@ -91,6 +91,7 @@ export class NotificationService {
 
   clearHistory(): void {
     this._history.set([]);
+    this._notifications.set([]);
     this._unreadCount.set(0);
     localStorage.removeItem(HISTORY_KEY);
     localStorage.removeItem(UNREAD_KEY);

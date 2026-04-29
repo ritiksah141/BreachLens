@@ -76,18 +76,32 @@ import { FormsModule } from '@angular/forms';
             </div>
 
             <div class="dropdown">
-              <div class="nav-item" data-bs-toggle="dropdown">
-                <span class="material-symbols-outlined">person</span>
-                <span class="nav-tooltip">{{ auth.isAuthenticated() ? 'PROFILE' : 'ACCOUNT' }}</span>
+              <div class="nav-item position-relative" [class.authenticated]="auth.isAuthenticated()" data-bs-toggle="dropdown">
+                <span class="material-symbols-outlined">
+                  {{ auth.isAuthenticated() ? 'account_circle' : 'person' }}
+                </span>
+                @if (!auth.isAuthenticated()) {
+                  <span class="guest-badge">GUEST</span>
+                }
+                <span class="nav-tooltip">{{ auth.isAuthenticated() ? 'PROFILE' : 'SIGN IN / REGISTER' }}</span>
               </div>
               <ul class="dropdown-menu glass-panel border-outline-variant shadow-lg" style="z-index: 4000;">
                 @if (auth.isAuthenticated()) {
-                  <li><a class="dropdown-item text-xs-caps text-on-surface" routerLink="/auth/profile">Profile</a></li>
+                  <li class="px-3 py-2 border-bottom border-outline-variant border-opacity-10 mb-2">
+                    <div class="text-xs-caps text-primary mb-1" style="font-size: 6px;">IDENTIFIED AS</div>
+                    <div class="fw-bold text-on-surface" style="font-size: 10px;">{{ auth.currentUser()?.username }}</div>
+                    <div class="text-xs-caps text-on-surface-variant" style="font-size: 5px;">{{ auth.currentUser()?.role | uppercase }} ACCESS</div>
+                  </li>
+                  <li><a class="dropdown-item text-xs-caps text-on-surface" routerLink="/auth/profile">Profile Settings</a></li>
                   <li><hr class="dropdown-divider"></li>
-                  <li><button class="dropdown-item text-xs-caps text-error" (click)="logout()">Logout</button></li>
+                  <li><button class="dropdown-item text-xs-caps text-error" (click)="logout()">Logout Session</button></li>
                 } @else {
-                  <li><a class="dropdown-item text-xs-caps text-on-surface" routerLink="/auth/login">Login</a></li>
-                  <li><a class="dropdown-item text-xs-caps text-on-surface" routerLink="/auth/register">Sign Up</a></li>
+                  <li class="px-3 py-2 border-bottom border-outline-variant border-opacity-10 mb-2">
+                    <div class="text-xs-caps text-warning mb-1" style="font-size: 6px;">CURRENT STATUS</div>
+                    <div class="fw-bold text-on-surface" style="font-size: 10px;">GUEST VISITOR</div>
+                  </li>
+                  <li><a class="dropdown-item text-xs-caps text-on-surface" routerLink="/auth/login">Login to Account</a></li>
+                  <li><a class="dropdown-item text-xs-caps text-on-surface" routerLink="/auth/register">Create Identity</a></li>
                 }
               </ul>
             </div>

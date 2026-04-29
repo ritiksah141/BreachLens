@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { NgClass, SlicePipe, DecimalPipe, TitleCasePipe, CommonModule, UpperCasePipe } from '@angular/common';
 import { BreachService } from '../../../core/services/breach.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { Breach, BreachFilterParams, SubdocumentQueryParams } from '../../../core/models/models';
+import { Breach, BreachFilterParams, SubdocumentQueryParams, BreachFacets, BreachListResponse } from '../../../core/models/models';
 import { SeverityBadgeComponent } from '../../../shared/components/severity-badge/severity-badge.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
@@ -115,7 +115,7 @@ import { CompactNumberPipe } from '../../../shared/pipes/compact-number.pipe';
       <div class="col-lg-3 col-md-4">
         <div class="glass-panel p-4 border-0 shadow-lg h-100 d-flex flex-column justify-content-between transition-all hover-glow">
           <label class="text-xs-caps text-primary mb-3 d-block fw-bold" style="font-size: 7px;">LOG ACTIONS</label>
-          <button class="btn btn-primary text-on-primary w-100 fw-bold text-xs-caps mb-2 shadow-sm" style="height: 44px; font-size: 9px;" (click)="applyFilters()">
+          <button class="btn btn-primary text-on-primary w-100 fw-bold text-xs-caps mb-2 shadow-sm" style="height: 44px; font-size: 9px;" (click)="refreshLogs()">
             REFRESH LOGS
           </button>
           <button class="btn btn-dark bg-surface-container-highest border-0 text-on-surface w-100 text-xs-caps fw-bold shadow-sm" style="height: 38px; font-size: 9px;" (click)="resetFilters()">
@@ -152,19 +152,28 @@ import { CompactNumberPipe } from '../../../shared/pipes/compact-number.pipe';
             <div class="row g-3">
               <div class="col-md-3">
                 <label class="text-xs-caps text-on-surface-variant mb-2 d-block fw-bold" style="font-size: 7px;">EVENT TYPES</label>
-                <input class="form-control bg-surface-container-high border-0 text-on-surface" [(ngModel)]="subdocFilters.timeline_event_types" placeholder="e.g. found, fixed" style="font-size: 10px;" />
+                <select class="form-select bg-surface-container-high border-0 text-on-surface" [(ngModel)]="subdocFilters.timeline_event_types" style="font-size: 10px; height: 38px;">
+                  <option [ngValue]="undefined">ALL EVENTS</option>
+                  @for (t of timelineTypes; track t) { <option [value]="t">{{ t | uppercase }}</option> }
+                </select>
               </div>
               <div class="col-md-3">
                 <label class="text-xs-caps text-on-surface-variant mb-2 d-block fw-bold" style="font-size: 7px;">FIX STATUS</label>
-                <input class="form-control bg-surface-container-high border-0 text-on-surface" [(ngModel)]="subdocFilters.remediation_statuses" placeholder="e.g. pending" style="font-size: 10px;" />
+                <select class="form-select bg-surface-container-high border-0 text-on-surface" [(ngModel)]="subdocFilters.remediation_statuses" style="font-size: 10px; height: 38px;">
+                  <option [ngValue]="undefined">ANY STATUS</option>
+                  @for (rs of remediationStatuses; track rs) { <option [value]="rs">{{ rs.split('_').join(' ') | uppercase }}</option> }
+                </select>
               </div>
               <div class="col-md-3">
                 <label class="text-xs-caps text-on-surface-variant mb-2 d-block fw-bold" style="font-size: 7px;">ALERT LEVEL</label>
-                <input class="form-control bg-surface-container-high border-0 text-on-surface" [(ngModel)]="subdocFilters.alert_severities" placeholder="e.g. critical" style="font-size: 10px;" />
+                <select class="form-select bg-surface-container-high border-0 text-on-surface" [(ngModel)]="subdocFilters.alert_severities" style="font-size: 10px; height: 38px;">
+                  <option [ngValue]="undefined">ANY LEVEL</option>
+                  @for (s of severities; track s) { <option [value]="s">{{ s | uppercase }}</option> }
+                </select>
               </div>
               <div class="col-md-3">
                 <label class="text-xs-caps text-on-surface-variant mb-2 d-block fw-bold" style="font-size: 7px;">ACCOUNT UPDATED</label>
-                <select class="form-select bg-surface-container-high border-0 text-on-surface" [(ngModel)]="subdocFilters.account_notified" style="font-size: 10px;">
+                <select class="form-select bg-surface-container-high border-0 text-on-surface" [(ngModel)]="subdocFilters.account_notified" style="font-size: 10px; height: 38px;">
                   <option [ngValue]="undefined">ANY STATE</option>
                   <option [ngValue]="true">YES</option>
                   <option [ngValue]="false">NO</option>
@@ -176,6 +185,36 @@ import { CompactNumberPipe } from '../../../shared/pipes/compact-number.pipe';
               <button class="btn btn-primary text-on-primary text-xs-caps py-2 px-4 fw-bold shadow-sm" style="font-size: 8px;" (click)="runSubdocumentQuery()">APPLY ADVANCED</button>
             </div>
           </div>
+        </div>
+      }
+
+      <!-- Analytics Facets Row -->
+      @if (facets && breaches.length > 0) {
+        <div class="col-12 animate__animated animate__fadeIn">
+           <div class="glass-panel p-3 border-0 shadow-sm d-flex gap-4 overflow-auto custom-scrollbar-hidden">
+              <div class="d-flex align-items-center gap-3 pe-4 border-end border-outline-variant border-opacity-10">
+                 <span class="text-xs-caps text-on-surface-variant fw-bold" style="font-size: 7px;">DISTRIBUTION:</span>
+                 <div class="d-flex gap-2">
+                    @for (s of facets.severity; track s._id) {
+                       <div class="d-flex align-items-center gap-1 cursor-pointer hover-opacity" (click)="filters.severity = s._id; applyFilters()">
+                          <span class="p-1 rounded-circle" [ngClass]="'bg-' + severityBorder(s._id)" style="width: 5px; height: 5px;"></span>
+                          <span class="text-xs-caps fw-bold" style="font-size: 7px;">{{ s.count }}</span>
+                       </div>
+                    }
+                 </div>
+              </div>
+              <div class="d-flex align-items-center gap-3">
+                 <span class="text-xs-caps text-on-surface-variant fw-bold" style="font-size: 7px;">TOP SECTORS:</span>
+                 <div class="d-flex gap-3">
+                    @for (i of facets.industry | slice:0:4; track i._id) {
+                       <div class="d-flex align-items-center gap-2 cursor-pointer hover-opacity" (click)="filters.industry = i._id; applyFilters()">
+                          <span class="material-symbols-outlined text-primary" style="font-size: 12px;">{{ getIcon(i._id) }}</span>
+                          <span class="text-xs-caps fw-bold opacity-75" style="font-size: 7px;">{{ i._id | uppercase }}: {{ i.count }}</span>
+                       </div>
+                    }
+                 </div>
+              </div>
+           </div>
         </div>
       }
     </div>
@@ -310,7 +349,7 @@ export class BreachListComponent implements OnInit {
   total = 0;
   totalPages = 1;
   loading = false;
-  facets: any = null;
+  facets: BreachFacets | null = null;
 
   filters: BreachFilterParams = {
     page: 1,
@@ -331,6 +370,8 @@ export class BreachListComponent implements OnInit {
   severities = ['critical', 'high', 'medium', 'low', 'informational'];
   industries = ['finance', 'healthcare', 'technology', 'retail', 'education', 'government', 'energy', 'other'];
   statuses = ['active', 'investigating', 'contained', 'resolved'];
+  remediationStatuses = ['pending', 'in_progress', 'completed'];
+  timelineTypes = ['discovered', 'reported', 'mitigated', 'resolved', 'notified'];
 
   // Search Suggestions
   searchSuggestions: Array<{ title: string; organisation: string }> = [];
@@ -348,17 +389,35 @@ export class BreachListComponent implements OnInit {
 
   loadBreaches(): void {
     this.loading = true;
-    const params = { ...this.filters };
+    const params: any = { ...this.filters };
+
+    // Advanced search transformation: strings to arrays for the backend
     if (this.showSubdocQuery) {
-       Object.assign(params, this.subdocFilters);
+      const advanced = { ...this.subdocFilters };
+
+      // Convert comma-separated strings to arrays
+      if (typeof advanced.timeline_event_types === 'string' && (advanced.timeline_event_types as string).trim()) {
+        advanced.timeline_event_types = (advanced.timeline_event_types as string).split(',').map(s => s.trim());
+      }
+      if (typeof advanced.remediation_statuses === 'string' && (advanced.remediation_statuses as string).trim()) {
+        advanced.remediation_statuses = (advanced.remediation_statuses as string).split(',').map(s => s.trim());
+      }
+      if (typeof advanced.alert_severities === 'string' && (advanced.alert_severities as string).trim()) {
+        advanced.alert_severities = (advanced.alert_severities as string).split(',').map(s => s.trim());
+      }
+      if (typeof advanced.exposed_data_types === 'string' && (advanced.exposed_data_types as string).trim()) {
+        advanced.exposed_data_types = (advanced.exposed_data_types as string).split(',').map(s => s.trim());
+      }
+
+      Object.assign(params, advanced);
     }
 
     this.breachService.getBreaches(params).subscribe({
-      next: (res: any) => {
+      next: (res: BreachListResponse) => {
         this.breaches = res.data;
         this.total = res.meta.total;
         this.totalPages = res.meta.total_pages;
-        this.facets = res.facets;
+        this.facets = res.facets || null;
         this.loading = false;
       },
       error: () => {
@@ -371,6 +430,11 @@ export class BreachListComponent implements OnInit {
   applyFilters(): void {
     this.filters.page = 1;
     this.loadBreaches();
+  }
+
+  refreshLogs(): void {
+    this.notifications.show('SYNCHRONIZING THREAT INTELLIGENCE...', 'info', 2000);
+    this.applyFilters();
   }
 
   resetFilters(): void {
@@ -388,6 +452,7 @@ export class BreachListComponent implements OnInit {
     };
     this.subdocFilters = {};
     this.showSubdocQuery = false;
+    this.notifications.show('ALL FILTERS RESET', 'info', 2000);
     this.loadBreaches();
   }
 
@@ -404,6 +469,8 @@ export class BreachListComponent implements OnInit {
       if (this.subdocFilters.timeline_event_types) chips.push({ key: 'timeline', label: 'ADV: EVENTS' });
       if (this.subdocFilters.remediation_statuses) chips.push({ key: 'remediation', label: 'ADV: PROGRESS' });
       if (this.subdocFilters.alert_severities) chips.push({ key: 'alerts', label: 'ADV: URGENCY' });
+      if (this.subdocFilters.exposed_data_types) chips.push({ key: 'exposed', label: 'ADV: DATA' });
+      if (this.subdocFilters.account_notified !== undefined) chips.push({ key: 'notified', label: 'ADV: NOTIFIED' });
     }
 
     return chips;
@@ -419,6 +486,8 @@ export class BreachListComponent implements OnInit {
     if (key === 'timeline') this.subdocFilters.timeline_event_types = undefined;
     if (key === 'remediation') this.subdocFilters.remediation_statuses = undefined;
     if (key === 'alerts') this.subdocFilters.alert_severities = undefined;
+    if (key === 'exposed') this.subdocFilters.exposed_data_types = undefined;
+    if (key === 'notified') this.subdocFilters.account_notified = undefined;
 
     this.applyFilters();
   }

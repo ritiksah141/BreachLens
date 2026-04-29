@@ -922,6 +922,58 @@ html::before {
   transition: border-color var(--transition-base);
 }
 
+.guest-hero-container {
+  position: absolute;
+  top: 50%;
+  left: 24px;
+  transform: translateY(-50%);
+  z-index: 1200;
+  max-width: 380px;
+  pointer-events: none;
+}
+
+.guest-hero-card {
+  pointer-events: auto;
+  border: 1px solid color-mix(in srgb, var(--primary) 20%, var(--outline-variant)) !important;
+  background: rgba(15, 23, 42, 0.8) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 20px color-mix(in srgb, var(--primary) 10%, transparent) !important;
+}
+
+.orb-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+}
+
+.orb-icon .material-symbols-outlined {
+  font-size: 24px;
+  font-variation-settings: 'FILL' 1, 'wght' 400;
+}
+
+.guest-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: var(--warning);
+  color: #000;
+  font-size: 5px;
+  font-weight: 900;
+  padding: 1px 3px;
+  border-radius: 2px;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.nav-item.authenticated .material-symbols-outlined {
+  color: var(--primary);
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--primary) 40%, transparent));
+}
+
 .map-container-panel:hover {
   border-color: color-mix(in srgb, var(--primary) 30%, var(--outline-variant));
 }

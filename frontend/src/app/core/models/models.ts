@@ -86,6 +86,7 @@ export interface BreachListResponse {
     total: number;
     total_pages: number;
   };
+  facets?: BreachFacets;
 }
 
 export interface ApiResponse<T> {
@@ -238,6 +239,16 @@ export interface FilterCountItem {
   value?: string;
   count: number;
   notified?: boolean;
+}
+
+export interface FacetItem {
+  _id: string;
+  count: number;
+}
+
+export interface BreachFacets {
+  severity: FacetItem[];
+  industry: FacetItem[];
 }
 
 export interface BreachFilterOptions {
