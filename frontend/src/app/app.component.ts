@@ -431,11 +431,7 @@ export class AppComponent implements OnInit {
   showHistory = signal(false);
   private countdownInterval: any;
 
-  ngOnInit(): void {
-    if (this.auth.isAuthenticated()) {
-      this.auth.fetchProfile().subscribe({ error: () => {} });
-    }
-
+  constructor() {
     // Effect to start countdown when modal shows
     effect(() => {
       if (this.auth.showSessionModal()) {
@@ -444,6 +440,12 @@ export class AppComponent implements OnInit {
         this.stopModalCountdown();
       }
     });
+  }
+
+  ngOnInit(): void {
+    if (this.auth.isAuthenticated()) {
+      this.auth.fetchProfile().subscribe({ error: () => {} });
+    }
   }
 
   toggleHistory(): void {
