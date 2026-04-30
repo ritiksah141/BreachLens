@@ -113,7 +113,7 @@ import { NotificationService } from '../../../core/services/notification.service
               @if (loading) {
                 <span class="spinner-border spinner-border-sm"></span>
               } @else {
-                <span>AUTHORIZE ACCESS</span>
+                <span>LOGIN</span>
                 <span class="material-symbols-outlined fs-5">login</span>
               }
             </button>
