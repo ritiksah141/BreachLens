@@ -188,16 +188,18 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
               <div class="p-3 border-bottom border-outline-variant border-opacity-10 bg-surface-container-high animate__animated animate__fadeIn">
                 <div class="row g-2">
                   <div class="col-12">
-                    <input [(ngModel)]="newAlert.message" class="form-control" placeholder="Alert details..." style="font-size: 11px; height: 32px;" />
+                    <input [(ngModel)]="newAlert.message" class="form-control" placeholder="Alert details (min 10 chars)..." style="font-size: 11px; height: 32px;" />
                   </div>
                   <div class="col-md-6">
                     <select [(ngModel)]="newAlert.alert_type" class="form-select" style="font-size: 11px; height: 32px;">
                       <option value="new_exposure">NEW EXPOSURE</option>
                       <option value="credential_stuffing">CREDENTIAL STUFFING</option>
+                      <option value="dark_web_mention">DARK WEB MENTION</option>
+                      <option value="domain_squatting">DOMAIN SQUATTING</option>
                     </select>
                   </div>
                   <div class="col-md-6 text-end">
-                    <button class="btn btn-primary px-3 fw-bold text-xs-caps" (click)="addAlert()" [disabled]="!newAlert.message" style="font-size: 8px; height: 32px;">SAVE</button>
+                    <button class="btn btn-primary px-3 fw-bold text-xs-caps" (click)="addAlert()" [disabled]="!newAlert.message || newAlert.message.length < 10" style="font-size: 8px; height: 32px;">SAVE</button>
                   </div>
                 </div>
               </div>
@@ -323,10 +325,19 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
               @if (showAddTimeline) {
                 <div class="glass-panel p-4 mb-5 border-primary border-opacity-20 bg-surface-container-high animate__animated animate__fadeIn">
                   <div class="row g-3">
-                    <div class="col-md-6"><input [(ngModel)]="newEvent.event_type" class="form-control" placeholder="Event type..." style="font-size: 11px; height: 38px;" /></div>
+                    <div class="col-md-6">
+                      <select [(ngModel)]="newEvent.event_type" class="form-select" style="font-size: 11px; height: 38px;">
+                        <option value="" disabled selected>SELECT EVENT TYPE...</option>
+                        <option value="breach_occurred">BREACH OCCURRED</option>
+                        <option value="discovered">DISCOVERED</option>
+                        <option value="disclosed">DISCLOSED</option>
+                        <option value="contained">CONTAINED</option>
+                        <option value="resolved">RESOLVED</option>
+                      </select>
+                    </div>
                     <div class="col-md-6"><input type="datetime-local" [(ngModel)]="newEvent.occurred_at" class="form-control" style="font-size: 11px; height: 38px;" /></div>
-                    <div class="col-12"><textarea [(ngModel)]="newEvent.description" class="form-control" rows="2" placeholder="Event description..." style="font-size: 11px;"></textarea></div>
-                    <div class="col-12 text-end"><button class="btn btn-primary px-3 fw-bold text-xs-caps" (click)="addTimeline()" style="font-size: 8px; height: 38px;">SAVE EVENT</button></div>
+                    <div class="col-12"><textarea [(ngModel)]="newEvent.description" class="form-control" rows="2" placeholder="Event description (min 10 chars)..." style="font-size: 11px;"></textarea></div>
+                    <div class="col-12 text-end"><button class="btn btn-primary px-3 fw-bold text-xs-caps" (click)="addTimeline()" [disabled]="!newEvent.event_type || !newEvent.description || newEvent.description.length < 10" style="font-size: 8px; height: 38px;">SAVE EVENT</button></div>
                   </div>
                 </div>
               }
@@ -338,11 +349,19 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
                     <div class="glass-panel p-4 shadow-lg border-0 bg-surface-container-low transition-all hover-glow">
                       @if (editingTimelineId === event._id) {
                         <div class="row g-3">
-                          <div class="col-md-6"><input [(ngModel)]="editEventData.event_type" class="form-control" style="font-size: 11px; height: 38px;" /></div>
+                          <div class="col-md-6">
+                            <select [(ngModel)]="editEventData.event_type" class="form-select" style="font-size: 11px; height: 38px;">
+                              <option value="breach_occurred">BREACH OCCURRED</option>
+                              <option value="discovered">DISCOVERED</option>
+                              <option value="disclosed">DISCLOSED</option>
+                              <option value="contained">CONTAINED</option>
+                              <option value="resolved">RESOLVED</option>
+                            </select>
+                          </div>
                           <div class="col-md-6"><input type="datetime-local" [(ngModel)]="editEventData.occurred_at" class="form-control" style="font-size: 11px; height: 38px;" /></div>
                           <div class="col-12"><textarea [(ngModel)]="editEventData.description" class="form-control" rows="2" style="font-size: 11px;"></textarea></div>
                           <div class="col-12 text-end d-flex gap-2">
-                             <button class="btn btn-primary px-3 fw-bold flex-grow-1 text-xs-caps" (click)="saveEditTimeline()" style="font-size: 8px; height: 38px;">SAVE</button>
+                             <button class="btn btn-primary px-3 fw-bold flex-grow-1 text-xs-caps" (click)="saveEditTimeline()" [disabled]="!editEventData.event_type || !editEventData.description" style="font-size: 8px; height: 38px;">SAVE</button>
                              <button class="btn btn-dark py-1 px-3 flex-grow-1 text-xs-caps" (click)="editingTimelineId = null" style="font-size: 8px; height: 38px;">CANCEL</button>
                           </div>
                         </div>
@@ -393,10 +412,10 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
               @if (showAddRemediation) {
                 <div class="glass-panel p-4 mb-5 border-primary border-opacity-20 bg-surface-container-high animate__animated animate__fadeIn">
                   <div class="row g-3">
-                    <div class="col-12"><input [(ngModel)]="newAction.action" class="form-control" placeholder="Action description..." style="font-size: 11px; height: 38px;" /></div>
+                    <div class="col-12"><input [(ngModel)]="newAction.action" class="form-control" placeholder="Action description (min 5 chars)..." style="font-size: 11px; height: 38px;" /></div>
                     <div class="col-md-6"><select [(ngModel)]="newAction.status" class="form-select" style="font-size: 11px; height: 38px;"><option value="pending">PENDING</option><option value="in_progress">IN PROGRESS</option><option value="completed">COMPLETED</option></select></div>
                     <div class="col-md-6"><input [(ngModel)]="newAction.assigned_to" class="form-control" placeholder="Assignee..." style="font-size: 11px; height: 38px;" /></div>
-                    <div class="col-12 text-end"><button class="btn btn-primary text-xs-caps py-1 px-3 fw-bold" (click)="addRemediation()" style="font-size: 8px; height: 38px;">SAVE</button></div>
+                    <div class="col-12 text-end"><button class="btn btn-primary text-xs-caps py-1 px-3 fw-bold" (click)="addRemediation()" [disabled]="!newAction.action || newAction.action.length < 5" style="font-size: 8px; height: 38px;">SAVE</button></div>
                   </div>
                 </div>
               }

@@ -301,9 +301,22 @@ import { UserManagementComponent } from './user-management/user-management.compo
                       <div class="col-12 mt-2 pt-2 border-top border-outline-variant border-opacity-10">
                         <label class="text-xs-caps text-primary mb-2 d-block fw-bold" style="font-size: 7px;">TARGET ORGANIZATION</label>
                       </div>
-                      <div class="col-md-8" formGroupName="organisation">
+                      <div class="col-md-4" formGroupName="organisation">
                         <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 7px;">ORG NAME</label>
                         <input formControlName="name" class="form-control" placeholder="Organization name..." style="font-size: 11px;" />
+                      </div>
+                      <div class="col-md-4" formGroupName="organisation">
+                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 7px;">DOMAIN</label>
+                        <input formControlName="domain" class="form-control" placeholder="example.com" style="font-size: 11px;" />
+                      </div>
+                      <div class="col-md-4" formGroupName="organisation">
+                        <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 7px;">ORG SIZE</label>
+                        <select formControlName="size" class="form-select" style="font-size: 11px;">
+                          <option value="small">SMALL</option>
+                          <option value="medium">MEDIUM</option>
+                          <option value="large">LARGE</option>
+                          <option value="enterprise">ENTERPRISE</option>
+                        </select>
                       </div>
                       <div class="col-md-4">
                         <label class="text-xs-caps text-on-surface-variant mb-1 d-block" style="font-size: 7px;">INDUSTRY</label>
@@ -476,8 +489,8 @@ export class AdminComponent implements OnInit {
 
   constructor() {
     this.breachForm = this.fb.group({
-      title: ['', [Validators.required, Validators.minLength(3)]],
-      description: ['', [Validators.required]],
+      title: ['', [Validators.required, Validators.minLength(5)]],
+      description: ['', [Validators.required, Validators.minLength(20)]],
       severity: ['medium', [Validators.required]],
       status: ['active', [Validators.required]],
       industry: ['technology', [Validators.required]],
@@ -490,7 +503,7 @@ export class AdminComponent implements OnInit {
       organisation: this.fb.group({
         name: [''],
         domain: [''],
-        size: ['mid'],
+        size: ['medium'],
       }),
       location: this.fb.group({
         type: ['Point'],

@@ -73,7 +73,15 @@ def is_valid_iso_date(value: Any) -> bool:
     """Return True if *value* can be parsed as an ISO-8601 date/datetime."""
     if not isinstance(value, str):
         return False
-    for fmt in ("%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d"):
+    # Try fromisoformat first (flexible, handles YYYY-MM-DD, YYYY-MM-DDTHH:MM, etc.)
+    try:
+        # replace Z with +00:00 to support Z suffix in Python < 3.11
+        datetime.fromisoformat(value.replace("Z", "+00:00"))
+        return True
+    except (ValueError, TypeError, AttributeError):
+        pass
+    # Fallback to strptime for safety
+    for fmt in ("%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%d"):
         try:
             datetime.strptime(value, fmt)
             return True
@@ -87,7 +95,12 @@ def parse_iso_date(value: str) -> datetime:
 
     Raises :exc:`ValueError` if *value* cannot be parsed.
     """
-    for fmt in ("%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d"):
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except (ValueError, TypeError, AttributeError):
+        pass
+
+    for fmt in ("%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%d"):
         try:
             return datetime.strptime(value, fmt)
         except ValueError:
