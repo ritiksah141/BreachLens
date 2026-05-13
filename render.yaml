@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: breachlens-api
+    runtime: python
+    plan: free
+    region: oregon # Render free tier is often best in Oregon/Frankfurt
+    branch: main   # Industry Standard: Only deploy to production from the main branch
+    rootDir: backend
+    buildCommand: ./build.sh
+    startCommand: gunicorn run:app
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_APP
+        value: run.py
+      - key: SWAGGER_ENABLED
+        value: "true"
+
+      # DATABASE & CACHING (Must be set in Render Dashboard)
+      - key: MONGO_URI
+        sync: false
+      - key: RATELIMIT_STORAGE_URL
+        sync: false
+      - key: CACHE_REDIS_URL
+        sync: false
+
+      # SECURITY (Must be set in Render Dashboard)
+      - key: SECRET_KEY
+        sync: false
+      - key: IP_ANONYMIZATION_SALT
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
