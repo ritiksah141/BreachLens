@@ -4,7 +4,7 @@ Uses the free api.pwnedpasswords.com service.
 """
 import hashlib
 import requests
-from typing import Tuple, Optional
+from typing import Tuple
 
 def check_password_exposure(password: str) -> Tuple[bool, int]:
     """
@@ -20,7 +20,7 @@ def check_password_exposure(password: str) -> Tuple[bool, int]:
         return False, 0
 
     # 1. SHA-1 Hash the password
-    sha1_hash = hashlib.sha1(password.encode('utf-8')).hexdigest().upper()
+    sha1_hash = hashlib.sha1(password.encode("utf-8"), usedforsecurity=False).hexdigest().upper()
 
     # 2. Split into prefix (first 5 chars) and suffix (rest)
     prefix = sha1_hash[:5]
@@ -32,7 +32,7 @@ def check_password_exposure(password: str) -> Tuple[bool, int]:
         response = requests.get(url, timeout=5)
 
         if response.status_code != 200:
-            return False, 0
+            raise RuntimeError("Pwned Passwords API unavailable")
 
         # 4. Check if our suffix exists in the results
         # The API returns results in the format "SUFFIX:COUNT"
@@ -45,7 +45,5 @@ def check_password_exposure(password: str) -> Tuple[bool, int]:
 
         return False, 0
 
-    except Exception:
-        # In case of API downtime or network issues, fail closed (say not exposed)
-        # In a real production app, we might log this error.
-        return False, 0
+    except Exception as exc:
+        raise RuntimeError("Pwned Passwords API unavailable") from exc

@@ -18,6 +18,8 @@ from pymongo.errors import DuplicateKeyError
 
 from app.extensions import mongo
 
+TOKEN_TYPE_BEARER = "Bearer"  # nosec B105 - token type label
+
 
 class AuthService:
     COLLECTION = "users"
@@ -132,7 +134,7 @@ class AuthService:
         return (
             {
                 "token": token,
-                "token_type": "Bearer",
+                "token_type": TOKEN_TYPE_BEARER,
                 "expires_in": expires_seconds,
                 "user": {
                     "_id": str(user["_id"]),
@@ -205,7 +207,7 @@ class AuthService:
         """Reset the failed-login counter and remove the lockout timestamp."""
         self.col.update_one(
             {"email": email.lower()},
-            {"$set": {"failed_login_attempts": 0}, "$unset": {"locked_until": ""}},
+            {"$set": {"failed_login_attempts": 0}, "$unset": {"locked_until": 1}},
         )
 
     def resolve_lockout_identity(self, email: str = None, username: str = None) -> Optional[str]:
@@ -284,10 +286,10 @@ class AuthService:
                     "failed_login_attempts": 0,
                 },
                 "$unset": {
-                    "password_reset_token_hash": "",
-                    "password_reset_expires_at": "",
-                    "password_reset_requested_at": "",
-                    "locked_until": "",
+                    "password_reset_token_hash": 1,
+                    "password_reset_expires_at": 1,
+                    "password_reset_requested_at": 1,
+                    "locked_until": 1,
                 },
             },
         )

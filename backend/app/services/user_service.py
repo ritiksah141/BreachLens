@@ -58,7 +58,7 @@ class UserService:
         except (InvalidId, TypeError):
             return False
 
-        user = self.col.find_one({"_id": oid}, {"password_hash": 1})
+        user = self.col.find_one({"_id": oid}, {"password_hash": 1})  # nosec B105
         if not user or "password_hash" not in user:
             return False
 
@@ -126,7 +126,7 @@ class UserService:
         result = self.col.find_one_and_update(
             {"_id": oid, "role": "admin"},
             {"$set": {"role": new_role, "updated_at": datetime.utcnow()}},
-            projection={"password_hash": 0},
+            projection={"password_hash": 0},  # nosec B105
             return_document=True
         )
 
@@ -145,7 +145,7 @@ class UserService:
         result = self.col.find_one_and_update(
             {"_id": oid},
             {"$set": {"role": new_role, "updated_at": datetime.utcnow()}},
-            projection={"password_hash": 0},
+            projection={"password_hash": 0},  # nosec B105
             return_document=True
         )
         return result
@@ -193,7 +193,7 @@ class UserService:
         result = self.col.find_one_and_update(
             {"_id": oid, "is_active": True},
             {"$set": {"is_active": False, "updated_at": datetime.utcnow()}},
-            projection={"password_hash": 0},
+            projection={"password_hash": 0},  # nosec B105
             return_document=True
         )
 
@@ -227,7 +227,7 @@ class UserService:
         result = self.col.find_one_and_update(
             {"_id": oid},
             {"$set": {"is_active": True, "updated_at": datetime.utcnow()}},
-            projection={"password_hash": 0},
+            projection={"password_hash": 0},  # nosec B105
             return_document=True,
         )
         return result

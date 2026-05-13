@@ -1,7 +1,7 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap, catchError, throwError, switchMap, map } from 'rxjs';
+import { Observable, tap, catchError, throwError, switchMap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { NotificationService } from './notification.service';
 import {
@@ -12,20 +12,15 @@ import {
   User,
 } from '../models/models';
 
-const TOKEN_KEY = 'bl_token';
-const USER_KEY = 'bl_user';
-
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly apiUrl = environment.apiUrl;
-  private _expiryTimer: any = null;
 
   // Reactive state — signals
-  private _token = signal<string | null>(localStorage.getItem(TOKEN_KEY));
-  private _user = signal<User | null>(this._loadUser());
+  private _user = signal<User | null>(null);
   readonly showSessionModal = signal(false);
 
-  readonly isAuthenticated = computed(() => !!this._getValidToken(this._token()));
+  readonly isAuthenticated = computed(() => !!this._user());
   readonly currentUser = computed(() => this._user());
   readonly isAdmin = computed(() => this._user()?.role === 'admin');
   readonly isAnalyst = computed(
@@ -38,11 +33,7 @@ export class AuthService {
     private router: Router,
     private notifications: NotificationService
   ) {
-    this._purgeExpiredSession();
-    const currentToken = this._token();
-    if (currentToken && !this._isTokenExpired(currentToken)) {
-      this._scheduleSessionExpiry(currentToken);
-    }
+    this.fetchProfile().subscribe({ error: () => {} });
   }
 
   // ------------------------------------------------------------------
@@ -50,11 +41,7 @@ export class AuthService {
   // ------------------------------------------------------------------
 
   getToken(): string | null {
-    const token = this._getValidToken(this._token());
-    if (!token && this._token()) {
-      this.handleSessionExpired();
-    }
-    return token;
+    return null;
   }
 
   // ------------------------------------------------------------------
@@ -66,16 +53,10 @@ export class AuthService {
       .post<ApiResponse<AuthToken>>(`${this.apiUrl}/auth/login`, credentials)
       .pipe(
         switchMap((res) => {
-          const token = res.data?.token;
-          if (token) {
-            localStorage.setItem(TOKEN_KEY, token);
-            this._token.set(token);
-            this._scheduleSessionExpiry(token);
-            // Return the profile fetch observable
+          if (res.data?.token) {
             return this.fetchProfile();
-          } else {
-            return throwError(() => new Error('No token received'));
           }
+          return throwError(() => new Error('No token received'));
         }),
         catchError((err) => throwError(() => err))
       );
@@ -107,10 +88,7 @@ export class AuthService {
   }
 
   logout(): void {
-    const token = this._token();
-    if (token) {
-      this.http.post(`${this.apiUrl}/auth/logout`, {}).subscribe();
-    }
+    this.http.post(`${this.apiUrl}/auth/logout`, {}).subscribe();
     this._clearSession();
     this.notifications.clearHistory();
     this.notifications.show('You have been logged out.', 'info', 3000);
@@ -118,7 +96,7 @@ export class AuthService {
   }
 
   handleSessionExpired(): void {
-    const hadSession = Boolean(this._token() || this._user());
+    const hadSession = Boolean(this._user());
     if (!hadSession) return;
 
     this._clearSession();
@@ -133,7 +111,6 @@ export class AuthService {
       tap((res) => {
         const user = res.data;
         if (user) {
-          localStorage.setItem(USER_KEY, JSON.stringify(user));
           this._user.set(user);
         }
       }),
@@ -145,82 +122,7 @@ export class AuthService {
   // Private helpers
   // ------------------------------------------------------------------
 
-  private _loadUser(): User | null {
-    try {
-      const raw = localStorage.getItem(USER_KEY);
-      return raw ? (JSON.parse(raw) as User) : null;
-    } catch {
-      return null;
-    }
-  }
-
-  private _getValidToken(token: string | null): string | null {
-    if (!token || this._isTokenExpired(token)) return null;
-    return token;
-  }
-
-  private _isTokenExpired(token: string): boolean {
-    try {
-      const payload = token.split('.')[1];
-      if (!payload) return true;
-
-      const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
-      const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
-      const decoded = atob(padded);
-      const parsed = JSON.parse(decoded);
-
-      const exp = Number(parsed?.exp);
-      if (!Number.isFinite(exp)) return false;
-      return exp <= Math.floor(Date.now() / 1000);
-    } catch {
-      return true;
-    }
-  }
-
-  private _purgeExpiredSession(): void {
-    const token = this._token();
-    if (token && this._isTokenExpired(token)) {
-      this.handleSessionExpired();
-    }
-  }
-
   private _clearSession(): void {
-    if (this._expiryTimer) {
-      clearTimeout(this._expiryTimer);
-      this._expiryTimer = null;
-    }
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-    this._token.set(null);
     this._user.set(null);
-  }
-
-  private _scheduleSessionExpiry(token: string): void {
-    if (this._expiryTimer) {
-      clearTimeout(this._expiryTimer);
-      this._expiryTimer = null;
-    }
-
-    try {
-      const payload = token.split('.')[1];
-      if (!payload) return;
-
-      const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
-      const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
-      const decoded = atob(padded);
-      const parsed = JSON.parse(decoded);
-
-      const exp = Number(parsed?.exp);
-      if (!Number.isFinite(exp)) return;
-
-      const timeUntilExpiry = (exp * 1000) - Date.now();
-      if (timeUntilExpiry > 0) {
-        this._expiryTimer = setTimeout(() => {
-          this.handleSessionExpired();
-        }, timeUntilExpiry + 500);
-      }
-    } catch {
-      // Ignore
-    }
   }
 }

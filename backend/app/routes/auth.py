@@ -12,14 +12,16 @@ All JWT operations use the raw ``pyjwt`` library (``jwt.encode`` / ``jwt.decode`
 as required by the module specification.  Flask-JWT-Extended is NOT used.
 """
 import re
+import secrets
 from datetime import datetime
 
-from flask import Blueprint, current_app, request, g
+from flask import Blueprint, current_app, request, g, make_response
 
 from app.extensions import limiter, mongo
 from app.middleware.auth_middleware import jwt_required, require_auth
 from app.models.user import UserSchema
 from app.services.auth_service import AuthService
+from app.utils.email import send_password_reset_email
 from app.utils.response import error_response, success_response
 from app.utils.validators import ALLOWED_ROLES, is_valid_email
 
@@ -88,6 +90,49 @@ def _validate_registration(data: dict) -> list[str]:
     return UserSchema.validate_registration(data)
 
 
+def _cookie_domain() -> str | None:
+    domain = (current_app.config.get("AUTH_COOKIE_DOMAIN") or "").strip()
+    return domain or None
+
+
+def _set_auth_cookies(response, token: str, expires_seconds: int) -> None:
+    cookie_name = current_app.config.get("AUTH_COOKIE_NAME", "bl_auth")
+    samesite = current_app.config.get("AUTH_COOKIE_SAMESITE", "Lax")
+    secure = bool(current_app.config.get("AUTH_COOKIE_SECURE", False))
+
+    response.set_cookie(
+        cookie_name,
+        token,
+        max_age=expires_seconds,
+        httponly=True,
+        secure=secure,
+        samesite=samesite,
+        domain=_cookie_domain(),
+        path="/",
+    )
+
+    # Double-submit CSRF cookie for browser clients
+    csrf_cookie = current_app.config.get("CSRF_COOKIE_NAME", "bl_csrf")
+    csrf_token = secrets.token_urlsafe(32)
+    response.set_cookie(
+        csrf_cookie,
+        csrf_token,
+        max_age=expires_seconds,
+        httponly=False,
+        secure=secure,
+        samesite=samesite,
+        domain=_cookie_domain(),
+        path="/",
+    )
+
+
+def _clear_auth_cookies(response) -> None:
+    cookie_name = current_app.config.get("AUTH_COOKIE_NAME", "bl_auth")
+    csrf_cookie = current_app.config.get("CSRF_COOKIE_NAME", "bl_csrf")
+    response.delete_cookie(cookie_name, domain=_cookie_domain(), path="/")
+    response.delete_cookie(csrf_cookie, domain=_cookie_domain(), path="/")
+
+
 # ---------------------------------------------------------------------------
 # Module-required login: GET /api/v1/login  (Basic Authentication)
 # ---------------------------------------------------------------------------
@@ -119,7 +164,12 @@ def _handle_basic_auth_login():
     if err:
         return error_response(err, 401)
 
-    return success_response(token_data)
+    response = success_response(token_data)
+    response_obj = response[0]
+    token = token_data.get("token")
+    if token:
+        _set_auth_cookies(response_obj, token, token_data.get("expires_in", 0))
+    return response
 
 
 @login_bp.get("/login")
@@ -134,8 +184,6 @@ def login_basic_auth_toplevel():
 def login_basic_auth():
     """``GET /api/v1/auth/login`` — Basic Auth login (alias)."""
     return _handle_basic_auth_login()
-
-    return success_response(token_data)
 
 
 # ---------------------------------------------------------------------------
@@ -220,7 +268,12 @@ def login():
     if lockout_key:
         auth_service.reset_failed_attempts(lockout_key)
 
-    return success_response(token_data)
+    response = success_response(token_data)
+    response_obj = response[0]
+    token = token_data.get("token")
+    if token:
+        _set_auth_cookies(response_obj, token, token_data.get("expires_in", 0))
+    return response
 
 
 @auth_bp.post("/logout")
@@ -237,10 +290,15 @@ def logout():
         token = auth_header.split(" ")[1]
     else:
         token = request.headers.get("x-access-token")
+        if not token:
+            cookie_name = current_app.config.get("AUTH_COOKIE_NAME", "bl_auth")
+            token = request.cookies.get(cookie_name)
 
     if token:
         _add_to_blacklist(token)
-    return "", 204
+    resp = make_response("", 204)
+    _clear_auth_cookies(resp)
+    return resp
 
 
 @auth_bp.get("/me")
@@ -289,6 +347,18 @@ def forgot_password():
         return error_response("A valid 'email' is required.", 422)
 
     exists, reset_token = auth_service.create_password_reset_token(email)
+
+    if exists and reset_token:
+        base_url = current_app.config.get("FRONTEND_BASE_URL", "http://localhost:4200")
+        ttl_minutes = int(current_app.config.get("PASSWORD_RESET_TOKEN_TTL_MINUTES", 30))
+        frontend_pending = bool(current_app.config.get("FRONTEND_PENDING", False))
+        send_password_reset_email(
+            email,
+            reset_token,
+            base_url=base_url,
+            ttl_minutes=ttl_minutes,
+            frontend_pending=frontend_pending,
+        )
 
     payload = {
         "message": "If an account with that email exists, a password reset link has been sent.",

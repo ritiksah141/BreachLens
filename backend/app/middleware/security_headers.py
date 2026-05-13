@@ -27,21 +27,6 @@ def init_security_headers(app: Flask) -> None:
     def set_security_headers(response):
         """Apply security headers to every response."""
 
-        # Content Security Policy - Prevents XSS and injection attacks
-        csp_policy = os.getenv(
-            "CSP_POLICY",
-            "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline'; "  # Allow inline scripts for Swagger UI
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "  # Allow Google Fonts for Swagger
-            "img-src 'self' data: https:; "
-            "font-src 'self' https://fonts.gstatic.com; "  # Allow Google Fonts
-            "connect-src 'self'; "
-            "frame-ancestors 'none'; "
-            "base-uri 'self'; "
-            "form-action 'self';"
-        )
-        response.headers['Content-Security-Policy'] = csp_policy
-
         # Prevent MIME type sniffing
         response.headers['X-Content-Type-Options'] = 'nosniff'
 

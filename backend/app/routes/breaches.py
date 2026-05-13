@@ -579,7 +579,8 @@ def bulk_delete_breaches():
 # ---------------------------------------------------------------------------
 
 @breaches_bp.get("/exposure-check")
-@limiter.limit("5 per minute")
+@require_auth
+@limiter.limit("3 per minute")
 def exposure_check():
     """Check if an email address or domain appears in any known breach."""
     from app.utils.validators import is_valid_email, is_valid_domain
@@ -600,7 +601,7 @@ def exposure_check():
 
 
 @breaches_bp.post("/exposure/password")
-@limiter.limit("5 per minute")
+@limiter.limit("3 per minute")
 def password_exposure_check():
     """Check if a password has been exposed using k-Anonymity (POST for security)."""
     from app.utils.pwned_passwords import check_password_exposure
@@ -611,7 +612,13 @@ def password_exposure_check():
     if not password:
         return error_response("'password' field is required in request body.", 400)
 
-    is_exposed, count = check_password_exposure(password)
+    try:
+        is_exposed, count = check_password_exposure(password)
+    except RuntimeError:
+        return error_response(
+            "Password exposure service is temporarily unavailable. Please try again later.",
+            503,
+        )
 
     return success_response({
         "password_exposed": is_exposed,

@@ -2,7 +2,7 @@
 app/__init__.py — Flask application factory for BreachLens.
 """
 import logging
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flasgger import Swagger
 from flask_talisman import Talisman
 from app.config import config
@@ -42,19 +42,27 @@ def create_app(config_name: str = "development") -> Flask:
     # Initialise extensions
     mongo.init_app(app)
     allowed_origins = [o.strip() for o in app.config.get("CORS_ORIGINS", []) if o.strip()]
-    cors.init_app(app, resources={r"/api/.*": {"origins": allowed_origins}})
+    cors.init_app(
+        app,
+        resources={r"/api/.*": {"origins": allowed_origins}},
+        supports_credentials=True,
+        expose_headers=["X-Request-ID"],
+    )
     limiter.init_app(app)
     cache.init_app(app)
 
     # Security Headers with Flask-Talisman
-    # Define CSP: allow scripts/styles only from self and trusted sources (Swagger)
     csp = {
-        'default-src': ["'self'"],
-        'script-src': ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com'],
-        'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com'],
-        'font-src': ["'self'", 'https://fonts.gstatic.com'],
-        'img-src': ["'self'", 'data:']
+        "default-src": ["'self'"],
+        "script-src": ["'self'"],
+        "style-src": ["'self'", "https://fonts.googleapis.com"],
+        "font-src": ["'self'", "https://fonts.gstatic.com"],
+        "img-src": ["'self'", "data:"],
     }
+
+    if app.config.get("SWAGGER_ENABLED", False) and config_name != "production":
+        csp["script-src"].extend(["'unsafe-inline'", "https://cdnjs.cloudflare.com"])
+        csp["style-src"].extend(["'unsafe-inline'", "https://cdnjs.cloudflare.com"])
 
     # We disable force_https during testing to avoid issues with local PyTest
     is_prod = config_name == "production"
@@ -81,6 +89,39 @@ def create_app(config_name: str = "development") -> Flask:
     app.register_blueprint(admin_bp)
     app.register_blueprint(users_bp)
     app.register_blueprint(health_bp)
+
+    @app.before_request
+    def csrf_protect():
+        if not app.config.get("CSRF_ENABLED", True):
+            return None
+
+        if request.method not in {"POST", "PUT", "PATCH", "DELETE"}:
+            return None
+
+        # Skip CSRF for token-based API clients
+        if request.headers.get("Authorization") or request.headers.get("x-access-token"):
+            return None
+
+        auth_cookie = app.config.get("AUTH_COOKIE_NAME", "bl_auth")
+        if not request.cookies.get(auth_cookie):
+            return None
+
+        exempt_paths = {
+            "/api/v1/login",
+            "/api/v1/auth/login",
+            "/api/v1/auth/register",
+            "/api/v1/auth/forgot-password",
+            "/api/v1/auth/reset-password",
+        }
+        if request.path in exempt_paths:
+            return None
+
+        csrf_cookie = app.config.get("CSRF_COOKIE_NAME", "bl_csrf")
+        csrf_header = app.config.get("CSRF_HEADER_NAME", "X-CSRF-Token")
+        cookie_token = request.cookies.get(csrf_cookie)
+        header_token = request.headers.get(csrf_header)
+        if not cookie_token or not header_token or cookie_token != header_token:
+            return jsonify({"status": "error", "message": "CSRF validation failed.", "code": 403}), 403
 
     # Ensure MongoDB indexes on startup
     # Note: ensure_indexes() is idempotent and safe to call multiple times.
@@ -186,3 +227,10 @@ def _validate_security_config(app: Flask, config_name: str) -> None:
         localhost_origins = ("http://localhost", "https://localhost", "http://127.0.0.1", "https://127.0.0.1")
         if any(origin.startswith(localhost) for origin in origins for localhost in localhost_origins):
             raise RuntimeError("CORS_ORIGINS must not include localhost in production.")
+
+        ratelimit_storage = str(app.config.get("RATELIMIT_STORAGE_URL", "")).strip().lower()
+        if ratelimit_storage.startswith("memory://"):
+            raise RuntimeError("RATELIMIT_STORAGE_URL must point to a shared store in production (e.g., Redis).")
+
+        if not app.config.get("AUTH_COOKIE_SECURE", False):
+            raise RuntimeError("AUTH_COOKIE_SECURE must be enabled in production.")

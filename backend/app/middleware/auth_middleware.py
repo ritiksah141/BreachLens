@@ -47,7 +47,12 @@ def _get_token_from_header() -> str | None:
             return auth_header.split(" ")[1]
         except IndexError:
             return None
-    return request.headers.get("x-access-token")
+    token = request.headers.get("x-access-token")
+    if token:
+        return token
+
+    cookie_name = current_app.config.get("AUTH_COOKIE_NAME", "bl_auth")
+    return request.cookies.get(cookie_name)
 
 
 def _check_blacklist(token: str) -> bool:

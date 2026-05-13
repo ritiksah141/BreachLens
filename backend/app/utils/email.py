@@ -101,7 +101,13 @@ def send_email(
         return False
 
 
-def send_password_reset_email(to: str, reset_token: str, base_url: str = "http://localhost:4200") -> bool:
+def send_password_reset_email(
+    to: str,
+    reset_token: str,
+    base_url: str = "http://localhost:4200",
+    ttl_minutes: int = 60,
+    frontend_pending: bool = False,
+) -> bool:
     """
     Send a password-reset link to *to*.
 
@@ -115,17 +121,32 @@ def send_password_reset_email(to: str, reset_token: str, base_url: str = "http:/
     """
     reset_url = f"{base_url}/reset-password?token={reset_token}"
 
+    ttl_label = f"{ttl_minutes} minutes" if ttl_minutes != 60 else "1 hour"
+    pending_note = (
+        "\n\nFrontend is not yet live. Keep this token and use it directly in the reset password form once the UI is available."
+        if frontend_pending
+        else ""
+    )
+
     body_text = (
         f"You requested a password reset for your BreachLens account.\n\n"
-        f"Click the link below to reset your password (valid for 1 hour):\n{reset_url}\n\n"
+        f"Click the link below to reset your password (valid for {ttl_label}):\n{reset_url}\n\n"
         "If you did not request a reset, please ignore this email."
+        f"{pending_note}"
     )
+    pending_html = (
+        "<p><em>Frontend is not yet live. Keep this token and use it directly in the reset password form once the UI is available.</em></p>"
+        if frontend_pending
+        else ""
+    )
+
     body_html = f"""
     <html>
       <body>
         <p>You requested a password reset for your <strong>BreachLens</strong> account.</p>
-        <p><a href="{reset_url}">Reset your password</a> (valid for 1 hour).</p>
+        <p><a href="{reset_url}">Reset your password</a> (valid for {ttl_label}).</p>
         <p>If you did not request a reset, please ignore this email.</p>
+        {pending_html}
       </body>
     </html>
     """

@@ -75,7 +75,8 @@ jobs:
           SECRET_KEY: test-secret-key # pragma: allowlist secret
           MONGO_URI: mongodb://localhost:27017/unused
         run: |
-          pytest tests/test_exposure_logic.py --cov=app --cov-report=xml
+          # Run all tests except those marked as slow or performance-related
+          pytest tests/ -m "not slow" --cov=app --cov-report=xml
       - name: Upload Coverage to Artifacts
         uses: actions/upload-artifact@v4
         with:

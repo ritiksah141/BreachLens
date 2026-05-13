@@ -16,6 +16,12 @@ services:
       - key: FLASK_APP
         value: run.py
       - key: SWAGGER_ENABLED
+        value: "false"
+
+      # FRONTEND (temporary backend-only mode supported)
+      - key: FRONTEND_BASE_URL
+        sync: false
+      - key: FRONTEND_PENDING
         value: "true"
 
       # DATABASE & CACHING (Must be set in Render Dashboard)
@@ -32,4 +38,26 @@ services:
       - key: IP_ANONYMIZATION_SALT
         sync: false
       - key: CORS_ORIGINS
+        sync: false
+      - key: AUTH_COOKIE_SECURE
+        value: "true"
+      - key: AUTH_COOKIE_SAMESITE
+        value: "Lax"
+      - key: AUTH_COOKIE_DOMAIN
+        sync: false
+      - key: CSRF_ENABLED
+        value: "true"
+      - key: CSRF_COOKIE_NAME
+        value: "bl_csrf"
+      - key: CSRF_HEADER_NAME
+        value: "X-CSRF-Token"
+      - key: FRONTEND_BASE_URL
+        sync: false
+      - key: AUTH_COOKIE_SECURE
+        sync: false
+      - key: AUTH_COOKIE_SAMESITE
+        sync: false
+      - key: AUTH_COOKIE_DOMAIN
+        sync: false
+      - key: CSRF_ENABLED
         sync: false

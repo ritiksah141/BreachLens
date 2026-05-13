@@ -461,8 +461,8 @@ def _pick_coords(country: str) -> list[float]:
     """Pick representative coordinates for a country, with fallback."""
     matches = [c for label, c in CITY_COORDS if label == country]
     if matches:
-        return random.choice(matches)
-    return random.choice([c for _, c in CITY_COORDS])
+        return random.choice(matches)  # nosec B311
+    return random.choice([c for _, c in CITY_COORDS])  # nosec B311
 
 
 def _clean_description(raw: str) -> str:
@@ -481,7 +481,7 @@ def _build_timeline(hibp: dict, attack_vector: str) -> list[dict]:
     breach_date = _parse_hibp_date(hibp.get("BreachDate", "2020-01-01"))
     discovery_date = _parse_hibp_date(hibp.get("AddedDate", "2020-06-01"))
 
-    actor_name = random.choice(THREAT_ACTORS)
+    actor_name = random.choice(THREAT_ACTORS)  # nosec B311
 
     events: list[dict] = [
         {
@@ -540,10 +540,10 @@ def _build_remediation(attack_vector: str, status: str) -> list[dict]:
     for i, action_text in enumerate(actions):
         if status == "resolved":
             r_status = "completed"
-            completed = now - timedelta(days=random.randint(10, 60))
+            completed = now - timedelta(days=random.randint(10, 60))  # nosec B311
         elif i == 0:
             r_status = "completed"
-            completed = now - timedelta(days=random.randint(5, 15))
+            completed = now - timedelta(days=random.randint(5, 15))  # nosec B311
         elif i == 1:
             r_status = "in_progress"
             completed = None
@@ -556,8 +556,8 @@ def _build_remediation(attack_vector: str, status: str) -> list[dict]:
             "action": action_text,
             "status": r_status,
             "assigned_to": random.choice(["Security Team", "Engineering", "Legal & Compliance",
-                                          "SOC", "Cloud Ops", "IAM Team"]),
-            "due_date": now + timedelta(days=random.randint(7, 30)),
+                                          "SOC", "Cloud Ops", "IAM Team"]),  # nosec B311
+            "due_date": now + timedelta(days=random.randint(7, 30)),  # nosec B311
             "completed_date": completed,
         })
 
@@ -1025,8 +1025,8 @@ def main() -> None:
         print(f"\n  ✓ MongoDB `{db_name}.breaches`: {total} total records")
         print(f"    — {detailed_count:3d} detailed hand-crafted records")
         print(f"    — {hibp_count:3d} HIBP-sourced records")
-    except Exception:
-        pass
+    except Exception as exc:
+        print(f"  WARNING: Summary unavailable: {exc}")
 
     print("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     print(" Pipeline complete.")

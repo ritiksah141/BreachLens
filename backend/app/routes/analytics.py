@@ -41,8 +41,8 @@ def make_cache_key(*args, **kwargs):
                 algorithms=["HS256"],
             )
             user_id = payload.get("user_id") or payload.get("user", "anonymous")
-        except Exception:
-            pass
+        except Exception as exc:
+            current_app.logger.debug("JWT decode failed for analytics cache key: %s", exc)
 
     # Include path, user, and query params in cache key
     try:

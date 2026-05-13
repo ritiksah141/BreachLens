@@ -13,6 +13,9 @@ class Config:
     SECRET_KEY: str = os.getenv("SECRET_KEY", "")
     MONGO_URI: str = os.getenv("MONGO_URI", "mongodb://localhost:27017/breachlens")
 
+    FRONTEND_BASE_URL: str = os.getenv("FRONTEND_BASE_URL", "http://localhost:4200")
+    FRONTEND_PENDING: bool = os.getenv("FRONTEND_PENDING", "false").lower() in ("true", "1", "yes")
+
     # JWT expiry (used by auth_service.py when calling jwt.encode)
     JWT_ACCESS_TOKEN_EXPIRES: timedelta = timedelta(
         seconds=int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES", 3600))
@@ -44,6 +47,17 @@ class Config:
     # Password reset settings
     PASSWORD_RESET_TOKEN_TTL_MINUTES: int = int(os.getenv("PASSWORD_RESET_TOKEN_TTL_MINUTES", 30))
 
+    # Auth cookie settings
+    AUTH_COOKIE_NAME: str = os.getenv("AUTH_COOKIE_NAME", "bl_auth")
+    AUTH_COOKIE_SECURE: bool = os.getenv("AUTH_COOKIE_SECURE", "false").lower() in ("true", "1", "yes")
+    AUTH_COOKIE_SAMESITE: str = os.getenv("AUTH_COOKIE_SAMESITE", "Lax")
+    AUTH_COOKIE_DOMAIN: str = os.getenv("AUTH_COOKIE_DOMAIN", "")
+
+    # CSRF protection (double-submit cookie)
+    CSRF_ENABLED: bool = os.getenv("CSRF_ENABLED", "true").lower() in ("true", "1", "yes")
+    CSRF_COOKIE_NAME: str = os.getenv("CSRF_COOKIE_NAME", "bl_csrf")
+    CSRF_HEADER_NAME: str = os.getenv("CSRF_HEADER_NAME", "X-CSRF-Token")
+
 
 class DevelopmentConfig(Config):
     """Development configuration."""
@@ -66,6 +80,8 @@ class ProductionConfig(Config):
     """Production configuration with stricter secure defaults."""
     DEBUG: bool = False
     SWAGGER_ENABLED: bool = os.getenv("SWAGGER_ENABLED", "false").lower() in ("true", "1", "yes")
+
+    AUTH_COOKIE_SECURE: bool = os.getenv("AUTH_COOKIE_SECURE", "true").lower() in ("true", "1", "yes")
 
     # Safely fallback to memory storage if Redis is not configured in production
     _redis_url = os.getenv("CACHE_REDIS_URL", "")
