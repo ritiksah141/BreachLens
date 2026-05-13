@@ -29,7 +29,8 @@ class Config:
     RATELIMIT_DEFAULT: str = "200 per day;50 per hour"
 
     # Flask-Caching configuration
-    CACHE_TYPE: str = os.getenv("CACHE_TYPE", "SimpleCache")  # Options: SimpleCache, RedisCache, FileSystemCache
+    CACHE_TYPE: str = os.getenv("CACHE_TYPE", "SimpleCache")
+    CACHE_REDIS_URL: str = os.getenv("CACHE_REDIS_URL", "")
     CACHE_DEFAULT_TIMEOUT: int = int(os.getenv("CACHE_DEFAULT_TIMEOUT", 300))
 
     # Request logging settings

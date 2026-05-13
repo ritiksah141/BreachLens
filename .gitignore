@@ -61,6 +61,10 @@ Thumbs.db
 # Submission folder (coursework)
 submission/
 
+# Generated Data & Caches
+backend/seed/*.json
+backend/seed/*.bloom
+
 # Node.js dependencies
 node_modules/
 
@@ -74,3 +78,8 @@ coverage/
 
 # Documenttation build
 documentation/
+
+# AI tooling — local context files (managed by SecondBrain)
+CLAUDE.md
+AGENTS.md
+GEMINI.md
