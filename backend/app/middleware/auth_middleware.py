@@ -37,7 +37,16 @@ _OBJECTID_RE = re.compile(r"^[0-9a-fA-F]{24}$")
 # ------------------------------------------------------------------ #
 
 def _get_token_from_header() -> str | None:
-    """Extract the JWT string from the ``x-access-token`` header."""
+    """Extract the JWT string from the ``Authorization`` or ``x-access-token`` header.
+
+    Prioritises 'Authorization: Bearer <token>' over 'x-access-token'.
+    """
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        try:
+            return auth_header.split(" ")[1]
+        except IndexError:
+            return None
     return request.headers.get("x-access-token")
 
 

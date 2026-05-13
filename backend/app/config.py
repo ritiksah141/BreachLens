@@ -66,8 +66,9 @@ class ProductionConfig(Config):
     """Production configuration with stricter secure defaults."""
     DEBUG: bool = False
     SWAGGER_ENABLED: bool = os.getenv("SWAGGER_ENABLED", "false").lower() in ("true", "1", "yes")
-    RATELIMIT_STORAGE_URL: str = os.getenv("RATELIMIT_STORAGE_URL", "redis://localhost:6379/0")
+    RATELIMIT_STORAGE_URL: str = os.getenv("RATELIMIT_STORAGE_URL", "")
     CACHE_TYPE: str = os.getenv("CACHE_TYPE", "RedisCache")
+    CACHE_REDIS_URL: str = os.getenv("CACHE_REDIS_URL", "")
 
 
 config: dict = {

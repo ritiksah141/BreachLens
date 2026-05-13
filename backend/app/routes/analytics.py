@@ -27,7 +27,12 @@ def make_cache_key(*args, **kwargs):
     """
     # Check if JWT is present (optional endpoints) — raw pyjwt
     user_id = "anonymous"
-    token = request.headers.get("x-access-token")
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+    else:
+        token = request.headers.get("x-access-token")
+
     if token:
         try:
             payload = pyjwt.decode(
@@ -35,7 +40,7 @@ def make_cache_key(*args, **kwargs):
                 current_app.config["SECRET_KEY"],
                 algorithms=["HS256"],
             )
-            user_id = payload.get("user", payload.get("user_id", "anonymous"))
+            user_id = payload.get("user_id") or payload.get("user", "anonymous")
         except Exception:
             pass
 

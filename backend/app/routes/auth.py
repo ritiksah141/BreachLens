@@ -36,11 +36,26 @@ def _blacklist_collection():
 def _add_to_blacklist(token: str) -> None:
     """Insert a revoked **full token** into the blacklist collection.
 
-    Uses ``update_one`` with ``upsert=True`` so duplicates are safe.
+    Includes the 'expires_at' field for the MongoDB TTL index to automatically
+    purge the token after it has expired.
     """
+    try:
+        # Decode without verification to get the 'exp' claim
+        import jwt as pyjwt
+        payload = pyjwt.decode(token, options={"verify_signature": False})
+        exp_timestamp = payload.get("exp")
+        # Ensure expires_at is a datetime object in UTC
+        expires_at = datetime.fromtimestamp(exp_timestamp) if exp_timestamp else datetime.utcnow()
+    except Exception:
+        expires_at = datetime.utcnow()
+
     _blacklist_collection().update_one(
         {"token": token},
-        {"$set": {"token": token, "blacklisted_at": datetime.utcnow()}},
+        {"$set": {
+            "token": token,
+            "blacklisted_at": datetime.utcnow(),
+            "expires_at": expires_at
+        }},
         upsert=True,
     )
 
@@ -215,8 +230,14 @@ def logout():
 
     The module requires storing the full token string in the blacklist
     collection so that the decorator can check via ``find_one({"token": …})``.
+    Supports 'Authorization: Bearer <token>' and the legacy 'x-access-token' header.
     """
-    token = request.headers.get("x-access-token")
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+    else:
+        token = request.headers.get("x-access-token")
+
     if token:
         _add_to_blacklist(token)
     return "", 204

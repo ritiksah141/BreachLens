@@ -4,6 +4,7 @@ app/__init__.py — Flask application factory for BreachLens.
 import logging
 from flask import Flask, jsonify
 from flasgger import Swagger
+from flask_talisman import Talisman
 from app.config import config
 from app.extensions import mongo, cors, limiter, cache
 from app.routes.auth import auth_bp, login_bp
@@ -45,6 +46,23 @@ def create_app(config_name: str = "development") -> Flask:
     limiter.init_app(app)
     cache.init_app(app)
 
+    # Security Headers with Flask-Talisman
+    # Define CSP: allow scripts/styles only from self and trusted sources (Swagger)
+    csp = {
+        'default-src': ["'self'"],
+        'script-src': ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com'],
+        'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com'],
+        'font-src': ["'self'", 'https://fonts.gstatic.com'],
+        'img-src': ["'self'", 'data:']
+    }
+
+    # We disable force_https during testing to avoid issues with local PyTest
+    is_prod = config_name == "production"
+    Talisman(app,
+             content_security_policy=csp,
+             force_https=is_prod,
+             strict_transport_security=is_prod)
+
     # Swagger UI at /api/docs (disabled by default in production)
     if app.config.get("SWAGGER_ENABLED", True):
         Swagger(app, template=SWAGGER_TEMPLATE, config={
@@ -74,7 +92,10 @@ def create_app(config_name: str = "development") -> Flask:
             BreachService().ensure_indexes()
             AuthService().ensure_indexes()
             # Create index on the token blacklist collection for fast lookups
+            # Use a TTL (Time-To-Live) index so expired tokens are automatically removed.
+            # We set expireAfterSeconds=0 because we will store the 'exp' time in the document.
             mongo.db["blacklist"].create_index("token", unique=True, background=True)
+            mongo.db["blacklist"].create_index("expires_at", expireAfterSeconds=0, background=True)
         except Exception as e:
             logger.exception("Failed to create database indexes at startup: %s", e)
             # Indexes will be created on first request if DB not yet available

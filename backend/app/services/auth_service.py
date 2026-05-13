@@ -132,7 +132,7 @@ class AuthService:
         return (
             {
                 "token": token,
-                "token_type": "JWT",
+                "token_type": "Bearer",
                 "expires_in": expires_seconds,
                 "user": {
                     "_id": str(user["_id"]),

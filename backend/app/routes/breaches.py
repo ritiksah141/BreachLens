@@ -51,8 +51,14 @@ def _try_optional_jwt() -> None:
     """Attempt to verify a JWT if present; silently ignore missing/invalid tokens.
 
     Uses raw ``pyjwt.decode()`` — no Flask-JWT-Extended dependency.
+    Supports 'Authorization: Bearer <token>' and the legacy 'x-access-token' header.
     """
-    token = request.headers.get("x-access-token")
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+    else:
+        token = request.headers.get("x-access-token")
+
     if not token:
         g.current_user_id = None
         return
@@ -62,7 +68,7 @@ def _try_optional_jwt() -> None:
             current_app.config["SECRET_KEY"],
             algorithms=["HS256"],
         )
-        g.current_user_id = payload.get("user", payload.get("user_id"))
+        g.current_user_id = payload.get("user_id") or payload.get("user")
     except Exception:
         g.current_user_id = None
 
