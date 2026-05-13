@@ -8,6 +8,7 @@ Usage:
 import sys
 import os
 import argparse
+import getpass
 import secrets
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
@@ -41,9 +42,17 @@ def _oid() -> ObjectId:
 # Seed Users                                                                   #
 # --------------------------------------------------------------------------- #
 def seed_users(reset: bool = False) -> tuple[dict, dict]:
-    admin_pass = os.getenv("ADMIN_PASSWORD", secrets.token_urlsafe(12))
-    analyst_pass = os.getenv("ANALYST_PASSWORD", secrets.token_urlsafe(12))
-    guest_pass = os.getenv("GUEST_PASSWORD", secrets.token_urlsafe(12))
+    def _prompt_secret(var_name: str, label: str) -> str:
+        env_value = os.getenv(var_name)
+        if env_value:
+            return env_value
+        if sys.stdin.isatty():
+            return getpass.getpass(f"Enter {label} (leave blank to auto-generate): ") or ""
+        return ""
+
+    admin_pass = _prompt_secret("ADMIN_PASSWORD", "admin password") or secrets.token_urlsafe(12)
+    analyst_pass = _prompt_secret("ANALYST_PASSWORD", "analyst password") or secrets.token_urlsafe(12)
+    guest_pass = _prompt_secret("GUEST_PASSWORD", "guest password") or secrets.token_urlsafe(12)
 
     users = [
         {

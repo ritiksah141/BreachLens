@@ -264,7 +264,7 @@ class AuthService:
                 "password_reset_token_hash": token_hash,
                 "password_reset_expires_at": {"$gt": now},
             },
-            {"_id": 1, "password_hash": 1},
+            {"_id": 1, "password_hash": 1},  # nosec B105
         )
         if not user:
             return False, "Invalid or expired reset token."
@@ -285,7 +285,7 @@ class AuthService:
                     "updated_at": now,
                     "failed_login_attempts": 0,
                 },
-                "$unset": {
+                "$unset": {  # nosec B105
                     "password_reset_token_hash": 1,
                     "password_reset_expires_at": 1,
                     "password_reset_requested_at": 1,
