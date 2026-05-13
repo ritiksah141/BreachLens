@@ -3,7 +3,7 @@ auth_middleware.py — Authentication and authorisation decorators for BreachLen
 
 Implements the module-required authentication pattern:
 
-1. Tokens are read from the ``x-access-token`` request header.
+1. Tokens are read from the ``Authorization: Bearer <token>`` request header (with fallback to ``x-access-token``).
 2. Tokens are decoded with the raw ``pyjwt`` library (``jwt.decode``).
 4. The ``blacklist`` MongoDB collection is checked via ``find_one()`` before
    granting access — if the token is found, the request is rejected with

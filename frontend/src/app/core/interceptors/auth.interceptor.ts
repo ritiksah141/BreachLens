@@ -10,8 +10,8 @@ import { AuthService } from '../services/auth.service';
 import { NotificationService } from '../services/notification.service';
 
 /**
- * Attaches the JWT as `x-access-token` header — matching the Flask backend's
- * `_get_token_from_header()` which reads `request.headers.get("x-access-token")`.
+ * Attaches the JWT as `Authorization: Bearer <token>` header — matching the Flask backend's
+ * `_get_token_from_header()` which prioritises the Authorization header.
  */
 export const authInterceptor: HttpInterceptorFn = (
   req: HttpRequest<unknown>,
@@ -23,7 +23,7 @@ export const authInterceptor: HttpInterceptorFn = (
   const isAuthEntryCall = /\/auth\/(login|register)$/i.test(req.url);
 
   const requestToSend = token
-    ? req.clone({ setHeaders: { 'x-access-token': token } })
+    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
     : req;
 
   return next(requestToSend).pipe(

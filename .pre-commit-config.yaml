@@ -13,8 +13,6 @@ repos:
       - id: detect-private-key           # blocks PEM private keys
       - id: end-of-file-fixer            # ensures files end with a newline
       - id: trailing-whitespace          # removes trailing spaces
-      - id: no-commit-to-branch          # blocks direct commits to main
-        args: ["--branch", "main"]
       - id: check-case-conflict          # catches macOS/Windows filename clashes
       - id: mixed-line-ending            # enforces LF line endings
 

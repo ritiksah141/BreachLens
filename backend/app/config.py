@@ -66,9 +66,13 @@ class ProductionConfig(Config):
     """Production configuration with stricter secure defaults."""
     DEBUG: bool = False
     SWAGGER_ENABLED: bool = os.getenv("SWAGGER_ENABLED", "false").lower() in ("true", "1", "yes")
-    RATELIMIT_STORAGE_URL: str = os.getenv("RATELIMIT_STORAGE_URL", "")
-    CACHE_TYPE: str = os.getenv("CACHE_TYPE", "RedisCache")
-    CACHE_REDIS_URL: str = os.getenv("CACHE_REDIS_URL", "")
+
+    # Safely fallback to memory storage if Redis is not configured in production
+    _redis_url = os.getenv("CACHE_REDIS_URL", "")
+    CACHE_REDIS_URL: str = _redis_url
+    CACHE_TYPE: str = os.getenv("CACHE_TYPE", "RedisCache" if _redis_url else "SimpleCache")
+
+    RATELIMIT_STORAGE_URL: str = os.getenv("RATELIMIT_STORAGE_URL", "memory://")
 
 
 config: dict = {

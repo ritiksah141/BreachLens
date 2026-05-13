@@ -37,7 +37,7 @@ import random
 import re
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -321,7 +321,7 @@ def _oid() -> ObjectId:
 
 
 def _now() -> datetime:
-    return datetime.utcnow()
+    return datetime.now(timezone.utc)
 
 
 def _parse_hibp_date(raw: str) -> datetime:
@@ -331,7 +331,7 @@ def _parse_hibp_date(raw: str) -> datetime:
             return datetime.strptime(raw[:19], fmt)
         except ValueError:
             continue
-    return datetime.utcnow()
+    return datetime.now(timezone.utc)
 
 
 def _infer_industry(name: str, description: str) -> str:

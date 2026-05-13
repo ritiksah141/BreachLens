@@ -8,7 +8,8 @@ Usage:
 import sys
 import os
 import argparse
-from datetime import datetime, timedelta
+import secrets
+from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -17,7 +18,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import bcrypt
-from pymongo import MongoClient
+from pymongo import MongoClient, UpdateOne
 from bson import ObjectId
 
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/breachlens")
@@ -39,15 +40,21 @@ def _oid() -> ObjectId:
 # --------------------------------------------------------------------------- #
 # Seed Users                                                                   #
 # --------------------------------------------------------------------------- #
-def seed_users(reset: bool = False) -> dict:
+def seed_users(reset: bool = False) -> tuple[dict, dict]:
+    admin_pass = os.getenv("ADMIN_PASSWORD", secrets.token_urlsafe(12))
+    analyst_pass = os.getenv("ANALYST_PASSWORD", secrets.token_urlsafe(12))
+    guest_pass = os.getenv("GUEST_PASSWORD", secrets.token_urlsafe(12))
+
     users = [
         {
             "_id": _oid(),
             "username": "admin_breach",
             "email": "admin@breachlens.io",
-            "password_hash": bcrypt.hashpw(b"Admin@123", bcrypt.gensalt(12)).decode(),
+            "password_hash": bcrypt.hashpw(admin_pass.encode(), bcrypt.gensalt(12)).decode(),
             "role": "admin",
             "is_active": True,
+            "failed_login_attempts": 0,
+            "locked_until": None,
             "created_at": _dt(2026, 1, 1),
             "last_login": None,
         },
@@ -55,9 +62,11 @@ def seed_users(reset: bool = False) -> dict:
             "_id": _oid(),
             "username": "priya_analyst",
             "email": "priya@breachlens.io",
-            "password_hash": bcrypt.hashpw(b"Analyst@123", bcrypt.gensalt(12)).decode(),
+            "password_hash": bcrypt.hashpw(analyst_pass.encode(), bcrypt.gensalt(12)).decode(),
             "role": "analyst",
             "is_active": True,
+            "failed_login_attempts": 0,
+            "locked_until": None,
             "created_at": _dt(2026, 1, 5),
             "last_login": None,
         },
@@ -65,9 +74,11 @@ def seed_users(reset: bool = False) -> dict:
             "_id": _oid(),
             "username": "marcus_guest",
             "email": "marcus@example.com",
-            "password_hash": bcrypt.hashpw(b"Guest@123", bcrypt.gensalt(12)).decode(),
+            "password_hash": bcrypt.hashpw(guest_pass.encode(), bcrypt.gensalt(12)).decode(),
             "role": "guest",
             "is_active": True,
+            "failed_login_attempts": 0,
+            "locked_until": None,
             "created_at": _dt(2026, 1, 10),
             "last_login": None,
         },
@@ -75,9 +86,31 @@ def seed_users(reset: bool = False) -> dict:
     # Only delete if reset is requested
     if reset:
         db.users.delete_many({})
-    db.users.insert_many(users)
-    print(f"  Inserted {len(users)} users.")
-    return {u["username"]: u["_id"] for u in users}
+
+    operations = []
+    for u in users:
+        operations.append(
+            UpdateOne(
+                {"email": u["email"]},
+                {"$setOnInsert": u},
+                upsert=True
+            )
+        )
+
+    result = db.users.bulk_write(operations)
+    print(f"  Upserted {result.upserted_count} new users. (Matched {result.matched_count} existing)")
+
+    # Fetch all user IDs (either newly inserted or existing)
+    emails = [u["email"] for u in users]
+    db_users = db.users.find({"email": {"$in": emails}})
+    user_ids = {u["username"]: u["_id"] for u in db_users}
+
+    passwords = {
+        "admin": admin_pass,
+        "analyst": analyst_pass,
+        "guest": guest_pass
+    }
+    return user_ids, passwords
 
 
 # --------------------------------------------------------------------------- #
@@ -1290,8 +1323,8 @@ def seed_breaches(user_ids: dict, reset: bool = False) -> None:
     admin_id = user_ids.get("admin_breach")
     analyst_id = user_ids.get("priya_analyst")
 
-    now = datetime.utcnow()
-    docs = []
+    now = datetime.now(timezone.utc)
+    operations = []
     for i, b in enumerate(BREACHES_DATA):
         doc = {
             **b,
@@ -1299,13 +1332,20 @@ def seed_breaches(user_ids: dict, reset: bool = False) -> None:
             "updated_at": now - timedelta(days=len(BREACHES_DATA) - i),
             "created_by": admin_id if i % 3 == 0 else analyst_id,
         }
-        docs.append(doc)
+        operations.append(
+            UpdateOne(
+                {"breach_id": b["breach_id"]},
+                {"$setOnInsert": doc},
+                upsert=True
+            )
+        )
 
     # Only delete if reset is requested
     if reset:
-        db.breaches.delete_many({})
-    db.breaches.insert_many(docs)
-    print(f"  Inserted {len(docs)} breach records.")
+        db.breaches.delete_many({"breach_id": {"$exists": True}})
+
+    result = db.breaches.bulk_write(operations)
+    print(f"  Upserted {result.upserted_count} new hand-crafted breaches. (Matched {result.matched_count} existing)")
 
     # Create indexes
     db.breaches.create_index([("location", "2dsphere")])
@@ -1334,13 +1374,14 @@ def main(reset: bool = False) -> None:
         print("  Collections dropped.")
 
     print("  Seeding BreachLens hand-crafted records...")
-    user_ids = seed_users(reset=reset)
+    user_ids, passwords = seed_users(reset=reset)
     seed_breaches(user_ids, reset=reset)
     print(f"  Done. Database: {DB_NAME}")
-    print("\n  Default credentials:")
-    print("    Admin:   admin@breachlens.io  / Admin@123")
-    print("    Analyst: priya@breachlens.io  / Analyst@123")
-    print("    Guest:   marcus@example.com   / Guest@123")
+    print("\n  Generated default credentials:")
+    print(f"    Admin:   admin@breachlens.io  / {passwords['admin']}")
+    print(f"    Analyst: priya@breachlens.io  / {passwords['analyst']}")
+    print(f"    Guest:   marcus@example.com   / {passwords['guest']}")
+    print("\n  ⚠️  Please save these credentials securely. They will not be printed again.")
 
 
 if __name__ == "__main__":

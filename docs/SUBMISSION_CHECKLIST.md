@@ -336,7 +336,7 @@ curl -X GET http://localhost:5001/api/v1/admin/stats \
 
 # 8. Login as admin (Basic Auth)
 ADMIN_TOKEN=$(curl -X GET http://localhost:5001/api/v1/login \
-  -u "admin_breach:Admin@123" -s | jq -r '.data.token')
+  -u "admin_breach:<ADMIN_PASSWORD>" -s | jq -r '.data.token')
 
 # 9. Test admin endpoint (should succeed)
 curl -X GET http://localhost:5001/api/v1/admin/stats \

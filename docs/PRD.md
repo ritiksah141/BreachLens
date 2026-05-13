@@ -1,6 +1,6 @@
 # BreachLens – Dark Web Breach Intelligence Tracker
 ## Product Requirements Document (PRD)
-**Version:** 1.0.0
+**Version:** 2.1.0
 **Module:** COM661 – Full Stack Strategies and Development
 **Author:** Individual Coursework Submission
 **Classification:** Academic – Internal Use Only
@@ -26,7 +26,7 @@
 
 ## 1. Executive Summary
 
-**BreachLens** is an enterprise-grade, full-stack cybersecurity intelligence platform designed to ingest, analyse, and visualise dark web data breach records. The system provides security professionals with a centralised, data-rich environment to track exposure events, score organisational risk, monitor remediation progress, and visualise breach geography in real time.
+**BreachLens** is a production-grade, full-stack cybersecurity intelligence platform designed to ingest, analyse, and visualise dark web data breach records at scale. Transitioned from a local prototype to a high-performance system, it now features an **in-memory Bloom Filter architecture** for millions of email signatures, **k-Anonymity password security**, and **distributed rate limiting** via Upstash Redis.
 
 Built on a Python Flask RESTful API backend, a MongoDB document store with advanced geospatial and aggregation capabilities, and an Angular 17+ reactive frontend, BreachLens is architected to demonstrate mastery of every dimension examined in the COM661 CW1 and CW2 rubrics — from schema design and complex query construction through to role-based access, professional UI, and automated testing.
 

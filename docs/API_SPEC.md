@@ -1,13 +1,13 @@
 # BreachLens – RESTful API Specification
 ## API_SPEC.md
-**Version:** 1.0.0
+**Version:** 2.1.0
 **Base URL:** `http://localhost:5001/api/v1`
 **Module:** COM661 – Full Stack Strategies and Development
 
 ---
 
 > **Design Principles**
-> All endpoints follow strict REST conventions: noun-based URIs, correct HTTP verbs, appropriate status codes, versioned under `/api/v1/`, and a uniform JSON response envelope. Authentication uses JWT tokens sent via the `x-access-token` header (raw PyJWT). Login supports HTTP Basic Authentication (`GET /api/v1/login`). Role hierarchy: `admin > analyst > guest (unauthenticated)`.
+> All endpoints follow strict REST conventions: noun-based URIs, correct HTTP verbs, appropriate status codes, versioned under `/api/v1/`, and a uniform JSON response envelope. Authentication uses industry-standard JWT tokens sent via the `Authorization: Bearer <token>` header (raw PyJWT). Legacy support for `x-access-token` is maintained for backward compatibility. Login supports HTTP Basic Authentication (`GET /api/v1/login`). Role hierarchy: `admin > analyst > guest (unauthenticated)`.
 
 ---
 
@@ -68,7 +68,7 @@ Authorization: Basic base64(username:password)
 }
 ```
 
-> The returned `token` must be sent in subsequent requests via the `x-access-token` header.
+> The returned `token` must be sent in subsequent requests via the `Authorization: Bearer <token>` header.
 
 ### Endpoint Detail: POST `/auth/register`
 
@@ -123,13 +123,13 @@ Authorization: Basic base64(username:password)
   }
 }
 ```
-> The token expires in **3600 seconds (1 hour)**. Send it in subsequent requests via the `x-access-token` header.
+> The token expires in **3600 seconds (1 hour)**. Send it in subsequent requests via the `Authorization: Bearer <token>` header.
 
 ### Endpoint Detail: POST `/auth/logout`
 
 **Request Headers:**
 ```
-x-access-token: <JWT token>
+Authorization: Bearer <token>
 ```
 
 **Request Body:** None
@@ -140,7 +140,7 @@ x-access-token: <JWT token>
 
 **Request Headers:**
 ```
-x-access-token: <JWT token>
+Authorization: Bearer <token>
 ```
 
 **Success Response `200`:**

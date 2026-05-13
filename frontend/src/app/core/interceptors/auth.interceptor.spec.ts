@@ -47,23 +47,23 @@ describe('authInterceptor', () => {
   // ---------------------------------------------------------------
   // Token attachment
   // ---------------------------------------------------------------
-  it('should attach x-access-token header when token is available', () => {
+  it('should attach Authorization: Bearer header when token is available', () => {
     mockAuthService.getToken.and.returnValue('my-jwt-token');
 
     httpClient.get('/api/data').subscribe();
 
     const req = httpTesting.expectOne('/api/data');
-    expect(req.request.headers.get('x-access-token')).toBe('my-jwt-token');
+    expect(req.request.headers.get('Authorization')).toBe('Bearer my-jwt-token');
     req.flush({});
   });
 
-  it('should not attach x-access-token header when token is null', () => {
+  it('should not attach Authorization header when token is null', () => {
     mockAuthService.getToken.and.returnValue(null);
 
     httpClient.get('/api/data').subscribe();
 
     const req = httpTesting.expectOne('/api/data');
-    expect(req.request.headers.has('x-access-token')).toBeFalse();
+    expect(req.request.headers.has('Authorization')).toBeFalse();
     req.flush({});
   });
 

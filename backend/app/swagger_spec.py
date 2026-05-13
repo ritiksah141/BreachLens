@@ -11,11 +11,12 @@ SWAGGER_TEMPLATE: dict = {
         "title": "BreachLens API",
         "description": (
             "Dark Web Breach Intelligence Tracker API.\n\n"
-            "**Authentication:** All protected endpoints require an `x-access-token` "
+            "**Authentication:** All protected endpoints require an `Authorization: Bearer <token>` "
             "header obtained from `GET /api/v1/login` (Basic Auth) or `POST /api/v1/auth/login`.\n\n"
+            "Legacy support for `x-access-token` is maintained for backward compatibility.\n\n"
             "**Roles:** `guest` · `analyst` · `admin`"
         ),
-        "version": "1.0.0",
+        "version": "2.1.0",
         "contact": {"email": "admin@breachlens.io"},
     },
     "basePath": "/api/v1",
@@ -26,8 +27,8 @@ SWAGGER_TEMPLATE: dict = {
         "Bearer": {
             "type": "apiKey",
             "in": "header",
-            "name": "x-access-token",
-            "description": 'Enter your JWT token directly (no Bearer prefix)',
+            "name": "Authorization",
+            "description": 'Enter your JWT token with the "Bearer " prefix (e.g., Bearer eyJhbGci...)',
         }
     },
     "tags": [
