@@ -307,9 +307,15 @@ export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
     );
   }
 
-  private async renderMarkers(geoData: any) {
+  private async renderMarkers(apiResponse: any) {
     const L = await import('leaflet' as any);
     if (this.geoJsonLayer) this.map.removeLayer(this.geoJsonLayer);
+
+    const geoData = apiResponse?.data || apiResponse;
+    if (!geoData || !geoData.features) {
+       console.warn('Map data empty or invalid format:', apiResponse);
+       return;
+    }
 
     const cs = getComputedStyle(document.documentElement);
     const colorMap: any = {

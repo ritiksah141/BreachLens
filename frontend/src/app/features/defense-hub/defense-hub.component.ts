@@ -48,7 +48,7 @@ import { NotificationService } from '../../core/services/notification.service';
                 <span class="text-on-surface-variant opacity-50 text-xs-caps" style="font-size: 8px;">/ 10.0</span>
               </div>
               <div class="text-xs-caps fw-bold mb-4" [ngClass]="exposureData.exposed ? 'text-error' : 'text-success'" style="font-size: 7px;">
-                {{ exposureData.exposed ? 'CRITICAL EXPOSURE DETECTED' : 'SYSTEMS NOMINAL' }}
+                {{ exposureData.exposed ? 'CRITICAL EXPOSURE DETECTED' : 'SYSTEMS NORMAL' }}
               </div>
 
               <div class="mt-auto pt-4 border-top border-outline-variant border-opacity-10">

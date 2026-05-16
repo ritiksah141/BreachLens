@@ -21,6 +21,7 @@ from app.extensions import limiter, mongo
 from app.middleware.auth_middleware import jwt_required, require_auth
 from app.models.user import UserSchema
 from app.services.auth_service import AuthService
+from app.utils.audit import log_auth_event, audit_log
 from app.utils.email import send_password_reset_email
 from app.utils.response import error_response, success_response
 from app.utils.validators import ALLOWED_ROLES, is_valid_email
@@ -216,8 +217,10 @@ def register():
         role=data.get("role", "guest"),
     )
     if err:
+        log_auth_event("register", data["email"], f"failure: {err}")
         return error_response(err, 409)
 
+    log_auth_event("register", data["email"], "success", {"role": data.get("role", "guest")})
     response = success_response(user, 201)
     # Set Location header on the actual Response object.
     resp_obj = response[0]
@@ -247,6 +250,7 @@ def login():
     if lockout_key:
         is_locked, remaining = auth_service.check_account_lockout(lockout_key)
         if is_locked:
+            log_auth_event("login", email or username, f"failure: account locked ({remaining}s remaining)")
             return error_response(
                 f"Account is locked due to too many failed login attempts. "
                 f"Try again in {remaining} seconds.",
@@ -262,11 +266,14 @@ def login():
         # Record failed login attempt
         if lockout_key:
             auth_service.record_failed_login(lockout_key)
+        log_auth_event("login", email or username, f"failure: {err}")
         return error_response(err, 401)
 
     # Reset failed attempts on successful login
     if lockout_key:
         auth_service.reset_failed_attempts(lockout_key)
+
+    log_auth_event("login", email or username, "success")
 
     response = success_response(token_data)
     response_obj = response[0]
@@ -296,6 +303,7 @@ def logout():
 
     if token:
         _add_to_blacklist(token)
+        log_auth_event("logout", getattr(g, "current_user", "unknown"), "success")
     resp = make_response("", 204)
     _clear_auth_cookies(resp)
     return resp

@@ -41,7 +41,7 @@ export class AuthService {
   // ------------------------------------------------------------------
 
   getToken(): string | null {
-    return null;
+    return localStorage.getItem('bl_token');
   }
 
   // ------------------------------------------------------------------
@@ -53,7 +53,9 @@ export class AuthService {
       .post<ApiResponse<AuthToken>>(`${this.apiUrl}/auth/login`, credentials)
       .pipe(
         switchMap((res) => {
-          if (res.data?.token) {
+          const token = res.data?.token;
+          if (token) {
+            localStorage.setItem('bl_token', token);
             return this.fetchProfile();
           }
           return throwError(() => new Error('No token received'));
@@ -124,5 +126,6 @@ export class AuthService {
 
   private _clearSession(): void {
     this._user.set(null);
+    localStorage.removeItem('bl_token');
   }
 }

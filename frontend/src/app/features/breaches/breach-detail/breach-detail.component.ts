@@ -76,7 +76,7 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
         </div>
         <div class="d-flex align-items-center gap-2">
            <span class="p-1 rounded-circle shadow-sm" [ngClass]="health.isBackendReady() ? 'bg-success' : 'bg-error'" style="width: 4px; height: 4px;"></span>
-           <span class="text-xs-caps fw-bold text-on-surface opacity-75" style="font-size: 6px; letter-spacing: 0.15em;">SIGNAL: {{ health.isBackendReady() ? 'NOMINAL' : 'LOST' }}</span>
+           <span class="text-xs-caps fw-bold text-on-surface opacity-75" style="font-size: 6px; letter-spacing: 0.15em;">SIGNAL: {{ health.isBackendReady() ? 'NORMAL' : 'LOST' }}</span>
         </div>
       </div>
 

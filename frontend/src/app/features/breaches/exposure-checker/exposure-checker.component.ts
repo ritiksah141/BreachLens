@@ -161,15 +161,15 @@ import { forkJoin } from 'rxjs';
           <!-- Primary Status Card -->
           <div class="col-lg-4">
             <div class="glass-panel p-4 shadow-lg h-100 d-flex flex-column justify-content-between border-top border-4"
-                 [ngClass]="results.exposed || results.email_exposed || results.domain_exposed ? 'border-error' : 'border-success'">
+                 [ngClass]="(results.exposed || results.email_exposed || results.domain_exposed) ? 'border-error status-card-exposed' : 'border-success status-card-clear'">
               <div>
                 <h2 class="text-xs-caps text-on-surface border-bottom border-outline-variant border-opacity-10 pb-2 mb-4" style="font-size: 8px;">
                   {{ searchMode === 'email' ? 'IDENTITY THREAT STATUS' : (searchMode === 'domain' ? 'DOMAIN RISK PROFILE' : 'PASSWORD EXPOSURE INTEL') }}
                 </h2>
                 <div class="p-4 rounded-3 d-flex align-items-center gap-4 bg-surface-container-high border border-outline-variant border-opacity-10 shadow-sm">
-                  <div class="status-orb shadow-lg" [ngClass]="results.exposed || results.email_exposed || results.domain_exposed ? 'bg-error animate-pulse' : 'bg-success'"></div>
+                  <div class="status-orb shadow-lg" [ngClass]="(results.exposed || results.email_exposed || results.domain_exposed) ? 'bg-error animate-pulse' : 'bg-success'"></div>
                   <div>
-                    <div class="fs-4 fw-bold font-headline" [ngClass]="results.exposed || results.email_exposed || results.domain_exposed ? 'text-error' : 'text-success'">
+                    <div class="fs-4 fw-bold font-headline" [ngClass]="(results.exposed || results.email_exposed || results.domain_exposed) ? 'text-error' : 'text-success'">
                       {{ (results.exposed || results.email_exposed || results.domain_exposed) ? 'EXPOSURE DETECTED' : 'CLEAR SIGNAL' }}
                     </div>
                     <div class="text-xs-caps text-on-surface opacity-100 fw-bold" style="font-size: 8px;">
@@ -190,11 +190,11 @@ import { forkJoin } from 'rxjs';
                 </div>
               </div>
               <div class="mt-4">
-                <button class="btn btn-error w-100 py-3 text-xs-caps shadow-sm text-white fw-bold" *ngIf="results.exposed || results.email_exposed || results.domain_exposed" style="background-color: var(--error); font-size: 9px;">
+                <button class="btn btn-error w-100 py-3 text-xs-caps shadow-sm text-white fw-bold d-flex align-items-center justify-content-center" *ngIf="results.exposed || results.email_exposed || results.domain_exposed" style="background-color: var(--error); font-size: 9px;">
                   SECURE IDENTITY
                 </button>
                 <div class="text-center text-xs-caps opacity-100 py-3 text-on-surface fw-bold" *ngIf="!(results.exposed || results.email_exposed || results.domain_exposed)" style="font-size: 7px;">
-                  IDENTITY STATUS: NOMINAL
+                  IDENTITY STATUS: NORMAL
                 </div>
               </div>
             </div>
@@ -238,11 +238,20 @@ import { forkJoin } from 'rxjs';
             </div>
           </div>
 
-          <!-- Infiltration Logs -->
-          <div class="col-lg-12" *ngIf="searchMode !== 'password'">
-             <div class="glass-panel p-4 shadow-lg overflow-hidden d-flex flex-column">
+          <!-- Secondary Analytics Row (Map + Logs) -->
+          <div class="col-lg-6">
+            <div class="glass-panel p-3 shadow-lg" style="height: 450px;">
+              <h2 class="text-xs-caps text-on-surface px-2 mb-3" style="font-size: 8px;">THREAT VECTOR PROJECTION</h2>
+              <div class="position-relative overflow-hidden flex-grow-1" style="height: calc(100% - 40px); border-radius: 1rem;">
+                <app-breach-map height="100%" />
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-6" *ngIf="searchMode !== 'password'">
+             <div class="glass-panel p-4 shadow-lg overflow-hidden d-flex flex-column" style="height: 450px;">
                <h2 class="text-xs-caps text-on-surface border-bottom border-outline-variant border-opacity-10 pb-2 mb-4" style="font-size: 8px;">SOURCE INFILTRATION LOGS</h2>
-               <div class="table-responsive custom-scrollbar-hidden">
+               <div class="table-responsive custom-scrollbar-hidden flex-grow-1">
                 <table class="table table-hover align-middle mb-0 text-on-surface">
                   <thead>
                     <tr class="bg-surface-container-low">
@@ -257,7 +266,7 @@ import { forkJoin } from 'rxjs';
                       <tr class="bg-transparent border-bottom border-outline-variant border-opacity-5 transition-all hover-bg-surface-container-high cursor-pointer" [routerLink]="['/breaches', b._id]">
                         <td class="font-mono small py-3 ps-3 opacity-100 fw-bold" style="font-size: 10px;">{{ (b.created_at || b.breach_date) | date:'yyyy.MM.dd' }}</td>
                         <td class="fw-bold small py-3" style="font-size: 11px;">{{ getOrgName(b) | uppercase }}</td>
-                        <td class="text-xs-caps opacity-75 py-3 fw-bold" style="font-size: 7px;">{{ b.industry | uppercase }}</td>
+                        <td class="text-xs-caps opacity-75 py-3 fw-bold" style="font-size: 7px;">{{ (b.industry || '').split('_').join(' ') | uppercase }}</td>
                         <td class="text-end py-3 pe-3">
                           <div class="d-flex align-items-center justify-content-end gap-2">
                              <span class="p-1 rounded-circle shadow-sm" [ngClass]="'bg-' + getSevColor(b.severity)" style="width: 5px; height: 5px;"></span>
@@ -273,40 +282,32 @@ import { forkJoin } from 'rxjs';
           </div>
 
           <!-- Tactical Defense Playbook (Unique Feature) -->
-          <div class="col-lg-7" *ngIf="results.defense_playbook && results.defense_playbook.length > 0">
+          <div class="col-lg-12" *ngIf="results.defense_playbook && results.defense_playbook.length > 0">
             <div class="glass-panel p-4 shadow-lg h-100">
               <h2 class="text-xs-caps text-on-surface border-bottom border-outline-variant border-opacity-10 pb-2 mb-4" style="font-size: 8px;">TACTICAL DEFENSE PLAYBOOK</h2>
-              <div class="d-flex flex-column gap-3">
+              <div class="row g-3">
                 @for (item of results.defense_playbook; track item.action; let i = $index) {
-                  <div class="d-flex gap-4 p-3 rounded-3 bg-surface-container-low border-start border-4 shadow-sm"
-                       [ngClass]="item.priority === 'critical' ? 'border-error' : 'border-primary'">
-                    <div class="playbook-step-number text-xs-caps fw-extrabold" [ngClass]="item.priority === 'critical' ? 'text-error' : 'text-primary'">
-                       STEP {{ i + 1 }}
-                    </div>
-                    <div>
-                      <div class="d-flex align-items-center gap-2 mb-1">
-                        <span class="text-xs-caps fw-extrabold text-on-surface" style="font-size: 8px;">{{ item.action }}</span>
-                        <span class="badge rounded-pill bg-opacity-10 text-xs-caps"
-                              [ngClass]="item.priority === 'critical' ? 'bg-error text-error' : 'bg-primary text-primary'"
-                              style="font-size: 6px; transform: scale(0.8);">{{ item.priority | uppercase }}</span>
+                  <div class="col-md-6">
+                    <div class="d-flex gap-4 p-3 rounded-3 bg-surface-container-low border-start border-4 shadow-sm h-100"
+                         [ngClass]="item.priority === 'critical' ? 'border-error' : 'border-primary'">
+                      <div class="playbook-step-number text-xs-caps fw-extrabold" [ngClass]="item.priority === 'critical' ? 'text-error' : 'text-primary'">
+                         STEP {{ i + 1 }}
                       </div>
-                      <p class="text-on-surface-variant opacity-75 fw-medium mb-0" style="font-size: 11px;">{{ item.details }}</p>
+                      <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                          <span class="text-xs-caps fw-extrabold text-on-surface" style="font-size: 8px;">{{ item.action }}</span>
+                          <span class="badge rounded-pill bg-opacity-10 text-xs-caps"
+                                [ngClass]="item.priority === 'critical' ? 'bg-error text-error' : 'bg-primary text-primary'"
+                                style="font-size: 6px; transform: scale(0.8);">{{ item.priority | uppercase }}</span>
+                        </div>
+                        <p class="text-on-surface-variant opacity-75 fw-medium mb-0" style="font-size: 11px;">{{ item.details }}</p>
+                      </div>
                     </div>
                   </div>
                 }
               </div>
               <div class="mt-4 pt-3 border-top border-outline-variant border-opacity-10 text-xs-caps opacity-50 fw-bold" style="font-size: 6px;">
                  REAL-TIME ACTION PLAN GENERATED BASED ON RISK GENOME SEVERITY
-              </div>
-            </div>
-          </div>
-
-          <!-- Global Vector Map -->
-          <div class="col-lg-5">
-            <div class="glass-panel p-3 shadow-lg h-100">
-              <h2 class="text-xs-caps text-on-surface px-2 mb-3" style="font-size: 8px;">THREAT VECTOR PROJECTION</h2>
-              <div class="position-relative overflow-hidden" style="height: 400px; border-radius: 1rem;">
-                <app-breach-map height="100%" />
               </div>
             </div>
           </div>
@@ -489,6 +490,15 @@ import { forkJoin } from 'rxjs';
 
     .border-error { border-color: var(--error) !important; }
     .btn-error { background-color: var(--error) !important; color: white !important; }
+
+    .status-card-exposed {
+      background: color-mix(in srgb, var(--error) 10%, var(--surface-container)) !important;
+      border-color: var(--error) !important;
+    }
+    .status-card-clear {
+      background: color-mix(in srgb, var(--success) 10%, var(--surface-container)) !important;
+      border-color: var(--success) !important;
+    }
   `]
 })
 export class ExposureCheckerComponent implements OnInit {

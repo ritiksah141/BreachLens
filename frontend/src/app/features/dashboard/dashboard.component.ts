@@ -117,7 +117,7 @@ import { FormsModule } from '@angular/forms';
         <div class="floating-kpi-card border-start border-4 d-none d-xl-block" [ngClass]="health.isBackendReady() ? 'border-success' : 'border-error'">
           <div class="text-xs-caps text-on-surface-variant mb-1" style="font-size: 7px;">Systems</div>
           <div class="fs-4 fw-bold font-headline" [ngClass]="health.isBackendReady() ? 'text-success' : 'text-error'">
-            {{ health.isBackendReady() ? 'NOMINAL' : 'DOWN' }}
+            {{ health.isBackendReady() ? 'NORMAL' : 'DOWN' }}
           </div>
           <div class="text-xs-caps mt-1 opacity-50" style="font-size: 6px;">HEALTH: {{ health.isBackendReady() ? '99.8%' : '0.0%' }}</div>
         </div>

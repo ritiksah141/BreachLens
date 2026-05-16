@@ -17,13 +17,13 @@ from functools import wraps
 from datetime import datetime, timezone
 from flask import g, request, current_app, has_request_context
 from typing import Callable, Any
+from app.extensions import mongo
 
 
 class AuditLogger:
     """
-    Structured audit logger that writes to a separate audit log file.
-
-    Log format: JSON with timestamp, user_id, action, resource, IP, method, result, details
+    Structured audit logger that writes to both a separate audit log file
+    and a MongoDB 'audit_logs' collection for persistence and scalability.
     """
 
     def __init__(self):
@@ -38,28 +38,21 @@ class AuditLogger:
 
     def _setup_handler(self):
         """Setup file handler for audit logs."""
-        # Get audit log directory from environment or use default
         log_dir = os.getenv("AUDIT_LOG_DIR", "logs")
         log_file = os.getenv("AUDIT_LOG_FILE", "audit.log")
-
-        # Create logs directory if it doesn't exist
         os.makedirs(log_dir, exist_ok=True)
-
         log_path = os.path.join(log_dir, log_file)
 
-        # Create rotating file handler if available, otherwise use regular handler
         try:
             from logging.handlers import RotatingFileHandler
-            # Rotate after 10MB, keep 5 backup files
             handler = RotatingFileHandler(
                 log_path,
-                maxBytes=int(os.getenv("AUDIT_LOG_MAX_BYTES", 10485760)),  # 10MB default
+                maxBytes=int(os.getenv("AUDIT_LOG_MAX_BYTES", 10485760)),
                 backupCount=int(os.getenv("AUDIT_LOG_BACKUP_COUNT", 5))
             )
         except ImportError:
             handler = logging.FileHandler(log_path)
 
-        # JSON-formatted logs for easy parsing
         formatter = logging.Formatter('%(message)s')
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
@@ -73,32 +66,20 @@ class AuditLogger:
         user_id: str = None,
         ip_address: str = None
     ):
-        """
-        Log an audit event.
-
-        Args:
-            action: Type of action performed (e.g., "user_created", "breach_deleted")
-            resource: Resource affected (e.g., "/api/v1/breaches/123")
-            result: Outcome of the action ("success" or "failure: reason")
-            details: Additional context as dict (e.g., {"old_role": "user", "new_role": "admin"})
-            user_id: User performing the action (defaults to g.current_user_id)
-            ip_address: IP address of requester (defaults to request.remote_addr)
-        """
-        # Get user_id and IP from context if not provided
+        """Log an audit event to file and MongoDB."""
         if user_id is None:
             user_id = getattr(g, "current_user_id", "anonymous")
 
         if ip_address is None:
             ip_address = request.remote_addr if has_request_context() and request else "unknown"
 
-        # Anonymize IP if configured
         if os.getenv("REQUEST_IP_POLICY", "anonymize") == "anonymize":
             ip_address = self._anonymize_ip(ip_address)
         elif os.getenv("REQUEST_IP_POLICY") == "none":
             ip_address = "redacted"
 
         audit_entry = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(timezone.utc),
             "user_id": str(user_id),
             "action": action,
             "resource": resource,
@@ -109,26 +90,23 @@ class AuditLogger:
             "details": details or {}
         }
 
-        # Log as JSON
-        self.logger.info(json.dumps(audit_entry))
+        # 1. Log to file as JSON string
+        file_entry = audit_entry.copy()
+        file_entry["timestamp"] = file_entry["timestamp"].isoformat()
+        self.logger.info(json.dumps(file_entry))
+
+        # 2. Log to MongoDB (Background safe)
+        try:
+            if has_request_context() and mongo.db is not None:
+                mongo.db["audit_logs"].insert_one(audit_entry)
+        except Exception as e:
+            # Prevent audit logging failure from crashing the request
+            if has_request_context():
+                current_app.logger.warning(f"Failed to write audit log to MongoDB: {e}")
 
     def _anonymize_ip(self, ip_address: str) -> str:
-        """
-        Anonymize IP address by hashing it with a salt.
-
-        Args:
-            ip_address: Original IP address
-
-        Returns:
-            Hashed IP address (first 8 characters of hash)
-        """
         import hashlib
-        salt = os.getenv("IP_ANONYMIZATION_SALT")
-        if not salt:
-            raise ValueError(
-                "IP_ANONYMIZATION_SALT environment variable is required for anonymizing IP addresses. "
-                "Set a cryptographically secure random value (minimum 32 characters)."
-            )
+        salt = os.getenv("IP_ANONYMIZATION_SALT", "default-audit-salt-for-privacy")
         hashed = hashlib.sha256(f"{ip_address}{salt}".encode()).hexdigest()
         return f"anon_{hashed[:8]}"
 

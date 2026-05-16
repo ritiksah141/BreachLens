@@ -16,6 +16,7 @@ from app.models.breach import (
 )
 from app.extensions import limiter, mongo
 from app.services.breach_service import BreachService
+from app.utils.audit import audit_log
 from app.utils.response import error_response, success_response
 from app.utils.validators import (
     ALLOWED_INDUSTRIES,
@@ -405,6 +406,7 @@ def query_subdocuments():
 
 @breaches_bp.post("")
 @require_role("analyst", "admin")
+@audit_log("breach_created", include_response=True)
 def create_breach():
     """Create a new breach record."""
     data = request.get_json(silent=True) or {}
@@ -446,6 +448,7 @@ def get_breach(breach_id: str):
 
 @breaches_bp.put("/<breach_id>")
 @require_role("analyst", "admin")
+@audit_log("breach_fully_updated")
 def update_breach(breach_id: str):
     """Fully replace a breach record."""
     data = request.get_json(silent=True) or {}
@@ -470,6 +473,7 @@ def update_breach(breach_id: str):
 
 @breaches_bp.patch("/<breach_id>")
 @require_role("analyst", "admin")
+@audit_log("breach_partially_updated")
 def patch_breach(breach_id: str):
     """Partially update a breach record."""
     data = request.get_json(silent=True) or {}
@@ -497,6 +501,7 @@ def patch_breach(breach_id: str):
 
 @breaches_bp.delete("/<breach_id>")
 @require_role("admin")
+@audit_log("breach_deleted")
 def delete_breach(breach_id: str):
     """Delete a breach record."""
     success, err = breach_service.delete(breach_id)

@@ -218,45 +218,35 @@ def bulk_delete_breaches():
 @admin_bp.route("/audit-logs", methods=["GET"])
 @require_role("admin")
 def list_audit_logs():
-    """Read audit logs from file and return with pagination."""
-    import os
-    import json
-
+    """Read audit logs from MongoDB and return with pagination."""
     try:
         page = max(1, int(request.args.get("page", 1)))
         limit = min(100, max(1, int(request.args.get("limit", 20))))
     except ValueError:
         return error_response("'page' and 'limit' must be integers.", 400)
 
-    log_dir = os.getenv("AUDIT_LOG_DIR", "logs")
-    log_file = os.getenv("AUDIT_LOG_FILE", "audit.log")
-    log_path = os.path.join(log_dir, log_file)
-
-    if not os.path.exists(log_path):
-        return success_response([], 200, meta={"page": page, "limit": limit, "total": 0, "total_pages": 0})
-
-    logs = []
     try:
-        with open(log_path, "r") as f:
-            # Read all lines and reverse to show newest first
-            lines = f.readlines()
-            lines.reverse()
+        # Query from MongoDB collection
+        skip = (page - 1) * limit
+        cursor = mongo.db["audit_logs"].find().sort("timestamp", -1).skip(skip).limit(limit)
+        logs = list(cursor)
 
-            total = len(lines)
-            start = (page - 1) * limit
-            end = start + limit
+        # Count total for pagination
+        total = mongo.db["audit_logs"].count_documents({})
+        total_pages = (total + limit - 1) // limit if limit > 0 else 0
 
-            for line in lines[start:end]:
-                if line.strip():
-                    try:
-                        logs.append(json.loads(line))
-                    except json.JSONDecodeError:
-                        continue
+        # Format ObjectIds and datetimes for JSON serialization
+        for log in logs:
+            log["_id"] = str(log["_id"])
+            if "timestamp" in log and isinstance(log["timestamp"], datetime):
+                log["timestamp"] = log["timestamp"].isoformat()
 
-            total_pages = (total + limit - 1) // limit
-
-            return success_response(logs, 200, meta={
-                "page": page, "limit": limit, "total": total, "total_pages": total_pages
-            })
+        return success_response(logs, 200, meta={
+            "page": page,
+            "limit": limit,
+            "total": total,
+            "total_pages": total_pages
+        })
     except Exception as e:
+        current_app.logger.error(f"Failed to read audit logs from MongoDB: {str(e)}")
         return error_response(f"Failed to read audit logs: {str(e)}", 500)

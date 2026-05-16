@@ -156,18 +156,19 @@ def create_app(config_name: str = "development") -> Flask:
         code = 200 if status == "ok" else 503
         return jsonify({"status": status, "db": db_status}), code
 
-    # Ensure MongoDB indexes on startup
-    with app.app_context():
-        try:
-            from app.services.breach_service import BreachService
-            from app.services.auth_service import AuthService
-            BreachService().ensure_indexes()
-            AuthService().ensure_indexes()
-            # Create index on the token blacklist collection for fast lookups
-            mongo.db["blacklist"].create_index("token", unique=True, background=True)
-            mongo.db["blacklist"].create_index("expires_at", expireAfterSeconds=0, background=True)
-        except Exception as e:
-            logger.exception("Failed to create database indexes at startup: %s", e)
+    # Ensure MongoDB indexes on startup (Production/Dev only)
+    if config_name != "testing":
+        with app.app_context():
+            try:
+                from app.services.breach_service import BreachService
+                from app.services.auth_service import AuthService
+                BreachService().ensure_indexes()
+                AuthService().ensure_indexes()
+                # Create index on the token blacklist collection for fast lookups
+                mongo.db["blacklist"].create_index("token", unique=True, background=True)
+                mongo.db["blacklist"].create_index("expires_at", expireAfterSeconds=0, background=True)
+            except Exception as e:
+                logger.exception("Failed to create database indexes at startup: %s", e)
 
     # Centralised error handlers
     _register_error_handlers(app)
