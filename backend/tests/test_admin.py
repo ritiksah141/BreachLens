@@ -83,9 +83,8 @@ class TestChangeRole:
 
     def test_change_own_role_blocked(self, client, admin_headers):
         """Admin cannot change their own role."""
-        # g.current_user_id is set from JWT['user'] = 'testadmin'
         resp = client.patch(
-            "/api/v1/admin/users/testadmin/role",
+            f"/api/v1/admin/users/{_ADMIN_ID}/role",
             json={"role": "guest"},
             headers=admin_headers,
         )
@@ -108,7 +107,7 @@ class TestChangeRole:
         mock_user = {"_id": ObjectId(target_id), "role": "guest", "username": "target"}
         updated_user = {**mock_user, "role": "analyst"}
         with patch("app.routes.admin.user_service.get_user", return_value=mock_user), \
-             patch("app.routes.admin.user_service.update_user", return_value=updated_user):
+             patch("app.routes.admin.user_service.set_role", return_value=updated_user):
             resp = client.patch(
                 f"/api/v1/admin/users/{target_id}/role",
                 json={"role": "analyst"},
@@ -214,9 +213,8 @@ class TestActivateDeactivate:
 
     def test_deactivate_self_blocked(self, client, admin_headers):
         """Admin cannot deactivate their own account."""
-        # g.current_user_id is set from JWT['user'] = 'testadmin'
         resp = client.patch(
-            "/api/v1/admin/users/testadmin/deactivate",
+            f"/api/v1/admin/users/{_ADMIN_ID}/deactivate",
             headers=admin_headers,
         )
         assert resp.status_code == 400

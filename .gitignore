@@ -41,7 +41,7 @@ coverage.xml
 pytest_cache/
 
 # Logs
-logs/
+backend/logs/
 *.log
 
 # IDE / Editor
@@ -60,6 +60,9 @@ Thumbs.db
 
 # Submission folder (coursework)
 submission/
+
+# AI Documentation
+docs/
 
 # Generated Data & Caches
 backend/seed/*.json

@@ -14,12 +14,12 @@ import { NotificationService } from '../../../core/services/notification.service
       <div class="col-md-5 col-lg-4">
         <!-- Brand Anchor -->
         <div class="text-center mb-5">
-          <div class="login-brand-mark d-inline-flex mb-3" aria-hidden="true">
-            <span class="login-brand-chip login-brand-chip-a">
-              <span class="material-symbols-outlined login-brand-chip-icon">security</span>
+          <div class="brand-mark d-inline-flex mb-3" aria-hidden="true">
+            <span class="brand-chip brand-chip-a">
+              <span class="material-symbols-outlined brand-chip-icon">security</span>
             </span>
-            <span class="login-brand-chip login-brand-chip-b">
-              <span class="material-symbols-outlined login-brand-chip-icon">visibility</span>
+            <span class="brand-chip brand-chip-b">
+              <span class="material-symbols-outlined brand-chip-icon">visibility</span>
             </span>
           </div>
           <h1 class="font-headline fw-extrabold text-on-surface tracking-tighter mb-1">BreachLens</h1>
@@ -172,67 +172,6 @@ import { NotificationService } from '../../../core/services/notification.service
       font-size: 0.58rem;
       letter-spacing: 0.12em;
       line-height: 1.15;
-    }
-    .login-brand-mark {
-      width: 62px;
-      height: 62px;
-      border-radius: 1rem;
-      padding: 8px;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-      border: 1px solid var(--outline-variant);
-      background: linear-gradient(145deg, var(--surface-container-high), var(--surface-container-low));
-      box-shadow: 0 0 18px color-mix(in srgb, var(--primary) 12%, transparent);
-      position: relative;
-      overflow: hidden;
-    }
-    .login-brand-mark::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: repeating-linear-gradient(
-        -35deg,
-        transparent 0,
-        transparent 6px,
-        rgba(136, 146, 155, 0.16) 6px,
-        rgba(136, 146, 155, 0.16) 7px
-      );
-      opacity: 0.5;
-    }
-    .login-brand-chip {
-      position: relative;
-      z-index: 1;
-      width: 20px;
-      height: 34px;
-      border-radius: 0.55rem;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--font-headline);
-      font-weight: 800;
-      font-size: 0.9rem;
-      letter-spacing: 0.05em;
-      color: var(--primary);
-      border: 1px solid var(--outline-variant);
-      background: var(--surface-container-lowest);
-      text-shadow: 0 0 8px color-mix(in srgb, var(--primary) 20%, transparent);
-    }
-    .login-brand-chip-icon {
-      font-size: 13px;
-      font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 20;
-      line-height: 1;
-    }
-    .login-brand-chip-a { transform: rotate(-8deg) translateY(-1px); }
-    .login-brand-chip-b { transform: rotate(8deg) translateY(1px); }
-    :host-context([data-theme='light']) .login-brand-mark {
-      box-shadow: 0 0 12px color-mix(in srgb, var(--primary) 10%, transparent);
-    }
-    :host-context([data-theme='light']) .login-brand-mark::before {
-      opacity: 0.32;
-    }
-    :host-context([data-theme='light']) .login-brand-chip {
-      text-shadow: none;
     }
   `]
 })

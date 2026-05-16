@@ -62,6 +62,7 @@ class Config:
 class DevelopmentConfig(Config):
     """Development configuration."""
     DEBUG: bool = True
+    RATELIMIT_DEFAULT: str = "2000 per hour"
 
 
 class TestingConfig(Config):

@@ -578,7 +578,7 @@ def bulk_delete_breaches():
 # Exposure check
 # ---------------------------------------------------------------------------
 
-@breaches_bp.get("/exposure-check")
+@breaches_bp.get("/check")
 @require_auth
 @limiter.limit("3 per minute")
 def exposure_check():
@@ -604,27 +604,37 @@ def exposure_check():
 @limiter.limit("3 per minute")
 def password_exposure_check():
     """Check if a password has been exposed using k-Anonymity (POST for security)."""
-    from app.utils.pwned_passwords import check_password_exposure
+    from app.utils.pwned_passwords import check_password_exposure, get_pwned_suffixes
 
     data = request.get_json(silent=True) or {}
     password = data.get("password")
+    prefix = data.get("prefix")
 
-    if not password:
-        return error_response("'password' field is required in request body.", 400)
+    if not password and not prefix:
+        return error_response("'password' or 'prefix' field is required in request body.", 400)
 
     try:
-        is_exposed, count = check_password_exposure(password)
+        if prefix:
+            # Client-side k-Anonymity flow: Client sends 5-char prefix
+            suffixes = get_pwned_suffixes(prefix)
+            return success_response({
+                "prefix": prefix,
+                "suffixes": suffixes,
+                "info": "Matching performed client-side for maximum privacy."
+            })
+        else:
+            # Traditional flow: Client sends raw password (backend hashes it)
+            is_exposed, count = check_password_exposure(password)
+            return success_response({
+                "password_exposed": is_exposed,
+                "exposure_count": count,
+                "recommendation": "Change your password immediately if exposed." if is_exposed else "Password not found in known public breaches."
+            })
     except RuntimeError:
         return error_response(
             "Password exposure service is temporarily unavailable. Please try again later.",
             503,
         )
-
-    return success_response({
-        "password_exposed": is_exposed,
-        "exposure_count": count,
-        "recommendation": "Change your password immediately if exposed." if is_exposed else "Password not found in known public breaches."
-    })
 
 
 # ---------------------------------------------------------------------------

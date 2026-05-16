@@ -24,7 +24,6 @@ Usage:
 
 Environment variables (read from .env):
     MONGO_URI     — default mongodb://localhost:27017/breachlens
-    HIBP_API_KEY  — optional HIBP paid-tier key (higher rate limits)
 """
 
 from __future__ import annotations
@@ -54,7 +53,6 @@ load_dotenv()
 # ── Constants ─────────────────────────────────────────────────────────────────
 
 MONGO_URI: str = os.getenv("MONGO_URI", "mongodb://localhost:27017/breachlens")
-HIBP_API_KEY: str = os.getenv("HIBP_API_KEY", "")
 HIBP_URL: str = "https://haveibeenpwned.com/api/v3/breaches"
 CACHE_FILE: Path = Path(__file__).parent / "hibp_raw.json"
 OUTPUT_FILE: Path = Path(__file__).parent / "breaches_hybrid.json"
@@ -276,8 +274,6 @@ def fetch_hibp_breaches(use_cache: bool = False, verbose: bool = False) -> list[
         "User-Agent": "BreachLens-AcademicProject/1.0",
         "Accept": "application/json",
     }
-    if HIBP_API_KEY:
-        headers["hibp-api-key"] = HIBP_API_KEY
 
     try:
         response = requests.get(HIBP_URL, headers=headers, timeout=30)

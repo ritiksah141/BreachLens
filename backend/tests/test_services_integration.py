@@ -15,6 +15,10 @@ from app.services.auth_service import AuthService
 from app.services.analytics_service import AnalyticsService
 from app.models.user import UserSchema
 
+# Mark all tests in this module as integration tests.
+# These tests use mongomock (in-memory) but are more extensive and slower than unit tests.
+pytestmark = pytest.mark.integration
+
 
 # ===================================================================
 # Fixtures
@@ -449,17 +453,18 @@ class TestExposureCheck:
         svc.add_affected_account(str(doc["_id"]),
                                  {"email": "victim@example.com", "data_exposed": ["email"]})
         result = svc.check_exposure(email="victim@example.com")
-        assert result["exposed"] is True
+        assert result["email_exposed"] is True
         assert result["breach_count"] == 1
 
     def test_check_by_domain(self, svc):
         svc.create(_payload(organisation={"name": "Acme", "domain": "acme.com"}), CREATOR)
         result = svc.check_exposure(domain="acme.com")
-        assert result["exposed"] is True
+        assert result["domain_exposed"] is True
 
     def test_check_no_match(self, svc):
         result = svc.check_exposure(email="nobody@nowhere.com")
-        assert result["exposed"] is False
+        assert result["email_exposed"] is False
+        assert result["domain_exposed"] is False
         assert result["breach_count"] == 0
 
     def test_check_by_email_and_domain(self, svc):

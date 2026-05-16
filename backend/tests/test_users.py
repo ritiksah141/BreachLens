@@ -71,12 +71,11 @@ class TestListUsers:
 class TestGetUser:
 
     def test_get_own_profile(self, client, analyst_headers):
-        """Users can view their own profile (g.current_user_id == username from JWT)."""
-        # g.current_user_id is set from JWT["user"] which is the username
+        """Users can view their own profile."""
         with patch("app.routes.users.user_service.get_by_id",
                    return_value=MOCK_ANALYST_USER):
             resp = client.get(
-                "/api/v1/users/testanalyst", headers=analyst_headers
+                f"/api/v1/users/{_ANALYST_ID}", headers=analyst_headers
             )
         assert resp.status_code == 200
 
@@ -109,7 +108,7 @@ class TestGetUser:
         assert resp.status_code == 404
 
     def test_get_user_no_auth(self, client):
-        resp = client.get("/api/v1/users/testanalyst")
+        resp = client.get(f"/api/v1/users/{_ANALYST_ID}")
         assert resp.status_code == 401
 
 
@@ -125,7 +124,7 @@ class TestUpdateUser:
         with patch("app.routes.users.user_service.update_user",
                    return_value=updated):
             resp = client.patch(
-                "/api/v1/users/testanalyst",
+                f"/api/v1/users/{_ANALYST_ID}",
                 json={"username": "newname"},
                 headers=analyst_headers,
             )
@@ -143,7 +142,7 @@ class TestUpdateUser:
 
     def test_username_too_short(self, client, analyst_headers):
         resp = client.patch(
-            "/api/v1/users/testanalyst",
+            f"/api/v1/users/{_ANALYST_ID}",
             json={"username": "ab"},
             headers=analyst_headers,
         )
@@ -151,7 +150,7 @@ class TestUpdateUser:
 
     def test_username_too_long(self, client, analyst_headers):
         resp = client.patch(
-            "/api/v1/users/testanalyst",
+            f"/api/v1/users/{_ANALYST_ID}",
             json={"username": "x" * 31},
             headers=analyst_headers,
         )
@@ -159,7 +158,7 @@ class TestUpdateUser:
 
     def test_update_invalid_email(self, client, analyst_headers):
         resp = client.patch(
-            "/api/v1/users/testanalyst",
+            f"/api/v1/users/{_ANALYST_ID}",
             json={"email": "not-an-email"},
             headers=analyst_headers,
         )
@@ -170,7 +169,7 @@ class TestUpdateUser:
         with patch("app.routes.users.user_service.update_user",
                    return_value=updated):
             resp = client.patch(
-                "/api/v1/users/testanalyst",
+                f"/api/v1/users/{_ANALYST_ID}",
                 json={"email": "new@example.com"},
                 headers=analyst_headers,
             )
@@ -178,7 +177,7 @@ class TestUpdateUser:
 
     def test_empty_update_returns_400(self, client, analyst_headers):
         resp = client.patch(
-            "/api/v1/users/testanalyst",
+            f"/api/v1/users/{_ANALYST_ID}",
             json={},
             headers=analyst_headers,
         )
@@ -199,7 +198,7 @@ class TestUpdateUser:
         with patch("app.routes.users.user_service.update_user",
                    side_effect=ValueError("Username already taken.")):
             resp = client.patch(
-                "/api/v1/users/testanalyst",
+                f"/api/v1/users/{_ANALYST_ID}",
                 json={"username": "taken"},
                 headers=analyst_headers,
             )
@@ -215,31 +214,42 @@ class TestPasswordChange:
     def test_change_own_password_success(self, client, analyst_headers):
         """Valid password update returns 200."""
         updated = {**MOCK_ANALYST_USER}
-        with patch("app.routes.users.user_service.update_user",
-                   return_value=updated):
+        with patch("app.routes.users.user_service.verify_password", return_value=True), \
+             patch("app.routes.users.user_service.update_user", return_value=updated):
             resp = client.patch(
-                "/api/v1/users/testanalyst",
-                json={"password": "StrongPass1"},  # pragma: allowlist secret
+                f"/api/v1/users/{_ANALYST_ID}",
+                json={
+                    "current_password": "OldPassword1",  # pragma: allowlist secret
+                    "password": "StrongPass1"  # pragma: allowlist secret
+                },
                 headers=analyst_headers,
             )
         assert resp.status_code == 200
 
     def test_weak_password_rejected(self, client, analyst_headers):
         """Password without uppercase + digit returns 422."""
-        resp = client.patch(
-            "/api/v1/users/testanalyst",
-            json={"password": "weakpass"},  # pragma: allowlist secret
-            headers=analyst_headers,
-        )
+        with patch("app.routes.users.user_service.verify_password", return_value=True):
+            resp = client.patch(
+                f"/api/v1/users/{_ANALYST_ID}",
+                json={
+                    "current_password": "OldPassword1",  # pragma: allowlist secret
+                    "password": "weakpass"  # pragma: allowlist secret
+                },
+                headers=analyst_headers,
+            )
         assert resp.status_code == 422
 
     def test_short_password_rejected(self, client, analyst_headers):
         """Password under 8 chars returns 422."""
-        resp = client.patch(
-            "/api/v1/users/testanalyst",
-            json={"password": "Ab1"},  # pragma: allowlist secret
-            headers=analyst_headers,
-        )
+        with patch("app.routes.users.user_service.verify_password", return_value=True):
+            resp = client.patch(
+                f"/api/v1/users/{_ANALYST_ID}",
+                json={
+                    "current_password": "OldPassword1",  # pragma: allowlist secret
+                    "password": "Ab1"  # pragma: allowlist secret
+                },
+                headers=analyst_headers,
+            )
         assert resp.status_code == 422
 
     def test_change_others_password_forbidden(self, client, admin_headers):
@@ -262,7 +272,7 @@ class TestRoleChange:
     def test_analyst_cannot_change_role(self, client, analyst_headers):
         """Non-admin users cannot change roles."""
         resp = client.patch(
-            "/api/v1/users/testanalyst",
+            f"/api/v1/users/{_ANALYST_ID}",
             json={"role": "admin"},
             headers=analyst_headers,
         )
@@ -299,7 +309,7 @@ class TestIsActiveChange:
 
     def test_analyst_cannot_change_active_status(self, client, analyst_headers):
         resp = client.patch(
-            "/api/v1/users/testanalyst",
+            f"/api/v1/users/{_ANALYST_ID}",
             json={"is_active": False},
             headers=analyst_headers,
         )
@@ -326,7 +336,7 @@ class TestDeleteUser:
 
     def test_delete_requires_admin(self, client, analyst_headers):
         resp = client.delete(
-            "/api/v1/users/testanalyst", headers=analyst_headers
+            f"/api/v1/users/{_ANALYST_ID}", headers=analyst_headers
         )
         assert resp.status_code == 403
 
@@ -349,5 +359,5 @@ class TestDeleteUser:
         assert resp.status_code == 404
 
     def test_delete_no_auth(self, client):
-        resp = client.delete("/api/v1/users/testanalyst")
+        resp = client.delete(f"/api/v1/users/{_ANALYST_ID}")
         assert resp.status_code == 401

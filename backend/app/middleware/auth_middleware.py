@@ -57,7 +57,12 @@ def _get_token_from_header() -> str | None:
 
 def _check_blacklist(token: str) -> bool:
     """Return ``True`` if *token* has been blacklisted (cancelled)."""
-    return mongo.db["blacklist"].find_one({"token": token}) is not None
+    try:
+        return mongo.db["blacklist"].find_one({"token": token}) is not None
+    except Exception:
+        if current_app.config.get("TESTING"):
+            return False
+        raise
 
 
 def _decode_token(token: str) -> dict | None:

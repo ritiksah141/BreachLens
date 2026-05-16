@@ -8,6 +8,7 @@ import { BreachService } from '../../../core/services/breach.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { HealthService } from '../../../core/services/health.service';
 import { Breach, TimelineEvent, RemediationAction, MonitoringAlert, AffectedAccount } from '../../../core/models/models';
 import { SeverityBadgeComponent } from '../../../shared/components/severity-badge/severity-badge.component';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
@@ -23,13 +24,25 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
   template: `
     <!-- Header glass bar -->
     <div class="glass-panel p-3 mb-4 shadow-lg d-flex justify-content-between align-items-center border-0 animate__animated animate__fadeIn">
-      <a routerLink="/breaches" class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-3 shadow-sm d-flex align-items-center gap-2 text-on-surface" style="font-size: 8px;">
-        <span class="material-symbols-outlined fs-6">arrow_back</span> BACK TO LOGS
-      </a>
+      <div class="d-flex align-items-center gap-4">
+        <a routerLink="/breaches" class="btn btn-dark bg-surface-container-highest border-0 text-xs-caps py-2 px-3 shadow-sm d-flex align-items-center justify-content-center text-on-surface" style="font-size: 8px; width: 42px; height: 42px; border-radius: 12px;">
+          <span class="material-symbols-outlined fs-5">arrow_back</span>
+        </a>
+        <div class="title-wrapper">
+          <h2 class="page-title mb-1" style="font-size: 1.25rem;">
+            <span class="material-symbols-outlined text-primary opacity-50 me-2" style="font-size: 24px;">description</span>
+            Incident Intel
+          </h2>
+          <p class="text-xs-caps mb-0 text-on-surface-variant opacity-75" style="font-size: 7px; letter-spacing: 0.1em;">Deep packet analysis and forensic timeline for target event.</p>
+        </div>
+      </div>
       <div class="d-flex align-items-center gap-3">
         @if (auth.isAnalyst()) {
-          <div class="badge py-2 px-3 glass-panel border border-primary border-opacity-25 text-on-surface text-xs-caps shadow-sm" style="font-size: 8px;">
-            <span class="p-1 bg-success rounded-circle animate-pulse me-2" style="width: 6px; height: 6px; display: inline-block;"></span> ANALYST ACCESS
+          <div class="badge py-2 px-3 glass-panel border border-opacity-25 text-on-surface text-xs-caps shadow-sm"
+               [ngClass]="health.isBackendReady() ? 'border-primary' : 'border-error'"
+               style="font-size: 8px;">
+            <span class="p-1 rounded-circle me-2" [ngClass]="health.isBackendReady() ? 'bg-success animate-pulse' : 'bg-error'" style="width: 6px; height: 6px; display: inline-block;"></span>
+            ANALYST ACCESS {{ health.isBackendReady() ? '' : '(OFFLINE)' }}
           </div>
         }
         <span class="badge py-2 px-3 glass-panel border border-primary border-opacity-25 text-primary text-xs-caps shadow-sm" style="font-size: 8px;">ID: {{ (id).slice(-8) | uppercase }}</span>
@@ -54,16 +67,16 @@ import { RequireRoleDirective } from '../../../shared/directives/require-role.di
       <!-- System Parameters Row -->
       <div class="glass-panel p-3 mb-4 shadow-lg border-0 d-flex justify-content-around align-items-center flex-wrap gap-4 animate__animated animate__fadeIn">
         <div class="d-flex align-items-center gap-2">
-           <span class="p-1 bg-primary rounded-circle shadow-sm" style="width: 4px; height: 4px;"></span>
-           <span class="text-xs-caps fw-bold text-on-surface opacity-75" style="font-size: 6px; letter-spacing: 0.15em;">ENCRYPTION: AES-GCM</span>
+           <span class="p-1 rounded-circle shadow-sm" [ngClass]="health.isBackendReady() ? 'bg-primary' : 'bg-error'" style="width: 4px; height: 4px;"></span>
+           <span class="text-xs-caps fw-bold text-on-surface opacity-75" style="font-size: 6px; letter-spacing: 0.15em;">ENCRYPTION: {{ health.isBackendReady() ? 'AES-GCM' : 'INACTIVE' }}</span>
         </div>
         <div class="d-flex align-items-center gap-2">
-           <span class="p-1 bg-secondary rounded-circle shadow-sm" style="width: 4px; height: 4px;"></span>
-           <span class="text-xs-caps fw-bold text-on-surface opacity-75" style="font-size: 6px; letter-spacing: 0.15em;">TELEMETRY: SYNCED</span>
+           <span class="p-1 rounded-circle shadow-sm" [ngClass]="health.isBackendReady() ? 'bg-secondary' : 'bg-error'" style="width: 4px; height: 4px;"></span>
+           <span class="text-xs-caps fw-bold text-on-surface opacity-75" style="font-size: 6px; letter-spacing: 0.15em;">TELEMETRY: {{ health.isBackendReady() ? 'SYNCED' : 'DISCONNECTED' }}</span>
         </div>
         <div class="d-flex align-items-center gap-2">
-           <span class="p-1 bg-success rounded-circle shadow-sm" style="width: 4px; height: 4px;"></span>
-           <span class="text-xs-caps fw-bold text-on-surface opacity-75" style="font-size: 6px; letter-spacing: 0.15em;">SIGNAL: NOMINAL</span>
+           <span class="p-1 rounded-circle shadow-sm" [ngClass]="health.isBackendReady() ? 'bg-success' : 'bg-error'" style="width: 4px; height: 4px;"></span>
+           <span class="text-xs-caps fw-bold text-on-surface opacity-75" style="font-size: 6px; letter-spacing: 0.15em;">SIGNAL: {{ health.isBackendReady() ? 'NOMINAL' : 'LOST' }}</span>
         </div>
       </div>
 
@@ -487,6 +500,7 @@ export class BreachDetailComponent implements OnInit, OnDestroy {
   private breachService = inject(BreachService);
   private themeService = inject(ThemeService);
   private notifications = inject(NotificationService);
+  public health = inject(HealthService);
   private route = inject(ActivatedRoute);
   auth = inject(AuthService);
 

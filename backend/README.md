@@ -1,9 +1,9 @@
 # BreachLens Backend API
 
-[![Tests](https://img.shields.io/badge/Tests-586%20passing-brightgreen.svg)](tests/)
-[![Coverage](https://img.shields.io/badge/Coverage-88%25-brightgreen.svg)](htmlcov/)
+[![Tests](https://img.shields.io/badge/Tests-634%20passing-brightgreen.svg)](tests/)
+[![Coverage](https://img.shields.io/badge/Coverage-84%25-brightgreen.svg)](tests/)
 [![CI/CD](https://github.com/ritiksah/BreachLens/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/ritiksah/BreachLens/actions)
-[![Python](https://img.shields.io/badge/Python-3.14-blue.svg)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
 
 **Production-grade RESTful API for breach intelligence tracking.**
 
@@ -55,11 +55,11 @@ python run.py
 ## 🧪 Testing
 
 ```bash
-# Run full suite
-pytest tests/ -v
+# Run essential tests in parallel (~1 min)
+pytest tests/ -n auto -m "not slow and not integration"
 
-# Generate coverage report
-pytest tests/ --cov=app --cov-report=html
+# Generate full coverage report
+pytest tests/ -n auto --cov=app --cov-report=html
 ```
 
 ---
@@ -97,7 +97,7 @@ backend/
 │   ├── services/                 # Business logic layer
 │   ├── middleware/               # Auth, logging, security
 │   └── utils/                    # Helper functions (Pwned Passwords, Bloom, etc.)
-├── tests/                        # Test suite (586 tests)
+├── tests/                        # Test suite (634 tests)
 ├── seed/                         # OSINT ETL Pipeline & Bloom Filter
 ├── build.sh                      # Production build script
 ├── run.py                        # App entry point

@@ -7,6 +7,7 @@ import { of } from 'rxjs';
 import { ProfileComponent } from './profile.component';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserService } from '../../../core/services/user.service';
+import { HealthService } from '../../../core/services/health.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { User } from '../../../core/models/models';
 
@@ -86,6 +87,14 @@ describe('ProfileComponent', () => {
         { provide: AuthService, useValue: mockAuth },
         { provide: UserService, useValue: mockUserService },
         { provide: NotificationService, useValue: mockNotificationService },
+        {
+          provide: HealthService,
+          useValue: {
+            isBackendReady: signal(true),
+            isOnline: signal(true),
+            isSecureChannelActive: true
+          }
+        },
       ],
     }).compileComponents();
   }

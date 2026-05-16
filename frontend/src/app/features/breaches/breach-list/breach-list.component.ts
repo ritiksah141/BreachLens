@@ -5,6 +5,7 @@ import { NgClass, SlicePipe, DecimalPipe, TitleCasePipe, CommonModule, UpperCase
 import { BreachService } from '../../../core/services/breach.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { Breach, BreachFilterParams, SubdocumentQueryParams, BreachFacets, BreachListResponse } from '../../../core/models/models';
+import { HealthService } from '../../../core/services/health.service';
 import { SeverityBadgeComponent } from '../../../shared/components/severity-badge/severity-badge.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
@@ -21,18 +22,24 @@ import { CompactNumberPipe } from '../../../shared/pipes/compact-number.pipe';
   template: `
     <!-- Page Header -->
     <div class="glass-panel p-4 mb-4 shadow-lg border-0 d-flex justify-content-between align-items-center animate__animated animate__fadeIn">
-      <div>
-        <h2 class="font-headline fw-extrabold text-on-surface tracking-tight page-title mb-1">Incident Logs</h2>
-        <p class="text-xs-caps mb-0 text-on-surface-variant opacity-75" style="font-size: 7px; letter-spacing: 0.1em;">Real-time feed of confirmed security events from various sources.</p>
+      <div class="title-wrapper">
+        <h2 class="page-title mb-1">
+          <span class="material-symbols-outlined text-primary opacity-50 me-2" style="font-size: 24px;">description</span>
+          Incident Logs
+        </h2>
+        <p class="text-xs-caps mb-0 text-on-surface-variant opacity-75" style="font-size: 7px; letter-spacing: 0.1em;">Real-time feed of confirmed data breaches and security incursions.</p>
       </div>
+
       <div class="d-flex align-items-center gap-3">
         <div class="text-end d-none d-md-block me-3">
           <div class="text-xs-caps text-primary mb-1" style="font-size: 7px;">TOTAL EVENTS</div>
           <div class="font-headline fw-bold text-on-surface fs-4">{{ total | number }}</div>
         </div>
-        <span class="badge py-2 px-3 glass-panel border border-primary border-opacity-25 text-primary text-xs-caps shadow-sm d-flex align-items-center gap-2" style="font-size: 8px;">
-          <span class="material-symbols-outlined fs-6">description</span>
-          REPOSITORY ACTIVE
+        <span class="badge py-2 px-3 glass-panel border border-opacity-25 text-xs-caps shadow-sm d-flex align-items-center gap-2"
+              [ngClass]="health.isBackendReady() ? 'border-primary text-primary' : 'border-error text-error'"
+              style="font-size: 8px;">
+          <span class="material-symbols-outlined fs-6">{{ health.isBackendReady() ? 'description' : 'cloud_off' }}</span>
+          {{ health.isBackendReady() ? 'REPOSITORY ACTIVE' : 'REPOSITORY OFFLINE' }}
         </span>
       </div>
     </div>
@@ -343,6 +350,7 @@ import { CompactNumberPipe } from '../../../shared/pipes/compact-number.pipe';
 export class BreachListComponent implements OnInit {
   private breachService = inject(BreachService);
   private notifications = inject(NotificationService);
+  public health = inject(HealthService);
   private route = inject(ActivatedRoute);
 
   breaches: Breach[] = [];

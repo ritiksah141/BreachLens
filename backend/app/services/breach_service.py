@@ -584,7 +584,10 @@ class BreachService:
         existing = self.col.find_one({"_id": oid}, {"created_by": 1})
         if not existing:
             return None, "not_found"
-        if current_role != "admin" and str(existing.get("created_by")) != str(current_user_id):
+
+        # Admin can update everything; users can only update their own records
+        owner_id = str(existing.get("created_by"))
+        if current_role != "admin" and owner_id != str(current_user_id):
             return None, "forbidden"
 
         severity = data.get("severity", "low")
@@ -637,7 +640,9 @@ class BreachService:
         existing = self.col.find_one({"_id": oid})
         if not existing:
             return None, "not_found"
-        if current_role != "admin" and str(existing.get("created_by")) != str(current_user_id):
+
+        owner_id = str(existing.get("created_by"))
+        if current_role != "admin" and owner_id != str(current_user_id):
             return None, "forbidden"
 
         allowed_patch_fields = [
@@ -816,9 +821,13 @@ class BreachService:
 
         merged = list(seen.values())
 
-        # 4. Calculate Contextual Risk Score and Remediation Advice
+        # 4. Calculate Contextual Risk Profile
         total_risk = sum(r.get("risk_score", 0) for r in merged)
         avg_risk = round(total_risk / len(merged), 1) if merged else 0.0
+
+        # 5. Generate Risk Genome & Defense Playbook
+        genome = self._generate_risk_genome(merged)
+        playbook = self._generate_defense_playbook(genome, merged)
 
         return {
             "email": email,
@@ -828,8 +837,78 @@ class BreachService:
             "aggregated_risk_score": avg_risk,
             "breach_count": len(merged),
             "breaches": merged,
+            "risk_genome": genome,
+            "defense_playbook": playbook,
             "recommendation": self._get_remediation_advice(merged)
         }
+
+    def _generate_risk_genome(self, breaches: list[dict]) -> dict:
+        """Categorize exposed data into functional risk vectors."""
+        categories = {
+            "identity": ["email", "username", "name", "phone", "address", "gender", "dob"],
+            "credentials": ["password", "hash", "salt", "security_question", "auth_token"],
+            "financial": ["credit_card", "bank_account", "ssn", "tax_id", "salary", "purchase_history"],
+            "technical": ["ip_address", "device_info", "browser_info", "os_version", "mac_address"]
+        }
+
+        genome = {cat: [] for cat in categories}
+        all_exposed = set()
+        for b in breaches:
+            for dt in b.get("data_types_exposed", []):
+                all_exposed.add(dt.lower())
+
+        for cat, fields in categories.items():
+            for field in fields:
+                if any(field in dt for dt in all_exposed):
+                    genome[cat].append(field)
+
+        return genome
+
+    def _generate_defense_playbook(self, genome: dict, breaches: list[dict]) -> list[dict]:
+        """Generate a priority-ranked tactical action plan."""
+        playbook = []
+
+        # Priority 1: Credential Rotation
+        if genome["credentials"]:
+            playbook.append({
+                "priority": "critical",
+                "action": "CREDENTIAL ROTATION",
+                "details": f"Exposure of {', '.join(genome['credentials'])} detected. Reset passwords and clear session tokens."
+            })
+
+        # Priority 2: MFA Hardening
+        if genome["credentials"] or genome["identity"]:
+            playbook.append({
+                "priority": "high",
+                "action": "ENABLE HARDWARE MFA",
+                "details": "Move from SMS-based 2FA to hardware keys (YubiKey) or TOTP apps (Authy/Google Auth)."
+            })
+
+        # Priority 3: Financial Monitoring
+        if genome["financial"]:
+            playbook.append({
+                "priority": "critical",
+                "action": "CREDIT FREEZE / MONITORING",
+                "details": f"Highly sensitive financial data ({', '.join(genome['financial'])}) exposed. Contact your bank immediately."
+            })
+
+        # Priority 4: Communications Sanitization
+        if "email" in genome["identity"] or "phone" in genome["identity"]:
+            playbook.append({
+                "priority": "medium",
+                "action": "COMMUNICATIONS AUDIT",
+                "details": "Expect high-volume phishing and smishing. Audit your spam filters and avoid unusual links."
+            })
+
+        # Priority 5: Infrastructure Audit
+        if genome["technical"]:
+            playbook.append({
+                "priority": "medium",
+                "action": "DEVICE SANITIZATION",
+                "details": "Leaked technical metadata can be used for session hijacking. Clear your browser cookies and update your OS."
+            })
+
+        return playbook
 
     def _get_remediation_advice(self, breaches: list[dict]) -> str:
         """Generate automated action plan based on exposed data types."""

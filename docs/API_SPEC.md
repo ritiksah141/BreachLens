@@ -973,4 +973,4 @@ Every `422` response includes a `details` object with field-level error messages
 
 ---
 
-*API_SPEC.md v1.0.0 – BreachLens – COM661 Individual Coursework*
+*API_SPEC.md v1.0.0 – BreachLens

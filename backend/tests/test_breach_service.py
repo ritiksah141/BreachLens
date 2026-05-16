@@ -290,36 +290,37 @@ class TestBulkOperations:
 
 class TestExposureCheckService:
 
-    def test_exposure_check_by_domain(self, client):
+    def test_exposure_check_by_domain(self, client, analyst_headers):
         with patch("app.routes.breaches.breach_service.check_exposure",
-                   return_value={"domain": "example.com", "exposed": True, "breach_count": 2, "breaches": []}):
-            resp = client.get("/api/v1/breaches/exposure-check?domain=example.com")
+                   return_value={"domain": "example.com", "domain_exposed": True, "breach_count": 2, "breaches": []}):
+            resp = client.get("/api/v1/breaches/check?domain=example.com", headers=analyst_headers)
         assert resp.status_code == 200
-        assert resp.get_json()["data"]["exposed"] is True
+        assert resp.get_json()["data"]["domain_exposed"] is True
 
-    def test_exposure_check_email_not_found(self, client):
+    def test_exposure_check_email_not_found(self, client, analyst_headers):
         with patch("app.routes.breaches.breach_service.check_exposure",
-                   return_value={"email": "clean@test.com", "exposed": False, "breach_count": 0, "breaches": []}):
-            resp = client.get("/api/v1/breaches/exposure-check?email=clean@test.com")
+                   return_value={"email": "clean@test.com", "email_exposed": False, "breach_count": 0, "breaches": []}):
+            resp = client.get("/api/v1/breaches/check?email=clean@test.com", headers=analyst_headers)
         assert resp.status_code == 200
-        assert resp.get_json()["data"]["exposed"] is False
+        assert resp.get_json()["data"]["email_exposed"] is False
 
-    def test_exposure_check_both_email_and_domain(self, client):
+    def test_exposure_check_both_email_and_domain(self, client, analyst_headers):
         with patch("app.routes.breaches.breach_service.check_exposure",
                    return_value={
                        "email": "user@corp.com", "domain": "corp.com",
                        "email_exposed": True, "domain_exposed": True,
                        "breach_count": 3, "breaches": [],
                    }):
-            resp = client.get("/api/v1/breaches/exposure-check?email=user@corp.com&domain=corp.com")
+            resp = client.get("/api/v1/breaches/check?email=user@corp.com&domain=corp.com", headers=analyst_headers)
         assert resp.status_code == 200
         data = resp.get_json()["data"]
         assert data["email_exposed"] is True
         assert data["domain_exposed"] is True
 
-    def test_exposure_check_invalid_domain(self, client):
-        resp = client.get("/api/v1/breaches/exposure-check?domain=not a domain!!")
+    def test_exposure_check_invalid_domain(self, client, analyst_headers):
+        resp = client.get("/api/v1/breaches/check?domain=not-a-domain", headers=analyst_headers)
         assert resp.status_code == 422
+
 
 
 # ---------------------------------------------------------------------------

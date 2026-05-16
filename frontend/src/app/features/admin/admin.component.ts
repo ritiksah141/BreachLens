@@ -10,6 +10,7 @@ import { AdminService } from '../../core/services/admin.service';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { Breach, SystemStats, AuditLog } from '../../core/models/models';
+import { HealthService } from '../../core/services/health.service';
 import { SeverityBadgeComponent } from '../../shared/components/severity-badge/severity-badge.component';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 import { UserManagementComponent } from './user-management/user-management.component';
@@ -24,8 +25,11 @@ import { UserManagementComponent } from './user-management/user-management.compo
   template: `
     <!-- Page Header -->
     <div class="glass-panel p-4 mb-4 shadow-lg d-flex justify-content-between align-items-center border-0 animate__animated animate__fadeIn">
-      <div>
-        <h2 class="font-headline fw-extrabold text-on-surface tracking-tight page-title mb-1">Command Center</h2>
+      <div class="title-wrapper">
+        <h2 class="page-title mb-1">
+          <span class="material-symbols-outlined text-primary opacity-50 me-2" style="font-size: 24px;">terminal</span>
+          Command Center
+        </h2>
         <p class="text-xs-caps mb-0 text-on-surface-variant opacity-75" style="font-size: 7px; letter-spacing: 0.1em;">System administration and operational intelligence node.</p>
       </div>
       <div class="d-flex gap-3 align-items-center">
@@ -85,7 +89,7 @@ import { UserManagementComponent } from './user-management/user-management.compo
               <div class="d-flex justify-content-between align-items-end">
                 <h3 class="mb-0 fw-bold font-headline text-error fs-2">{{ stats.alerts.unacknowledged }}</h3>
                 <div class="text-xs-caps text-error opacity-75 d-flex align-items-center gap-2 fw-bold" style="font-size: 6px; letter-spacing: 0.1em;">
-                  <span class="p-1 bg-success rounded-circle animate-pulse" style="width: 5px; height: 5px;"></span>
+                  <span class="p-1 rounded-circle" [ngClass]="health.isBackendReady() ? 'bg-success animate-pulse' : 'bg-error'" style="width: 5px; height: 5px;"></span>
                   UNACKNOWLEDGED
                 </div>
               </div>
@@ -449,6 +453,7 @@ export class AdminComponent implements OnInit {
   private breachService = inject(BreachService);
   private adminService = inject(AdminService);
   auth = inject(AuthService);
+  public health = inject(HealthService);
   private fb = inject(FormBuilder);
   private notifications = inject(NotificationService);
   private route = inject(ActivatedRoute);

@@ -4,6 +4,7 @@ import { NgClass, DatePipe, UpperCasePipe, CommonModule, DecimalPipe } from '@an
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserService } from '../../../core/services/user.service';
+import { HealthService } from '../../../core/services/health.service';
 import { NotificationService } from '../../../core/services/notification.service';
 
 @Component({
@@ -14,8 +15,11 @@ import { NotificationService } from '../../../core/services/notification.service
     <div class="profile-shell mt-2 animate__animated animate__fadeIn">
       <!-- Profile Header -->
       <div class="glass-panel p-4 mb-4 shadow-lg d-flex justify-content-between align-items-center border-0">
-        <div>
-          <h2 class="font-headline fw-extrabold text-on-surface tracking-tight page-title mb-1">User Profile</h2>
+        <div class="title-wrapper">
+          <h2 class="page-title mb-1">
+            <span class="material-symbols-outlined text-primary opacity-50 me-2" style="font-size: 24px;">account_circle</span>
+            User Profile
+          </h2>
           <p class="text-xs-caps mb-0 text-on-surface-variant opacity-75" style="font-size: 7px; letter-spacing: 0.1em;">Identity and account settings for your active session.</p>
         </div>
         <button class="btn btn-error text-white text-xs-caps py-2 px-3 shadow-sm fw-bold" style="background-color: var(--error); font-size: 8px;" (click)="auth.logout()">
@@ -39,11 +43,11 @@ import { NotificationService } from '../../../core/services/notification.service
           </div>
         </div>
         <div class="col-md-4">
-          <div class="glass-panel p-4 border-0 border-start border-success border-4 shadow-lg h-100">
+          <div class="glass-panel p-4 border-0 border-start border-4 shadow-lg h-100" [ngClass]="health.isBackendReady() ? 'border-success' : 'border-error'">
             <div class="text-xs-caps text-on-surface-variant mb-2" style="font-size: 7px;">Connection Status</div>
-            <div class="d-flex align-items-center gap-2 fs-4 fw-bold text-success font-headline">
-              <span class="status-dot"></span>
-              ONLINE
+            <div class="d-flex align-items-center gap-2 fs-4 fw-bold font-headline" [ngClass]="health.isBackendReady() ? 'text-success' : 'text-error'">
+              <span class="status-dot" [ngClass]="health.isBackendReady() ? 'bg-success' : 'bg-error'"></span>
+              {{ health.isBackendReady() ? 'ONLINE' : 'GATEWAY OFFLINE' }}
             </div>
             <div class="text-xs-caps text-on-surface-variant mt-2 fw-bold" style="font-size: 6px;">MEMBER SINCE {{ user?.created_at | date:'MMM yyyy' | uppercase }}</div>
           </div>
@@ -202,8 +206,7 @@ import { NotificationService } from '../../../core/services/notification.service
       width: 10px;
       height: 10px;
       border-radius: 50%;
-      background: var(--success);
-      box-shadow: 0 0 12px color-mix(in srgb, var(--success) 65%, transparent);
+      box-shadow: 0 0 12px currentColor;
       animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
 
@@ -261,6 +264,7 @@ export class ProfileComponent implements OnInit {
   auth = inject(AuthService);
   private userService = inject(UserService);
   private notifications = inject(NotificationService);
+  public health = inject(HealthService);
 
   newPassword = '';
   confirmPassword = '';

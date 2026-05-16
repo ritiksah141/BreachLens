@@ -3,6 +3,7 @@ import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/rou
 import { AuthService } from './core/services/auth.service';
 import { ThemeService } from './core/services/theme.service';
 import { NotificationService } from './core/services/notification.service';
+import { HealthService } from './core/services/health.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -15,7 +16,7 @@ import { FormsModule } from '@angular/forms';
       @if (showAppChrome()) {
         <!-- Floating Sidebar -->
         <aside class="sidebar glass-panel shadow-lg">
-          <div class="sidebar-header p-4 d-md-flex d-none align-items-center justify-content-center" style="position: relative;">
+          <div class="sidebar-header p-3 d-md-flex d-none align-items-center justify-content-center flex-shrink-0" style="position: relative;">
             <a class="brand-lockup text-decoration-none nav-item" routerLink="/" aria-label="BreachLens home" style="width: auto; height: auto; margin: 0;">
               <span class="brand-logo" aria-hidden="true">
                 <span class="brand-chip brand-chip-a">
@@ -43,6 +44,12 @@ import { FormsModule } from '@angular/forms';
               <span class="material-symbols-outlined">manage_search</span>
               <span class="nav-tooltip">PWNED CHECK</span>
             </a>
+            @if (auth.isAuthenticated()) {
+              <a class="nav-item" routerLink="/defense-hub" routerLinkActive="active">
+                <span class="material-symbols-outlined">shield_person</span>
+                <span class="nav-tooltip">DEFENSE HUB</span>
+              </a>
+            }
             @if (auth.isAnalyst()) {
               <a class="nav-item" routerLink="/analytics" routerLinkActive="active">
                 <span class="material-symbols-outlined">monitoring</span>
@@ -57,11 +64,12 @@ import { FormsModule } from '@angular/forms';
             }
           </nav>
 
-          <div class="sidebar-footer p-3 border-top border-outline-variant border-opacity-10 d-md-flex d-none flex-column align-items-center" style="overflow: visible;">
+          <div class="sidebar-footer p-2 border-top border-outline-variant border-opacity-10 d-md-flex d-none flex-column align-items-center flex-shrink-0" style="overflow: visible;">
             <div class="nav-item position-relative" (click)="toggleHistory()">
               <span class="material-symbols-outlined" [class.text-primary]="showHistory()">notifications</span>
               @if (notifications.unreadCount() > 0) {
-                <span class="position-absolute top-0 start-100 translate-middle-x badge rounded-pill bg-primary" style="font-size: 6px; padding: 2px 4px;">
+                <span class="position-absolute top-0 start-100 translate-middle-x badge rounded-pill bg-primary"
+                      style="font-size: 6px; padding: 2px 4px; color: var(--on-primary) !important; font-weight: 800;">
                   {{ notifications.unreadCount() }}
                 </span>
               }
@@ -83,7 +91,6 @@ import { FormsModule } from '@angular/forms';
                 @if (!auth.isAuthenticated()) {
                   <span class="guest-badge">GUEST</span>
                 }
-                <span class="nav-tooltip">{{ auth.isAuthenticated() ? 'PROFILE' : 'SIGN IN / REGISTER' }}</span>
               </div>
               <ul class="dropdown-menu glass-panel border-outline-variant shadow-lg" style="z-index: 4000;">
                 @if (auth.isAuthenticated()) {
@@ -100,8 +107,8 @@ import { FormsModule } from '@angular/forms';
                     <div class="text-xs-caps text-warning mb-1" style="font-size: 6px;">CURRENT STATUS</div>
                     <div class="fw-bold text-on-surface" style="font-size: 10px;">GUEST VISITOR</div>
                   </li>
-                  <li><a class="dropdown-item text-xs-caps text-on-surface" routerLink="/auth/login">Login to Account</a></li>
-                  <li><a class="dropdown-item text-xs-caps text-on-surface" routerLink="/auth/register">Create Identity</a></li>
+                  <li><a class="dropdown-item text-xs-caps text-on-surface" routerLink="/auth/login">Login</a></li>
+                  <li><a class="dropdown-item text-xs-caps text-on-surface" routerLink="/auth/register">Create Account</a></li>
                 }
               </ul>
             </div>
@@ -151,7 +158,9 @@ import { FormsModule } from '@angular/forms';
         <div class="p-3 border-top border-outline-variant border-opacity-10 bg-surface-container-low">
           <div class="d-flex align-items-center justify-content-between opacity-50">
             <span class="text-xs-caps" style="font-size: 6px;">SYSTEM STATUS</span>
-            <span class="text-xs-caps text-success" style="font-size: 6px;">ENCRYPTED</span>
+            <span class="text-xs-caps" [ngClass]="health.isBackendReady() ? 'text-success' : 'text-error'" style="font-size: 6px;">
+              {{ health.isBackendReady() ? 'ENCRYPTED & LIVE' : 'GATEWAY DOWN' }}
+            </span>
           </div>
         </div>
       </aside>
@@ -424,6 +433,7 @@ export class AppComponent implements OnInit {
   auth = inject(AuthService);
   themeService = inject(ThemeService);
   notifications = inject(NotificationService);
+  public health = inject(HealthService);
   private router = inject(Router);
 
   searchTerm = '';

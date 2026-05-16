@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 
 from flask import Blueprint, current_app, jsonify
 
-from app.extensions import mongo
+from app.extensions import mongo, limiter
 
 health_bp = Blueprint("health", __name__, url_prefix="/api/v1/health")
 
@@ -21,6 +21,7 @@ _START_TIME: float = time.time()
 # GET /api/v1/health/live  — Liveness probe
 # ---------------------------------------------------------------------------
 @health_bp.get("/live")
+@limiter.exempt
 def liveness():
     """
     Liveness probe.

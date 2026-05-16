@@ -5,6 +5,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { BreachService } from '../../core/services/breach.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { ThemeService } from '../../core/services/theme.service';
+import { HealthService } from '../../core/services/health.service';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { provideRouter } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -59,7 +61,7 @@ describe('DashboardComponent', () => {
     breachServiceSpy.getNear.and.returnValue(of({ status: 'success', data: { type: 'FeatureCollection', features: [] } } as any));
 
     await TestBed.configureTestingModule({
-      imports: [DashboardComponent, CommonModule],
+      imports: [DashboardComponent, CommonModule, HttpClientTestingModule],
       providers: [
         provideRouter([
           { path: '', component: DashboardComponent },
@@ -71,7 +73,15 @@ describe('DashboardComponent', () => {
         { provide: AuthService, useValue: authServiceSpy },
         { provide: BreachService, useValue: breachServiceSpy },
         { provide: NotificationService, useValue: notificationServiceSpy },
-        { provide: ThemeService, useValue: themeServiceSpy }
+        { provide: ThemeService, useValue: themeServiceSpy },
+        {
+          provide: HealthService,
+          useValue: {
+            isBackendReady: signal(true),
+            isOnline: signal(true),
+            isSecureChannelActive: true
+          }
+        },
       ]
     }).compileComponents();
 

@@ -6,6 +6,9 @@ import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { HealthService } from '../../../core/services/health.service';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { signal } from '@angular/core';
 
 describe('BreachListComponent', () => {
   let component: BreachListComponent;
@@ -30,14 +33,22 @@ describe('BreachListComponent', () => {
     notificationServiceSpy = jasmine.createSpyObj('NotificationService', ['show']);
 
     await TestBed.configureTestingModule({
-      imports: [BreachListComponent, FormsModule, CommonModule],
+      imports: [BreachListComponent, FormsModule, CommonModule, HttpClientTestingModule],
       providers: [
         { provide: BreachService, useValue: breachServiceSpy },
         { provide: NotificationService, useValue: notificationServiceSpy },
         {
           provide: ActivatedRoute,
           useValue: { queryParams: of({}) }
-        }
+        },
+        {
+          provide: HealthService,
+          useValue: {
+            isBackendReady: signal(true),
+            isOnline: signal(true),
+            isSecureChannelActive: true
+          }
+        },
       ]
     }).compileComponents();
 

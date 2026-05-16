@@ -5,7 +5,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue.svg)](https://www.typescriptlang.org/)
 [![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-purple.svg)](https://getbootstrap.com/)
 
-**Angular SPA for cyber threat intelligence visualization (COM661 coursework).**
+**Angular SPA for cyber threat intelligence visualization.**
 
 ---
 

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { BreachService } from '../../../core/services/breach.service';
 import { AnalyticsService } from '../../../core/services/analytics.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { HealthService } from '../../../core/services/health.service';
 import { BreachMapComponent } from '../breach-map/breach-map.component';
 import { RouterLink } from '@angular/router';
 import { Breach, AnalyticsSummary, SeverityBreakdown } from '../../../core/models/models';
@@ -18,16 +19,19 @@ import { forkJoin } from 'rxjs';
     <div class="exposure-checker-container animate__animated animate__fadeIn">
       <!-- Page Header -->
       <div class="glass-panel p-4 mb-5 shadow-lg border-0 d-flex justify-content-between align-items-center">
-        <div>
-          <h2 class="font-headline fw-extrabold text-on-surface tracking-tight page-title mb-1">Exposure Intelligence</h2>
+        <div class="title-wrapper">
+          <h2 class="page-title mb-1">
+            <span class="material-symbols-outlined text-primary opacity-50 me-2" style="font-size: 24px;">manage_search</span>
+            Exposure Intelligence
+          </h2>
           <p class="text-xs-caps mb-0 text-on-surface-variant opacity-75" style="font-size: 7px; letter-spacing: 0.1em;">Cross-reference identity and domain vectors against global breach repositories.</p>
         </div>
         <div class="d-flex align-items-center gap-3">
            <span class="badge py-2 px-3 glass-panel border border-primary border-opacity-25 text-primary text-xs-caps shadow-sm d-flex align-items-center gap-2"
                  style="font-size: 8px;">
-              <span class="status-dot-xs" [ngClass]="(summary && !errorMessage) ? 'bg-success' : 'bg-error'"></span>
+              <span class="status-dot-xs" [ngClass]="(health.isBackendReady() && !errorMessage) ? 'bg-success' : 'bg-error'"></span>
               <span class="material-symbols-outlined fs-6">manage_search</span>
-              {{ errorMessage ? 'SCANNER ERROR' : 'READY TO SCAN' }}
+              {{ (errorMessage || !health.isBackendReady()) ? 'SCANNER ERROR' : 'READY TO SCAN' }}
            </span>
         </div>
       </div>
@@ -52,36 +56,45 @@ import { forkJoin } from 'rxjs';
             <span class="material-symbols-outlined fs-6 align-middle me-2">corporate_fare</span>
             DOMAIN AUDIT
           </button>
+          <button
+            class="btn btn-sm text-xs-caps px-4 py-2 rounded-pill transition-all fw-bold"
+            style="font-size: 7px;"
+            [ngClass]="searchMode === 'password' ? 'glass-panel border-error text-error shadow-sm opacity-100' : 'glass-panel border-outline-variant text-on-surface opacity-50'"
+            (click)="setSearchMode('password')">
+            <span class="material-symbols-outlined fs-6 align-middle me-2">lock_reset</span>
+            PASSWORD SCAN
+          </button>
         </div>
 
         <div class="d-flex gap-3 align-items-center animate__animated animate__fadeInDown">
-          <div class="search-pill-outer flex-grow-1 shadow-lg" [class.is-loading]="loading">
+          <div class="search-pill-outer flex-grow-1 shadow-lg" [class.is-loading]="loading" [class.border-error]="searchMode === 'password' && query.length > 0">
             <div class="d-flex align-items-center w-100 h-100 ps-4">
-              <span class="material-symbols-outlined text-primary me-3 fs-4">
-                {{ searchMode === 'email' ? 'fingerprint' : 'hub' }}
+              <span class="material-symbols-outlined text-primary me-3 fs-4" [ngClass]="{'text-error': searchMode === 'password'}">
+                {{ searchMode === 'email' ? 'fingerprint' : (searchMode === 'domain' ? 'hub' : 'lock') }}
               </span>
               <input
                 #searchInput
-                type="text"
+                [type]="searchMode === 'password' ? 'password' : 'text'"
                 [(ngModel)]="query"
                 (keyup.enter)="performCheck()"
                 class="pill-input flex-grow-1 text-on-surface fw-bold"
-                [placeholder]="searchMode === 'email' ? 'Enter email address or operator username...' : 'Enter target domain (e.g. corporation.com)...'"
+                [placeholder]="searchMode === 'email' ? 'Enter email address or operator username...' : (searchMode === 'domain' ? 'Enter target domain (e.g. corporation.com)...' : 'Enter password to check k-Anonymity exposure...')"
                 autocomplete="off"
                 style="font-size: 13px;"
               >
             </div>
             <!-- Scanning Line Animation -->
-            <div class="scanning-line" *ngIf="loading"></div>
+            <div class="scanning-line" *ngIf="loading" [style.background]="searchMode === 'password' ? 'var(--error)' : 'var(--primary)'"></div>
           </div>
 
           <button
             class="btn btn-primary px-4 fw-bold text-xs-caps text-on-primary rounded-pill shadow-lg d-flex align-items-center justify-content-center"
             style="height: 64px; min-width: 180px; font-size: 9px;"
             [disabled]="loading"
+            [ngClass]="{'btn-error': searchMode === 'password'}"
             (click)="performCheck()">
             @if (!loading) {
-              <span>INITIATE SCAN</span>
+              <span>{{ searchMode === 'password' ? 'VERIFY PASSWORD' : 'INITIATE SCAN' }}</span>
             } @else {
               <span class="spinner-border spinner-border-sm"></span>
             }
@@ -145,40 +158,91 @@ import { forkJoin } from 'rxjs';
       <!-- Results Packet -->
       @if (results) {
         <div class="row g-4 mb-5 animate__animated animate__fadeIn">
+          <!-- Primary Status Card -->
           <div class="col-lg-4">
             <div class="glass-panel p-4 shadow-lg h-100 d-flex flex-column justify-content-between border-top border-4"
-                 [ngClass]="results.exposed ? 'border-error' : 'border-success'">
+                 [ngClass]="results.exposed || results.email_exposed || results.domain_exposed ? 'border-error' : 'border-success'">
               <div>
                 <h2 class="text-xs-caps text-on-surface border-bottom border-outline-variant border-opacity-10 pb-2 mb-4" style="font-size: 8px;">
-                  {{ searchMode === 'email' ? 'IDENTITY THREAT STATUS' : 'DOMAIN RISK PROFILE' }}
+                  {{ searchMode === 'email' ? 'IDENTITY THREAT STATUS' : (searchMode === 'domain' ? 'DOMAIN RISK PROFILE' : 'PASSWORD EXPOSURE INTEL') }}
                 </h2>
                 <div class="p-4 rounded-3 d-flex align-items-center gap-4 bg-surface-container-high border border-outline-variant border-opacity-10 shadow-sm">
-                  <div class="status-orb shadow-lg" [ngClass]="results.exposed ? 'bg-error animate-pulse' : 'bg-success'"></div>
+                  <div class="status-orb shadow-lg" [ngClass]="results.exposed || results.email_exposed || results.domain_exposed ? 'bg-error animate-pulse' : 'bg-success'"></div>
                   <div>
-                    <div class="fs-4 fw-bold font-headline" [ngClass]="results.exposed ? 'text-error' : 'text-success'">
-                      {{ results.exposed ? 'EXPOSURE DETECTED' : 'CLEAR SIGNAL' }}
+                    <div class="fs-4 fw-bold font-headline" [ngClass]="results.exposed || results.email_exposed || results.domain_exposed ? 'text-error' : 'text-success'">
+                      {{ (results.exposed || results.email_exposed || results.domain_exposed) ? 'EXPOSURE DETECTED' : 'CLEAR SIGNAL' }}
                     </div>
                     <div class="text-xs-caps text-on-surface opacity-100 fw-bold" style="font-size: 8px;">
-                      {{ results.exposed ? results.breach_count + ' BREACHES FOUND' : 'NO KNOWN INCURSIONS' }}
+                      {{ (results.exposed || results.email_exposed || results.domain_exposed) ? results.breach_count + ' INCURSIONS FOUND' : 'NO KNOWN EXPOSURES' }}
                     </div>
+                  </div>
+                </div>
+
+                <!-- Risk Benchmarking -->
+                <div class="mt-4 p-3 glass-panel border-0 bg-surface-container-low rounded-3" *ngIf="results.aggregated_risk_score > 0">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-xs-caps opacity-75 fw-bold" style="font-size: 7px;">THREAT MAGNITUDE</span>
+                    <span class="badge rounded-pill bg-error bg-opacity-10 text-error fw-mono" style="font-size: 9px;">{{ results.aggregated_risk_score }} / 10</span>
+                  </div>
+                  <div class="progress bg-surface-container-high" style="height: 4px;">
+                    <div class="progress-bar bg-error" [style.width.%]="results.aggregated_risk_score * 10"></div>
                   </div>
                 </div>
               </div>
               <div class="mt-4">
-                <button class="btn btn-error w-100 py-3 text-xs-caps shadow-sm text-white fw-bold" *ngIf="results.exposed" style="background-color: var(--error); font-size: 9px;">
+                <button class="btn btn-error w-100 py-3 text-xs-caps shadow-sm text-white fw-bold" *ngIf="results.exposed || results.email_exposed || results.domain_exposed" style="background-color: var(--error); font-size: 9px;">
                   SECURE IDENTITY
                 </button>
-                <div class="text-center text-xs-caps opacity-100 py-3 text-on-surface fw-bold" *ngIf="!results.exposed" style="font-size: 7px;">
+                <div class="text-center text-xs-caps opacity-100 py-3 text-on-surface fw-bold" *ngIf="!(results.exposed || results.email_exposed || results.domain_exposed)" style="font-size: 7px;">
                   IDENTITY STATUS: NOMINAL
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="col-lg-8">
-            <div class="glass-panel p-4 shadow-lg h-100 overflow-hidden d-flex flex-column">
-              <h2 class="text-xs-caps text-on-surface border-bottom border-outline-variant border-opacity-10 pb-2 mb-4" style="font-size: 8px;">INFILTRATION LOGS</h2>
-              <div class="table-responsive custom-scrollbar-hidden flex-grow-1">
+          <!-- Risk Genome (Unique Feature) -->
+          <div class="col-lg-8" *ngIf="results.risk_genome">
+            <div class="glass-panel p-4 shadow-lg h-100 d-flex flex-column">
+              <h2 class="text-xs-caps text-on-surface border-bottom border-outline-variant border-opacity-10 pb-2 mb-4" style="font-size: 8px;">RISK GENOME breakdown</h2>
+              <div class="row g-3 flex-grow-1">
+                @for (cat of ['identity', 'credentials', 'financial', 'technical']; track cat) {
+                  <div class="col-md-3">
+                    <div class="p-3 rounded-3 h-100 transition-all border border-outline-variant border-opacity-10"
+                         [ngClass]="results.risk_genome[cat].length > 0 ? 'bg-surface-container-high border-opacity-50' : 'bg-surface-container-low opacity-50'">
+                      <div class="d-flex align-items-center gap-2 mb-3">
+                        <span class="material-symbols-outlined fs-5"
+                              [ngClass]="results.risk_genome[cat].length > 0 ? getCategoryColor(cat) : 'text-on-surface-variant'">
+                          {{ getCategoryIcon(cat) }}
+                        </span>
+                        <span class="text-xs-caps fw-bold" style="font-size: 7px;">{{ cat }}</span>
+                      </div>
+                      @if (results.risk_genome[cat].length > 0) {
+                        <div class="d-flex flex-column gap-1">
+                          @for (field of results.risk_genome[cat]; track field) {
+                            <div class="d-flex align-items-center gap-2">
+                               <span class="p-1 rounded-circle" [ngClass]="getCategoryBg(cat)" style="width: 4px; height: 4px;"></span>
+                               <span class="text-xs-caps fw-bold opacity-75" style="font-size: 6px;">{{ field | uppercase }}</span>
+                            </div>
+                          }
+                        </div>
+                      } @else {
+                        <div class="text-xs-caps opacity-50 fw-bold py-2" style="font-size: 6px;">NO EXPOSURE</div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+              <div class="mt-4 pt-3 border-top border-outline-variant border-opacity-10 text-xs-caps opacity-50 fw-bold" style="font-size: 6px;">
+                 DNA DECONSTRUCTION: ANALYZING FOUR FUNCTIONAL RISK VECTORS
+              </div>
+            </div>
+          </div>
+
+          <!-- Infiltration Logs -->
+          <div class="col-lg-12" *ngIf="searchMode !== 'password'">
+             <div class="glass-panel p-4 shadow-lg overflow-hidden d-flex flex-column">
+               <h2 class="text-xs-caps text-on-surface border-bottom border-outline-variant border-opacity-10 pb-2 mb-4" style="font-size: 8px;">SOURCE INFILTRATION LOGS</h2>
+               <div class="table-responsive custom-scrollbar-hidden">
                 <table class="table table-hover align-middle mb-0 text-on-surface">
                   <thead>
                     <tr class="bg-surface-container-low">
@@ -191,7 +255,7 @@ import { forkJoin } from 'rxjs';
                   <tbody>
                     @for (b of results.breaches; track b._id; let i = $index) {
                       <tr class="bg-transparent border-bottom border-outline-variant border-opacity-5 transition-all hover-bg-surface-container-high cursor-pointer" [routerLink]="['/breaches', b._id]">
-                        <td class="font-mono small py-3 ps-3 opacity-100 fw-bold" style="font-size: 10px;">{{ b.created_at | date:'yyyy.MM.dd' }}</td>
+                        <td class="font-mono small py-3 ps-3 opacity-100 fw-bold" style="font-size: 10px;">{{ (b.created_at || b.breach_date) | date:'yyyy.MM.dd' }}</td>
                         <td class="fw-bold small py-3" style="font-size: 11px;">{{ getOrgName(b) | uppercase }}</td>
                         <td class="text-xs-caps opacity-75 py-3 fw-bold" style="font-size: 7px;">{{ b.industry | uppercase }}</td>
                         <td class="text-end py-3 pe-3">
@@ -202,50 +266,110 @@ import { forkJoin } from 'rxjs';
                         </td>
                       </tr>
                     }
-                    @if (!results.breaches || results.breaches.length === 0) {
-                      <tr><td colspan="4" class="text-center py-5 opacity-50 text-xs-caps text-on-surface" style="font-size: 8px;">NO DATA RECORDS AVAILABLE</td></tr>
-                    }
                   </tbody>
                 </table>
+               </div>
+             </div>
+          </div>
+
+          <!-- Tactical Defense Playbook (Unique Feature) -->
+          <div class="col-lg-7" *ngIf="results.defense_playbook && results.defense_playbook.length > 0">
+            <div class="glass-panel p-4 shadow-lg h-100">
+              <h2 class="text-xs-caps text-on-surface border-bottom border-outline-variant border-opacity-10 pb-2 mb-4" style="font-size: 8px;">TACTICAL DEFENSE PLAYBOOK</h2>
+              <div class="d-flex flex-column gap-3">
+                @for (item of results.defense_playbook; track item.action; let i = $index) {
+                  <div class="d-flex gap-4 p-3 rounded-3 bg-surface-container-low border-start border-4 shadow-sm"
+                       [ngClass]="item.priority === 'critical' ? 'border-error' : 'border-primary'">
+                    <div class="playbook-step-number text-xs-caps fw-extrabold" [ngClass]="item.priority === 'critical' ? 'text-error' : 'text-primary'">
+                       STEP {{ i + 1 }}
+                    </div>
+                    <div>
+                      <div class="d-flex align-items-center gap-2 mb-1">
+                        <span class="text-xs-caps fw-extrabold text-on-surface" style="font-size: 8px;">{{ item.action }}</span>
+                        <span class="badge rounded-pill bg-opacity-10 text-xs-caps"
+                              [ngClass]="item.priority === 'critical' ? 'bg-error text-error' : 'bg-primary text-primary'"
+                              style="font-size: 6px; transform: scale(0.8);">{{ item.priority | uppercase }}</span>
+                      </div>
+                      <p class="text-on-surface-variant opacity-75 fw-medium mb-0" style="font-size: 11px;">{{ item.details }}</p>
+                    </div>
+                  </div>
+                }
+              </div>
+              <div class="mt-4 pt-3 border-top border-outline-variant border-opacity-10 text-xs-caps opacity-50 fw-bold" style="font-size: 6px;">
+                 REAL-TIME ACTION PLAN GENERATED BASED ON RISK GENOME SEVERITY
               </div>
             </div>
           </div>
 
-          <div class="col-lg-6">
+          <!-- Global Vector Map -->
+          <div class="col-lg-5">
             <div class="glass-panel p-3 shadow-lg h-100">
-              <h2 class="text-xs-caps text-on-surface px-2 mb-3" style="font-size: 8px;">GLOBAL VECTOR MAP</h2>
-              <div class="position-relative overflow-hidden" style="height: 300px; border-radius: 1rem;">
+              <h2 class="text-xs-caps text-on-surface px-2 mb-3" style="font-size: 8px;">THREAT VECTOR PROJECTION</h2>
+              <div class="position-relative overflow-hidden" style="height: 400px; border-radius: 1rem;">
                 <app-breach-map height="100%" />
               </div>
             </div>
           </div>
+        </div>
+      }
 
-          <div class="col-lg-6">
-            <div class="glass-panel p-4 shadow-lg h-100">
-              <h2 class="text-xs-caps text-on-surface border-bottom border-outline-variant border-opacity-10 pb-2 mb-4" style="font-size: 8px;">RECOMMENDED PROTOCOLS</h2>
-              <ul class="list-unstyled d-flex flex-column gap-4">
-                <li class="d-flex gap-3">
-                  <span class="material-symbols-outlined text-primary">lock_reset</span>
-                  <div>
-                    <div class="text-xs-caps fw-bold text-primary mb-1" style="font-size: 7px;">ROTATE CORE CREDENTIALS</div>
-                    <div class="text-xs-caps text-on-surface opacity-75 fw-bold" style="font-size: 7px;">Immediate forced password reset across all linked domains.</div>
+      <!-- Privacy & Trust Protocol (Visible primarily in Password Mode) -->
+      @if (searchMode === 'password' && !results && !loading) {
+        <div class="max-width-800 mx-auto mt-2 animate__animated animate__fadeIn">
+          <div class="glass-panel p-4 border-0 shadow-lg position-relative overflow-hidden">
+            <div class="d-flex align-items-center gap-3 mb-4">
+              <span class="material-symbols-outlined text-primary fs-4">privacy_tip</span>
+              <div>
+                <h3 class="text-xs-caps text-on-surface fw-bold mb-0" style="font-size: 9px;">Privacy First Protocol</h3>
+                <p class="text-xs-caps text-on-surface-variant opacity-75 mb-0" style="font-size: 7px;">VERIFIED CLIENT-SIDE k-ANONYMITY</p>
+              </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+              <div class="col-md-4">
+                <div class="glass-panel p-3 border-0 shadow-sm h-100">
+                  <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined fs-6 text-primary">terminal</span>
+                    <span class="text-xs-caps fw-bold" style="font-size: 7px;">1. LOCAL HASHING</span>
                   </div>
-                </li>
-                <li class="d-flex gap-3">
-                  <span class="material-symbols-outlined text-secondary">shield_locked</span>
-                  <div>
-                    <div class="text-xs-caps fw-bold text-secondary mb-1" style="font-size: 7px;">ENABLE HARDWARE MFA</div>
-                    <div class="text-xs-caps text-on-surface opacity-75 fw-bold" style="font-size: 7px;">Elevate authentication protocols to physical token requirements.</div>
+                  <p class="mb-0 text-on-surface-variant opacity-75 fw-medium" style="font-size: 10px;">
+                    Your password is SHA-1 hashed locally. Plaintext never leaves your browser.
+                  </p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="glass-panel p-3 border-0 shadow-sm h-100">
+                  <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined fs-6 text-primary">share</span>
+                    <span class="text-xs-caps fw-bold" style="font-size: 7px;">2. PREFIX PROXY</span>
                   </div>
-                </li>
-                <li class="d-flex gap-3">
-                  <span class="material-symbols-outlined text-warning">security_update_good</span>
-                  <div>
-                    <div class="text-xs-caps fw-bold text-warning mb-1" style="font-size: 7px;">AUDIT LINKED ACCOUNTS</div>
-                    <div class="text-xs-caps text-on-surface opacity-75 fw-bold" style="font-size: 7px;">Review cross-domain authorization grants for unauthorized persistence.</div>
+                  <p class="mb-0 text-on-surface-variant opacity-75 fw-medium" style="font-size: 10px;">
+                    We send only the first 5 chars of your hash. It's mathematically impossible to reverse.
+                  </p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="glass-panel p-3 border-0 shadow-sm h-100">
+                  <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined fs-6 text-primary">sync_alt</span>
+                    <span class="text-xs-caps fw-bold" style="font-size: 7px;">3. ZERO-KNOWLEDGE</span>
                   </div>
-                </li>
-              </ul>
+                  <p class="mb-0 text-on-surface-variant opacity-75 fw-medium" style="font-size: 10px;">
+                    We download potential matches and verify them locally. We never see the result.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center p-3 glass-panel border-primary border-opacity-10 rounded-pill">
+              <div class="d-flex align-items-center gap-2" [ngClass]="health.isSecureChannelActive ? 'text-success' : 'text-error'">
+                <span class="status-dot-xs animate-pulse" [ngClass]="health.isSecureChannelActive ? 'bg-success' : 'bg-error'"></span>
+                <span class="text-xs-caps fw-bold" style="font-size: 7px;">E2E ENCRYPTION {{ health.isSecureChannelActive ? 'ACTIVE' : 'INACTIVE (GATEWAY DOWN)' }}</span>
+              </div>
+              <div class="d-flex align-items-center gap-2 text-on-surface-variant opacity-50">
+                <span class="material-symbols-outlined fs-6">verified</span>
+                <span class="text-xs-caps fw-bold" style="font-size: 7px;">SECURE CHANNEL</span>
+              </div>
             </div>
           </div>
         </div>
@@ -323,6 +447,15 @@ import { forkJoin } from 'rxjs';
 
     .status-orb { width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 15px currentColor; }
 
+    .playbook-step-number {
+       width: 48px;
+       flex-shrink: 0;
+       font-size: 7px;
+       letter-spacing: 0.1em;
+       opacity: 0.7;
+       padding-top: 4px;
+    }
+
     .status-dot-xs {
       width: 6px;
       height: 6px;
@@ -353,6 +486,9 @@ import { forkJoin } from 'rxjs';
     .text-severity-medium { color: var(--severity-medium) !important; }
     .text-severity-low { color: var(--severity-low) !important; }
     .text-severity-info { color: var(--severity-info) !important; }
+
+    .border-error { border-color: var(--error) !important; }
+    .btn-error { background-color: var(--error) !important; color: white !important; }
   `]
 })
 export class ExposureCheckerComponent implements OnInit {
@@ -361,6 +497,7 @@ export class ExposureCheckerComponent implements OnInit {
   private breachService = inject(BreachService);
   private analyticsService = inject(AnalyticsService);
   private notifications = inject(NotificationService);
+  public health = inject(HealthService);
 
   query = '';
   loading = false;
@@ -368,17 +505,114 @@ export class ExposureCheckerComponent implements OnInit {
   errorMessage = '';
   summary: AnalyticsSummary | null = null;
   criticalCount = 0;
-  searchMode: 'email' | 'domain' = 'email';
+  searchMode: 'email' | 'domain' | 'password' = 'email'; // pragma: allowlist secret
 
   ngOnInit(): void {
     this.loadData();
   }
 
-  setSearchMode(mode: 'email' | 'domain'): void {
+  setSearchMode(mode: 'email' | 'domain' | 'password'): void { // pragma: allowlist secret
     this.searchMode = mode;
     this.results = null;
     this.errorMessage = '';
+    this.query = '';
     this.focusSearch();
+  }
+
+  async performCheck(): Promise<void> {
+    if (!this.query.trim()) {
+      this.notifications.show('ENTER VALID TARGET QUERY', 'warning');
+      this.errorMessage = 'TARGET QUERY REQUIRED';
+      this.results = null;
+      return;
+    }
+
+    if (!this.health.isOnline()) {
+      this.notifications.show('INTERNET DISCONNECTED', 'error');
+      return;
+    }
+
+    if (!this.health.isBackendReady()) {
+      this.notifications.show('SECURE GATEWAY UNREACHABLE', 'error');
+      return;
+    }
+
+    this.loading = true;
+    this.errorMessage = '';
+
+    if (this.searchMode === 'password') {
+      await this.handlePasswordCheck();
+    } else {
+      this.handleIdentityCheck();
+    }
+  }
+
+  private handleIdentityCheck(): void {
+    const email = this.searchMode === 'email' ? this.query : undefined;
+    const domain = this.searchMode === 'domain' ? this.query : undefined;
+
+    this.breachService.checkExposure(email, domain).subscribe({
+      next: (res) => {
+        this.results = res.data;
+        this.loading = false;
+        if (this.results.exposed || this.results.email_exposed || this.results.domain_exposed) {
+          const type = this.searchMode === 'email' ? 'IDENTITY' : 'DOMAIN';
+          this.notifications.show(`${type} EXPOSURE CONFIRMED: ${this.results.breach_count || 0} BREACHES`, 'error');
+        } else {
+          this.notifications.show('QUERY RETURNED CLEAR SIGNAL', 'success');
+        }
+      },
+      error: (err) => {
+        this.loading = false;
+        this.results = null;
+        this.errorMessage = err?.error?.message || 'DATA INGESTION ERROR';
+        this.notifications.show(this.errorMessage, 'error');
+      }
+    });
+  }
+
+  private async handlePasswordCheck(): Promise<void> {
+    try {
+      // 1. SHA-1 Hash the password locally (Client-side)
+      const hash = await this.sha1(this.query);
+      const prefix = hash.substring(0, 5).toUpperCase();
+      const suffix = hash.substring(5).toUpperCase();
+
+      // 2. Send ONLY the 5-character prefix to the backend (k-Anonymity)
+      this.breachService.checkPasswordExposure(prefix).subscribe({
+        next: (res) => {
+          const suffixes = res.data.suffixes || {};
+          const count = suffixes[suffix] || 0;
+          const isExposed = count > 0;
+
+          this.results = {
+            exposed: isExposed,
+            password_exposed: isExposed,
+            breach_count: count,
+            recommendation: isExposed
+              ? 'ROTATE PASSWORD IMMEDIATELY. Verified exposure in public leak repositories.'
+              : 'Password not found in known public breaches. Standard rotation cycle recommended.'
+          };
+
+          this.loading = false;
+          if (isExposed) {
+            this.notifications.show(`PASSWORD COMPROMISED: ${count} DETECTIONS`, 'error');
+          } else {
+            this.notifications.show('PASSWORD STATUS: SECURE', 'success');
+          }
+        },
+        error: (err) => {
+          this.loading = false;
+          this.results = null;
+          this.errorMessage = err?.error?.message || 'PEERING ERROR';
+          this.notifications.show(this.errorMessage, 'error');
+        }
+      });
+    } catch (err) {
+      this.loading = false;
+      this.errorMessage = 'HASHING PROTOCOL FAILURE';
+      this.notifications.show(this.errorMessage, 'error');
+    }
   }
 
   loadData(): void {
@@ -403,40 +637,11 @@ export class ExposureCheckerComponent implements OnInit {
     }
   }
 
-  performCheck(): void {
-    if (!this.query.trim()) {
-      this.notifications.show('ENTER VALID TARGET QUERY', 'warning');
-      this.errorMessage = 'TARGET QUERY REQUIRED';
-      this.results = null;
-      return;
-    }
-
-    this.loading = true;
-    this.errorMessage = '';
-
-    const payload = {
-      email: this.searchMode === 'email' ? this.query : undefined,
-      domain: this.searchMode === 'domain' ? this.query : undefined
-    };
-
-    this.breachService.checkExposure(payload.email, payload.domain).subscribe({
-      next: (res) => {
-        this.results = res.data;
-        this.loading = false;
-        if (this.results.exposed) {
-          const type = this.searchMode === 'email' ? 'IDENTITY' : 'DOMAIN';
-          this.notifications.show(`${type} EXPOSURE CONFIRMED: ${this.results.breach_count} BREACHES`, 'error');
-        } else {
-          this.notifications.show('QUERY RETURNED CLEAR SIGNAL', 'success');
-        }
-      },
-      error: (err) => {
-        this.loading = false;
-        this.results = null;
-        this.errorMessage = err?.error?.message || 'DATA INGESTION ERROR';
-        this.notifications.show(this.errorMessage, 'error');
-      }
-    });
+  private async sha1(str: string): Promise<string> {
+    const buffer = new TextEncoder().encode(str);
+    const hashBuffer = await crypto.subtle.digest('SHA-1', buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
   getSevColor(sev: string): string {
@@ -449,5 +654,35 @@ export class ExposureCheckerComponent implements OnInit {
     if (!b.organisation) return 'UNKNOWN';
     if (typeof b.organisation === 'string') return b.organisation;
     return b.organisation.name || 'UNKNOWN';
+  }
+
+  getCategoryIcon(cat: string): string {
+    switch (cat) {
+      case 'identity': return 'fingerprint';
+      case 'credentials': return 'key';
+      case 'financial': return 'payments';
+      case 'technical': return 'lan';
+      default: return 'data_object';
+    }
+  }
+
+  getCategoryColor(cat: string): string {
+    switch (cat) {
+      case 'identity': return 'text-primary';
+      case 'credentials': return 'text-warning';
+      case 'financial': return 'text-error';
+      case 'technical': return 'text-secondary';
+      default: return 'text-on-surface-variant';
+    }
+  }
+
+  getCategoryBg(cat: string): string {
+    switch (cat) {
+      case 'identity': return 'bg-primary';
+      case 'credentials': return 'bg-warning';
+      case 'financial': return 'bg-error';
+      case 'technical': return 'bg-secondary';
+      default: return 'bg-on-surface-variant';
+    }
   }
 }

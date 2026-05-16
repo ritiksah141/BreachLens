@@ -13,8 +13,11 @@ import { CompactNumberPipe } from '../../shared/pipes/compact-number.pipe';
   template: `
     <!-- Page Header -->
     <div class="glass-panel p-4 mb-4 shadow-lg border-0 d-flex justify-content-between align-items-center animate__animated animate__fadeIn">
-      <div>
-        <h2 class="font-headline fw-extrabold text-on-surface tracking-tight page-title mb-1">Intelligence & Analytics</h2>
+      <div class="title-wrapper">
+        <h2 class="page-title mb-1">
+          <span class="material-symbols-outlined text-primary opacity-50 me-2" style="font-size: 24px;">monitoring</span>
+          Intelligence & Analytics
+        </h2>
         <p class="text-xs-caps mb-0 text-on-surface-variant opacity-75" style="font-size: 7px; letter-spacing: 0.1em;">Advanced cross-sector visualization and surface-level vulnerability mapping.</p>
       </div>
       <div class="d-flex align-items-center gap-3">

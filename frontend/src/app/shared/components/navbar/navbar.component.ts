@@ -10,8 +10,16 @@ import { AuthService } from '../../../core/services/auth.service';
   template: `
     <nav class="navbar navbar-expand-lg bg-surface-container border-bottom border-outline-variant">
       <div class="container-fluid">
-        <a class="navbar-brand fw-bold text-on-surface" routerLink="/">
-          <span class="text-error">⬡</span> BreachLens
+        <a class="navbar-brand d-flex align-items-center gap-2 fw-bold text-on-surface" routerLink="/">
+          <span class="brand-mark brand-mark-xs" aria-hidden="true">
+            <span class="brand-chip brand-chip-a">
+              <span class="material-symbols-outlined brand-chip-icon">security</span>
+            </span>
+            <span class="brand-chip brand-chip-b">
+              <span class="material-symbols-outlined brand-chip-icon">visibility</span>
+            </span>
+          </span>
+          BreachLens
         </a>
         <button
           class="navbar-toggler"
@@ -94,6 +102,10 @@ import { AuthService } from '../../../core/services/auth.service';
       </div>
     </nav>
   `,
+  styles: [`
+    .navbar { height: auto; }
+    .nav-link.active { font-weight: bold; color: var(--primary) !important; }
+  `]
 })
 export class NavbarComponent {
   auth = inject(AuthService);

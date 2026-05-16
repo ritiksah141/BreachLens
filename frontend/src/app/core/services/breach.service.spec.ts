@@ -74,7 +74,7 @@ describe('BreachService', () => {
 
   it('checkExposure() should send email as query param', () => {
     service.checkExposure('test@example.com').subscribe();
-    const req = http.expectOne((r) => r.url.includes('exposure-check'));
+    const req = http.expectOne((r) => r.url.endsWith('/check'));
     expect(req.request.params.get('email')).toBe('test@example.com');
     req.flush({ data: { exposed: false } });
   });

@@ -120,7 +120,11 @@ export class BreachService {
     let params = new HttpParams();
     if (email)  params = params.set('email',  email);
     if (domain) params = params.set('domain', domain);
-    return this.http.get<ApiResponse<any>>(`${this.base}/exposure-check`, { params });
+    return this.http.get<ApiResponse<any>>(`${this.base}/check`, { params });
+  }
+
+  checkPasswordExposure(prefix: string): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${this.base}/exposure/password`, { prefix });
   }
 
   // ------------------------------------------------------------------

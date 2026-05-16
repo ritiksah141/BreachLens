@@ -51,13 +51,3 @@ services:
         value: "bl_csrf"
       - key: CSRF_HEADER_NAME
         value: "X-CSRF-Token"
-      - key: FRONTEND_BASE_URL
-        sync: false
-      - key: AUTH_COOKIE_SECURE
-        sync: false
-      - key: AUTH_COOKIE_SAMESITE
-        sync: false
-      - key: AUTH_COOKIE_DOMAIN
-        sync: false
-      - key: CSRF_ENABLED
-        sync: false

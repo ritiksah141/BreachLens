@@ -69,4 +69,8 @@ export class AnalyticsService {
     }
     return this.http.get<ApiResponse<AttackSurfaceProfile>>(`${this.base}/attack-surface-profile`, { params });
   }
+
+  checkHealth(): Observable<any> {
+    return this.http.get(`${environment.apiUrl}/health/live`);
+  }
 }

@@ -6,7 +6,12 @@ This guide assumes the backend is deployed to Render first, then the frontend to
 - Rotate any leaked secrets before deploying (MongoDB user password, Redis password, SECRET_KEY).
 - Ensure you have a MongoDB Atlas database and an Upstash Redis instance.
 
-## 2) Render (Backend)
+## 2) GitHub Configuration (CI/CD & Sync)
+Add these secrets to your repository (Settings -> Secrets and variables -> Actions):
+- **`MONGO_URI`**: Production MongoDB Atlas URL (required for Daily OSINT Sync).
+- **`HIBP_API_KEY`**: (Optional) For high-speed synchronization; otherwise, the public API is used.
+
+## 3) Render (Backend)
 ### Render settings
 - Service type: Web
 - Root directory: backend
@@ -48,7 +53,7 @@ Other
 - Verify health: GET /health returns status ok.
 - Verify login and password reset: POST /api/v1/auth/login and /api/v1/auth/forgot-password.
 
-## 3) Vercel (Frontend)
+## 4) Vercel (Frontend)
 Deploy the frontend after the backend is stable.
 
 ### Vercel environment variables
@@ -62,13 +67,14 @@ Update Render env vars:
 - AUTH_COOKIE_SAMESITE=None (if frontend is on a different domain)
 - AUTH_COOKIE_DOMAIN=.vercel.app (optional, only if needed)
 
-## 4) Post-deploy checks
-- Auth flow works (login, logout, reset password).
-- Exposure-check requires auth.
-- Rate limiting enforced (429 after repeated calls).
-- CORS allows only the frontend origin.
+## 5) Post-deploy checks
+- **Defense Hub**: Log in and verify that your Personal Threat Advisory and Risk Genome load correctly.
+- **Daily Sync**: Check the GitHub "Actions" tab once a day to ensure the `OSINT Data Synchronization` workflow is passing.
+- **Alerts**: Verify that the "Open Alerts" panel on the Dashboard correctly pulls unacknowledged events.
+- **Rate Limiting**: Enforced (429 after repeated calls on protected endpoints).
+- **CORS**: Allows only the frontend origin.
 
-## 5) Local development
+## 6) Local development
 Use backend/.env for local values:
 - FRONTEND_BASE_URL=http://localhost:4200
 - CORS_ORIGINS=http://localhost:4200

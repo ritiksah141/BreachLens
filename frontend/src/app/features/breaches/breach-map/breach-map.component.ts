@@ -334,16 +334,25 @@ export class BreachMapComponent implements OnInit, AfterViewInit, OnDestroy {
       },
       onEachFeature: (feature: any, layer: any) => {
         const props = feature.properties;
+        const sev = props.severity?.toLowerCase() || 'medium';
+        const sevColor = colorMap[sev] || 'var(--on-surface)';
+
         layer.bindPopup(`
           <div class="text-on-surface">
-          <div class="text-xs-caps fw-bold mb-1" style="font-size: 10px;">${props.title}</div>
-          <div class="small mb-2 d-flex align-items-center gap-2">
-            <span class="badge py-1 px-2 border border-outline-variant border-opacity-25 text-xs-caps" style="font-size: 7px; background: var(--surface-container-low); color: var(--on-surface)">${props.severity?.toUpperCase()}</span>
+            <div class="text-xs-caps fw-bold mb-2" style="font-size: 10px; border-bottom: 1px solid var(--outline-variant); padding-bottom: 4px;">${props.title}</div>
+            <div class="small mb-3 d-flex align-items-center gap-2">
+              <span class="badge py-1 px-2 text-xs-caps fw-bold shadow-sm"
+                    style="font-size: 7px; background: color-mix(in srgb, ${sevColor} 15%, transparent); border: 1px solid ${sevColor}; color: ${sevColor}">
+                ${props.severity?.toUpperCase()}
+              </span>
+            </div>
+            <button class="btn btn-primary w-100 py-0 text-xs-caps fw-bold d-flex align-items-center justify-content-center" style="font-size: 8px; height: 28px;" id="popup-btn-${props.id}">VIEW DETAILS</button>
           </div>
-          <button class="btn btn-primary w-100 py-1 text-xs-caps" style="font-size: 8px;" id="popup-btn-${props.id}">DETAILS</button>
-          </div>
-
-        `, { className: 'bl-popup' });
+        `, {
+          className: 'bl-popup',
+          closeButton: false,
+          minWidth: 160
+        });
 
         layer.on('popupopen', () => {
           setTimeout(() => {

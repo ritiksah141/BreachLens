@@ -1,0 +1,34 @@
+name: OSINT Data Synchronization
+
+on:
+  schedule:
+    # Run once a day at midnight UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    # Allow manual triggering for testing
+
+jobs:
+  sync-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          pip install -r backend/requirements.txt
+
+      - name: Run Data Sync Pipeline
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          FLASK_ENV: production
+        run: |
+          # The pipeline script is already optimized for incremental updates and rate limiting.
+          # We run it from the backend folder context.
+          cd backend && python seed/pipeline.py --verbose

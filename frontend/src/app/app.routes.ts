@@ -41,6 +41,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'defense-hub',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/defense-hub/defense-hub.component').then(
+        (m) => m.DefenseHubComponent
+      ),
+  },
+  {
     path: 'admin',
     canActivate: [adminGuard],
     loadComponent: () =>

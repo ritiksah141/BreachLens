@@ -1,9 +1,8 @@
 # BreachLens – Dark Web Breach Intelligence Tracker
 ## Product Requirements Document (PRD)
 **Version:** 2.1.0
-**Module:** COM661 – Full Stack Strategies and Development
-**Author:** Individual Coursework Submission
-**Classification:** Academic – Internal Use Only
+**Module:** Full Stack Strategies and Development
+**Author:** Individual
 
 ---
 
@@ -695,4 +694,4 @@ Simplified: compute the average weight across all data types in the array, then 
 
 ---
 
-*BreachLens PRD v1.0.0 – COM661 Individual Coursework – Confidential*
+*BreachLens PRD v1.0.0

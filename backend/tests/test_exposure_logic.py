@@ -2,7 +2,8 @@
 test_exposure_logic.py — Unit tests for Phase 1 exposure checking features.
 """
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, PropertyMock
+from bson import ObjectId
 from app.utils.pwned_passwords import check_password_exposure
 from app.services.breach_service import BreachService
 
@@ -63,13 +64,15 @@ def test_aggregated_risk_score():
 
     # Mock data with _id and risk_score
     mock_breaches = [
-        {"risk_score": 8.0, "_id": "1", "data_types_exposed": ["email"]},
-        {"risk_score": 4.0, "_id": "2", "data_types_exposed": ["email"]}
+        {"risk_score": 8.0, "_id": ObjectId(), "data_types_exposed": ["email"]},
+        {"risk_score": 4.0, "_id": ObjectId(), "data_types_exposed": ["email"]}
     ]
 
-    # Directly mock the find method on the service's collection object
-    service.col.find = MagicMock(return_value=mock_breaches)
+    mock_col = MagicMock()
+    mock_col.find.return_value = mock_breaches
 
-    result = service.check_exposure(email="test@example.com")
-    assert result["aggregated_risk_score"] == 6.0
-    assert result["breach_count"] == 2
+    with patch.object(BreachService, 'col', new_callable=PropertyMock) as mock_col_prop:
+        mock_col_prop.return_value = mock_col
+        result = service.check_exposure(email="test@example.com")
+        assert result["aggregated_risk_score"] == 6.0
+        assert result["breach_count"] == 2

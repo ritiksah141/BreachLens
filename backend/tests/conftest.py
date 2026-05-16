@@ -9,6 +9,12 @@ from datetime import datetime, timedelta
 from unittest.mock import patch, MagicMock
 import jwt as pyjwt  # raw PyJWT — module requirement
 from bson import ObjectId
+import mongomock
+
+# Apply mongomock patch before any app code is imported
+# This ensures that even module-level imports of pymongo are patched.
+_mongo_patcher = patch("pymongo.MongoClient", mongomock.MongoClient)
+_mongo_patcher.start()
 
 from app import create_app
 
@@ -30,9 +36,9 @@ def app():
     return application
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def client(app):
-    """Flask test client (session-scoped for performance)."""
+    """Flask test client (function-scoped for isolation)."""
     return app.test_client()
 
 

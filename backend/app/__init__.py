@@ -222,6 +222,14 @@ def _validate_security_config(app: Flask, config_name: str) -> None:
         raise RuntimeError("CORS_ORIGINS must contain at least one explicit origin.")
 
     if config_name == "production":
+        frontend_pending = bool(app.config.get("FRONTEND_PENDING", False))
+        frontend_base_url = (app.config.get("FRONTEND_BASE_URL") or "").strip()
+        if not frontend_pending:
+            if not frontend_base_url:
+                raise RuntimeError("FRONTEND_BASE_URL must be set when FRONTEND_PENDING=false.")
+            if "localhost" in frontend_base_url:
+                raise RuntimeError("FRONTEND_BASE_URL must not use localhost in production.")
+
         if "*" in origins:
             raise RuntimeError("CORS_ORIGINS cannot contain '*' in production.")
         localhost_origins = ("http://localhost", "https://localhost", "http://127.0.0.1", "https://127.0.0.1")

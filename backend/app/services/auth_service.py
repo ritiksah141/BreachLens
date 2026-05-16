@@ -19,6 +19,13 @@ from pymongo.errors import DuplicateKeyError
 from app.extensions import mongo
 
 TOKEN_TYPE_BEARER = "Bearer"  # nosec B105 - token type label
+PASSWORD_HASH_PROJECTION = {"_id": 1, "password_hash": 1}  # nosec B105
+PASSWORD_RESET_UNSET = {
+    "password_reset_token_hash": 1,
+    "password_reset_expires_at": 1,
+    "password_reset_requested_at": 1,
+    "locked_until": 1,
+}  # nosec B105
 
 
 class AuthService:
@@ -264,7 +271,7 @@ class AuthService:
                 "password_reset_token_hash": token_hash,
                 "password_reset_expires_at": {"$gt": now},
             },
-            {"_id": 1, "password_hash": 1},  # nosec B105
+            PASSWORD_HASH_PROJECTION,
         )
         if not user:
             return False, "Invalid or expired reset token."
@@ -285,12 +292,7 @@ class AuthService:
                     "updated_at": now,
                     "failed_login_attempts": 0,
                 },
-                "$unset": {  # nosec B105
-                    "password_reset_token_hash": 1,
-                    "password_reset_expires_at": 1,
-                    "password_reset_requested_at": 1,
-                    "locked_until": 1,
-                },
+                "$unset": PASSWORD_RESET_UNSET,
             },
         )
 

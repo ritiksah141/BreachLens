@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://YOUR_DEPLOYED_API_URL/api/v1',
+  apiUrl: 'https://api.breachlens.io/api/v1',
 };
