@@ -271,23 +271,23 @@ class TestDeleteBreach:
 
 class TestExposureCheck:
 
-    def test_exposure_check_requires_email_or_domain(self, client, analyst_headers):
+    def test_exposure_check_requires_email_or_domain(self, client):
         """Missing both email and domain should return 400."""
-        resp = client.get("/api/v1/breaches/check", headers=analyst_headers)
+        resp = client.get("/api/v1/breaches/check")
         assert resp.status_code == 400
 
-    def test_exposure_check_invalid_email(self, client, analyst_headers):
+    def test_exposure_check_invalid_email(self, client):
         """Malformed email should return 422."""
-        resp = client.get("/api/v1/breaches/check?email=not-an-email", headers=analyst_headers)
+        resp = client.get("/api/v1/breaches/check?email=not-an-email")
         assert resp.status_code == 422
 
-    def test_exposure_check_by_email(self, client, analyst_headers):
+    def test_exposure_check_by_email(self, client):
         """Valid email query should return matching breaches."""
         with patch(
             "app.routes.breaches.breach_service.check_exposure",
             return_value={"email_exposed": True, "breach_count": 1, "breaches": [MOCK_BREACH]},
         ):
-            resp = client.get("/api/v1/breaches/check?email=victim@example.com", headers=analyst_headers)
+            resp = client.get("/api/v1/breaches/check?email=victim@example.com")
         assert resp.status_code == 200
         assert resp.get_json()["data"]["email_exposed"] is True
 

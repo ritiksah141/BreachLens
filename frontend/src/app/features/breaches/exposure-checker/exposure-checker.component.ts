@@ -68,13 +68,13 @@ import { forkJoin } from 'rxjs';
 
         <div class="d-flex gap-3 align-items-center animate__animated animate__fadeInDown">
           <div class="search-pill-outer flex-grow-1 shadow-lg" [class.is-loading]="loading" [class.border-error]="searchMode === 'password' && query.length > 0">
-            <div class="d-flex align-items-center w-100 h-100 ps-4">
+            <div class="d-flex align-items-center w-100 h-100 ps-4 pe-4">
               <span class="material-symbols-outlined text-primary me-3 fs-4" [ngClass]="{'text-error': searchMode === 'password'}">
                 {{ searchMode === 'email' ? 'fingerprint' : (searchMode === 'domain' ? 'hub' : 'lock') }}
               </span>
               <input
                 #searchInput
-                [type]="searchMode === 'password' ? 'password' : 'text'"
+                [type]="(searchMode === 'password' && !showPassword) ? 'password' : 'text'"
                 [(ngModel)]="query"
                 (keyup.enter)="performCheck()"
                 class="pill-input flex-grow-1 text-on-surface fw-bold"
@@ -82,6 +82,14 @@ import { forkJoin } from 'rxjs';
                 autocomplete="off"
                 style="font-size: 13px;"
               >
+              <button *ngIf="searchMode === 'password'"
+                      class="btn btn-link text-on-surface-variant p-0 border-0 d-flex align-items-center opacity-75 hover-opacity-100 transition-all"
+                      (click)="togglePasswordVisibility()"
+                      type="button">
+                <span class="material-symbols-outlined fs-5">
+                  {{ showPassword ? 'visibility_off' : 'visibility' }}
+                </span>
+              </button>
             </div>
             <!-- Scanning Line Animation -->
             <div class="scanning-line" *ngIf="loading" [style.background]="searchMode === 'password' ? 'var(--error)' : 'var(--primary)'"></div>
@@ -159,7 +167,7 @@ import { forkJoin } from 'rxjs';
       @if (results) {
         <div class="row g-4 mb-5 animate__animated animate__fadeIn">
           <!-- Primary Status Card -->
-          <div class="col-lg-4">
+          <div [ngClass]="searchMode === 'password' ? 'col-lg-6 mx-auto' : 'col-lg-4'">
             <div class="glass-panel p-4 shadow-lg h-100 d-flex flex-column justify-content-between border-top border-4"
                  [ngClass]="(results.exposed || results.email_exposed || results.domain_exposed) ? 'border-error status-card-exposed' : 'border-success status-card-clear'">
               <div>
@@ -175,6 +183,11 @@ import { forkJoin } from 'rxjs';
                     <div class="text-xs-caps text-on-surface opacity-100 fw-bold" style="font-size: 8px;">
                       {{ (results.exposed || results.email_exposed || results.domain_exposed) ? results.breach_count + ' INCURSIONS FOUND' : 'NO KNOWN EXPOSURES' }}
                     </div>
+                    @if (searchMode === 'password' && results.exposed) {
+                      <div class="mt-2 text-on-surface-variant opacity-50 fw-bold" style="font-size: 6px; letter-spacing: 0.05em;">
+                        * DUE TO K-ANONYMITY PRIVACY PROTOCOLS, SPECIFIC BREACH SOURCES ARE NOT IDENTIFIABLE.
+                      </div>
+                    }
                   </div>
                 </div>
 
@@ -190,8 +203,11 @@ import { forkJoin } from 'rxjs';
                 </div>
               </div>
               <div class="mt-4">
-                <button class="btn btn-error w-100 py-3 text-xs-caps shadow-sm text-white fw-bold d-flex align-items-center justify-content-center" *ngIf="results.exposed || results.email_exposed || results.domain_exposed" style="background-color: var(--error); font-size: 9px;">
-                  SECURE IDENTITY
+                <button class="btn btn-error w-100 py-3 text-xs-caps shadow-sm text-white fw-bold d-flex align-items-center justify-content-center"
+                        *ngIf="results.exposed || results.email_exposed || results.domain_exposed"
+                        style="background-color: var(--error); font-size: 9px;"
+                        [routerLink]="searchMode === 'password' ? (auth.isAuthenticated() ? '/auth/profile' : '/auth/register') : '/defense-hub'">
+                  {{ searchMode === 'password' ? 'ROTATE CREDENTIALS' : 'SECURE IDENTITY' }}
                 </button>
                 <div class="text-center text-xs-caps opacity-100 py-3 text-on-surface fw-bold" *ngIf="!(results.exposed || results.email_exposed || results.domain_exposed)" style="font-size: 7px;">
                   IDENTITY STATUS: NORMAL
@@ -201,7 +217,7 @@ import { forkJoin } from 'rxjs';
           </div>
 
           <!-- Risk Genome (Unique Feature) -->
-          <div class="col-lg-8" *ngIf="results.risk_genome">
+          <div class="col-lg-8" *ngIf="searchMode !== 'password' && results.risk_genome">
             <div class="glass-panel p-4 shadow-lg h-100 d-flex flex-column">
               <h2 class="text-xs-caps text-on-surface border-bottom border-outline-variant border-opacity-10 pb-2 mb-4" style="font-size: 8px;">RISK GENOME breakdown</h2>
               <div class="row g-3 flex-grow-1">
@@ -239,7 +255,7 @@ import { forkJoin } from 'rxjs';
           </div>
 
           <!-- Secondary Analytics Row (Map + Logs) -->
-          <div class="col-lg-6">
+          <div class="col-lg-6" *ngIf="searchMode !== 'password'">
             <div class="glass-panel p-3 shadow-lg" style="height: 450px;">
               <h2 class="text-xs-caps text-on-surface px-2 mb-3" style="font-size: 8px;">THREAT VECTOR PROJECTION</h2>
               <div class="position-relative overflow-hidden flex-grow-1" style="height: calc(100% - 40px); border-radius: 1rem;">
@@ -315,7 +331,7 @@ import { forkJoin } from 'rxjs';
       }
 
       <!-- Privacy & Trust Protocol (Visible primarily in Password Mode) -->
-      @if (searchMode === 'password' && !results && !loading) {
+      @if (searchMode === 'password') {
         <div class="max-width-800 mx-auto mt-2 animate__animated animate__fadeIn">
           <div class="glass-panel p-4 border-0 shadow-lg position-relative overflow-hidden">
             <div class="d-flex align-items-center gap-3 mb-4">
@@ -516,6 +532,7 @@ export class ExposureCheckerComponent implements OnInit {
   summary: AnalyticsSummary | null = null;
   criticalCount = 0;
   searchMode: 'email' | 'domain' | 'password' = 'email'; // pragma: allowlist secret
+  showPassword = false;
 
   ngOnInit(): void {
     this.loadData();
@@ -526,7 +543,12 @@ export class ExposureCheckerComponent implements OnInit {
     this.results = null;
     this.errorMessage = '';
     this.query = '';
+    this.showPassword = false;
     this.focusSearch();
+  }
+
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
   }
 
   async performCheck(): Promise<void> {
@@ -599,6 +621,7 @@ export class ExposureCheckerComponent implements OnInit {
             exposed: isExposed,
             password_exposed: isExposed,
             breach_count: count,
+            defense_playbook: res.data.defense_playbook || [],
             recommendation: isExposed
               ? 'ROTATE PASSWORD IMMEDIATELY. Verified exposure in public leak repositories.'
               : 'Password not found in known public breaches. Standard rotation cycle recommended.'

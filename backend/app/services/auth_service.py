@@ -53,7 +53,7 @@ class AuthService:
         on failure.
         """
         password_hash = bcrypt.hashpw(
-            password.encode("utf-8"), bcrypt.gensalt(rounds=12)
+            password.encode("utf-8"), bcrypt.gensalt(rounds=current_app.config.get("BCRYPT_LOG_ROUNDS", 12))
         ).decode("utf-8")
 
         now = datetime.utcnow()
@@ -281,7 +281,7 @@ class AuthService:
             return False, "New password must be different from your current password."
 
         password_hash = bcrypt.hashpw(
-            new_password.encode("utf-8"), bcrypt.gensalt(rounds=12)
+            new_password.encode("utf-8"), bcrypt.gensalt(rounds=current_app.config.get("BCRYPT_LOG_ROUNDS", 12))
         ).decode("utf-8")
 
         self.col.update_one(

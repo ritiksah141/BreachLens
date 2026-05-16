@@ -584,7 +584,6 @@ def bulk_delete_breaches():
 # ---------------------------------------------------------------------------
 
 @breaches_bp.get("/check")
-@require_auth
 @limiter.limit("3 per minute")
 def exposure_check():
     """Check if an email address or domain appears in any known breach."""
@@ -622,17 +621,62 @@ def password_exposure_check():
         if prefix:
             # Client-side k-Anonymity flow: Client sends 5-char prefix
             suffixes = get_pwned_suffixes(prefix)
+
+            # The client will check the suffix locally, but we provide the playbook
+            # for "exposure detected" scenario which the UI can render if needed.
+            # However, for true client-side flow, the client should decide.
+            # But the UI renders results based on what we send.
+
             return success_response({
                 "prefix": prefix,
                 "suffixes": suffixes,
+                "defense_playbook": [
+                    {
+                        "priority": "critical",
+                        "action": "IMMEDIATE ROTATION",
+                        "details": "This password has been identified in global public breaches. Change it immediately wherever it is used."
+                    },
+                    {
+                        "priority": "high",
+                        "action": "USE PASSWORD MANAGER",
+                        "details": "Adopt a manager like Bitwarden or 1Password to generate and store unique, strong credentials for every service."
+                    },
+                    {
+                        "priority": "medium",
+                        "action": "CROSS-SERVICE AUDIT",
+                        "details": "Identify other accounts where you might have reused this password and update them to prevent credential stuffing attacks."
+                    }
+                ],
                 "info": "Matching performed client-side for maximum privacy."
             })
         else:
             # Traditional flow: Client sends raw password (backend hashes it)
             is_exposed, count = check_password_exposure(password)
+
+            playbook = []
+            if is_exposed:
+                playbook = [
+                    {
+                        "priority": "critical",
+                        "action": "IMMEDIATE ROTATION",
+                        "details": "This password has been identified in global public breaches. Change it immediately wherever it is used."
+                    },
+                    {
+                        "priority": "high",
+                        "action": "USE PASSWORD MANAGER",
+                        "details": "Adopt a manager like Bitwarden or 1Password to generate and store unique, strong credentials for every service."
+                    },
+                    {
+                        "priority": "medium",
+                        "action": "CROSS-SERVICE AUDIT",
+                        "details": "Identify other accounts where you might have reused this password and update them to prevent credential stuffing attacks."
+                    }
+                ]
+
             return success_response({
                 "password_exposed": is_exposed,
                 "exposure_count": count,
+                "defense_playbook": playbook,
                 "recommendation": "Change your password immediately if exposed." if is_exposed else "Password not found in known public breaches."
             })
     except RuntimeError:

@@ -42,6 +42,7 @@ pytest_cache/
 
 # Logs
 backend/logs/
+logs/
 *.log
 
 # IDE / Editor

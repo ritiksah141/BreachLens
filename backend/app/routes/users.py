@@ -5,7 +5,7 @@ Prefix: /api/v1/users
 import re
 
 import bcrypt
-from flask import Blueprint, request, g
+from flask import Blueprint, request, g, current_app
 from app.middleware.auth_middleware import require_auth, require_role
 from app.services.user_service import UserService
 from app.utils.response import success_response, error_response
@@ -92,7 +92,7 @@ def update_user(user_id: str):
                 422,
             )
         password_hash = bcrypt.hashpw(
-            data["password"].encode("utf-8"), bcrypt.gensalt(rounds=12)
+            data["password"].encode("utf-8"), bcrypt.gensalt(rounds=current_app.config.get("BCRYPT_LOG_ROUNDS", 12))
         ).decode("utf-8")
         allowed["password_hash"] = password_hash
 

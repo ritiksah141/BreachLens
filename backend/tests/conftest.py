@@ -132,20 +132,23 @@ def mock_mongo_indexes():
 
 
 @pytest.fixture(autouse=True)
-def clear_token_blacklist(app):
-    """Clear the MongoDB blacklist collection between tests so that
-    session-scoped tokens don't become permanently revoked after a logout test."""
+def clear_db_collections(app):
+    """Clear MongoDB collections between tests to ensure isolation."""
     with app.app_context():
         try:
             from app.extensions import mongo
-            mongo.db["blacklist"].delete_many({})
+            collections = ["blacklist", "audit_logs", "breaches", "users"]
+            for coll in collections:
+                mongo.db[coll].delete_many({})
         except Exception:
             pass
     yield
     with app.app_context():
         try:
             from app.extensions import mongo
-            mongo.db["blacklist"].delete_many({})
+            collections = ["blacklist", "audit_logs", "breaches", "users"]
+            for coll in collections:
+                mongo.db[coll].delete_many({})
         except Exception:
             pass
 

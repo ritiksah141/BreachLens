@@ -102,6 +102,7 @@ export class NotificationService {
       const raw = localStorage.getItem(HISTORY_KEY);
       if (!raw) return [];
       const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
       return parsed.map((n: any) => ({
         ...n,
         timestamp: new Date(n.timestamp)

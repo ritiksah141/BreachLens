@@ -40,6 +40,9 @@ class Config:
     REQUEST_IP_POLICY: str = os.getenv("REQUEST_IP_POLICY", "anonymize")  # Options: "full", "anonymize", "none"
     IP_ANONYMIZATION_SALT: str = os.getenv("IP_ANONYMIZATION_SALT", "")
 
+    # Security: Bcrypt rounds (default 12 for production)
+    BCRYPT_LOG_ROUNDS: int = int(os.getenv("BCRYPT_LOG_ROUNDS", 12))
+
     # Account lockout settings
     MAX_LOGIN_ATTEMPTS: int = int(os.getenv("MAX_LOGIN_ATTEMPTS", 5))
     LOCKOUT_DURATION_MINUTES: int = int(os.getenv("LOCKOUT_DURATION_MINUTES", 15))
@@ -75,6 +78,8 @@ class TestingConfig(Config):
     RATELIMIT_DEFAULT: str = "10000 per hour"
     WTF_CSRF_ENABLED: bool = False
     CACHE_TYPE: str = "NullCache"  # Disable caching in tests to avoid Python 3.14 serialization issues
+    IP_ANONYMIZATION_SALT: str = "test-salt-value-for-ci"
+    BCRYPT_LOG_ROUNDS: int = 4  # Minimum rounds for speed in tests
 
 
 class ProductionConfig(Config):
