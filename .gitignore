@@ -62,7 +62,7 @@ Thumbs.db
 submission/
 
 # AI Documentation
-docs/
+/docs
 
 # Generated Data & Caches
 backend/seed/*.json

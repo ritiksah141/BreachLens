@@ -174,4 +174,18 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 **Ritik Sah**
 
 **Last Updated**: May 2026
-**Version**: v2.1.0 (Production Ready)
+**Version**: v1.0.0 (Web Platform)
+
+---
+
+## Roadmap
+
+### Current Version (v1.0.0)
+- Optimized for desktop and widescreen security terminals.
+- Full dashboard, map, and analytics capabilities.
+- Personal Defense Hub and OSINT synchronization.
+
+### Future Release (v2.0.0)
+- **Mobile Responsive Interface**: Refined UI for smartphones and tablets.
+- **Push Notifications**: Real-time breach alerts for mobile devices.
+- **Advanced API Integrations**: Expanded OSINT source peering.

@@ -91,7 +91,7 @@ describe('DefenseHubComponent', () => {
 
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('SYSTEMS NOMINAL');
+    expect(compiled.textContent).toContain('SYSTEMS NORMAL');
     expect(compiled.textContent).toContain('0.0');
   });
 
