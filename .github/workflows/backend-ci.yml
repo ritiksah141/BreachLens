@@ -53,17 +53,18 @@ jobs:
   test:
     name: Unit Tests (PyTest)
     runs-on: ubuntu-latest
-    # Removed 'needs' to allow parallel execution with other jobs
+    needs: [lint, security] # Mandatory security gates must pass first
     defaults:
       run:
         working-directory: ./backend
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-node@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
           cache: 'pip'
+          cache-dependency-path: backend/requirements.txt
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
