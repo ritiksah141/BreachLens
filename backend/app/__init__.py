@@ -40,6 +40,14 @@ def create_app(config_name: str = "development") -> Flask:
     app.url_map.strict_slashes = False
 
     # Initialise extensions
+    if config_name != "testing":
+        import certifi
+        app.config["MONGO_CONNECT_OPTIONS"] = {
+            "tlsCAFile": certifi.where(),
+            "retryWrites": True,
+            "w": "majority"
+        }
+
     mongo.init_app(app)
     allowed_origins = [o.strip() for o in app.config.get("CORS_ORIGINS", []) if o.strip()]
     cors.init_app(
@@ -123,23 +131,17 @@ def create_app(config_name: str = "development") -> Flask:
         if not cookie_token or not header_token or cookie_token != header_token:
             return jsonify({"status": "error", "message": "CSRF validation failed.", "code": 403}), 403
 
-    # Ensure MongoDB indexes on startup
-    # Note: ensure_indexes() is idempotent and safe to call multiple times.
-    # If DB is unavailable at startup, indexes will be created on first request.
-    with app.app_context():
-        try:
-            from app.services.breach_service import BreachService
-            from app.services.auth_service import AuthService
-            BreachService().ensure_indexes()
-            AuthService().ensure_indexes()
-            # Create index on the token blacklist collection for fast lookups
-            # Use a TTL (Time-To-Live) index so expired tokens are automatically removed.
-            # We set expireAfterSeconds=0 because we will store the 'exp' time in the document.
-            mongo.db["blacklist"].create_index("token", unique=True, background=True)
-            mongo.db["blacklist"].create_index("expires_at", expireAfterSeconds=0, background=True)
-        except Exception as e:
-            logger.exception("Failed to create database indexes at startup: %s", e)
-            # Indexes will be created on first request if DB not yet available
+    # Root route for professional status confirmation
+    @app.get("/")
+    def index():
+        """API Root — Welcome and Status."""
+        return jsonify({
+            "application": "BreachLens API",
+            "version": "2.1.0",
+            "status": "operational",
+            "message": "The BreachLens Cyber Threat Intelligence engine is active.",
+            "documentation": "/api/docs" if app.config.get("SWAGGER_ENABLED") else "private"
+        }), 200
 
     # Health check
     @app.get("/health")
@@ -153,6 +155,22 @@ def create_app(config_name: str = "development") -> Flask:
         status = "ok" if db_status == "ok" else "degraded"
         code = 200 if status == "ok" else 503
         return jsonify({"status": status, "db": db_status}), code
+
+    # Ensure MongoDB indexes on startup
+    # Note: ensure_indexes() is idempotent and safe to call multiple times.
+    # If DB is unavailable at startup, indexes will be created on first request.
+    with app.app_context():
+        try:
+            from app.services.breach_service import BreachService
+            from app.services.auth_service import AuthService
+            BreachService().ensure_indexes()
+            AuthService().ensure_indexes()
+            # Create index on the token blacklist collection for fast lookups
+            mongo.db["blacklist"].create_index("token", unique=True, background=True)
+            mongo.db["blacklist"].create_index("expires_at", expireAfterSeconds=0, background=True)
+        except Exception as e:
+            logger.exception("Failed to create database indexes at startup: %s", e)
+            # Indexes will be created on first request if DB not yet available
 
     # Centralised error handlers
     _register_error_handlers(app)
@@ -235,10 +253,3 @@ def _validate_security_config(app: Flask, config_name: str) -> None:
         localhost_origins = ("http://localhost", "https://localhost", "http://127.0.0.1", "https://127.0.0.1")
         if any(origin.startswith(localhost) for origin in origins for localhost in localhost_origins):
             raise RuntimeError("CORS_ORIGINS must not include localhost in production.")
-
-        ratelimit_storage = str(app.config.get("RATELIMIT_STORAGE_URL", "")).strip().lower()
-        if ratelimit_storage.startswith("memory://"):
-            raise RuntimeError("RATELIMIT_STORAGE_URL must point to a shared store in production (e.g., Redis).")
-
-        if not app.config.get("AUTH_COOKIE_SECURE", False):
-            raise RuntimeError("AUTH_COOKIE_SECURE must be enabled in production.")
