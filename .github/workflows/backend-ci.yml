@@ -53,14 +53,14 @@ jobs:
   test:
     name: Unit Tests (PyTest)
     runs-on: ubuntu-latest
-    needs: [lint, security] # Only run tests if basic checks pass
+    # Removed 'needs' to allow parallel execution with other jobs
     defaults:
       run:
         working-directory: ./backend
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-node@v4
         with:
           python-version: '3.12'
           cache: 'pip'
@@ -74,8 +74,8 @@ jobs:
           SECRET_KEY: test-secret-key # pragma: allowlist secret
           MONGO_URI: mongodb://localhost:27017/unused
         run: |
-          # Run essential tests in parallel, excluding slow and integration suites
-          pytest tests/ -n auto -m "not slow and not integration" --cov=app --cov-report=xml --ignore=tests/test_performance.py --ignore=tests/test_services_integration.py
+          # Run tests in parallel with compact output (-q)
+          pytest tests/ -n auto -q -m "not slow and not integration" --cov=app --cov-report=xml --ignore=tests/test_performance.py --ignore=tests/test_services_integration.py
       - name: Validate Production Env
         env:
           FLASK_ENV: production

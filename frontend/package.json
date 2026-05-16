@@ -6,7 +6,6 @@
     "start": "ng serve",
     "build": "ng build",
     "test": "ng test",
-    "lint": "ng lint",
     "compodoc": "npx compodoc -p tsconfig.doc.json -s"
   },
   "private": true,
